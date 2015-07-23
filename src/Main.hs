@@ -213,30 +213,18 @@ socketHandler (aSocket, aSockAddr) = do
               (remoteInputStream, remoteOutputStream) <- 
                 socketToStreams aRemoteSocket
 
-              let sendMessageLoop = do
-                    sentMessage <- S.read inputStream
-                    case sentMessage of
-                      Nothing -> return ()
-                      Just _ -> do
-                        S.write sentMessage remoteOutputStream
-                        sendMessageLoop 
-                
-              let receiveMessageLoop = do
-                    receivedMessage <- S.read remoteInputStream 
-                    case receivedMessage of
-                      Nothing -> return ()
-                      Just _ -> do
-                        S.write receivedMessage outputStream
-                        receiveMessageLoop
              
               (sendThreadID, sendLock) <- do
                 _lock <- newEmptyMVar
-                _threadID <- forkFinally sendMessageLoop - 
+                _threadID <- 
+                  forkFinally (S.connect inputStream remoteOutputStream) - 
                               const - putMVar _lock ()
+
                 return (_threadID, _lock)
                                             
 
-              receiveThreadID <- forkFinally receiveMessageLoop -
+              receiveThreadID <- 
+                forkFinally (S.connect remoteInputStream outputStream) -
                                     const - killThread sendThreadID 
               
               takeMVar sendLock
