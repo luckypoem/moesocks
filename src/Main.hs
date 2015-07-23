@@ -71,8 +71,7 @@ waitBoth x y = do
 
 data ClientGreeting = ClientGreeting
   {
-    _numberOfAuthenticationMethods :: Word8
-  , _authenticationMethods :: [Word8]
+    _authenticationMethods :: [Word8]
   }
   deriving (Show)
 
@@ -119,7 +118,6 @@ socketHandler (aSocket, aSockAddr) = do
 
         return - 
           ClientGreeting 
-            __numberOfAuthenticationMethods
             __authenticationMethods
 
   let reservedByte = 0
