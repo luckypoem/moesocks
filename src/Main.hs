@@ -213,18 +213,6 @@ socketHandler (aSocket, aSockAddr) = do
               (remoteInputStream, remoteOutputStream) <- 
                 socketToStreams aRemoteSocket
 
-              msg <- S.read inputStream
-
-              puts - show msg
-
-              S.write msg remoteOutputStream
-
-              msg <- S.read remoteInputStream
-              puts - show msg
-
-              S.write msg outputStream
-
-              
               let sendMessageLoop = do
                     sentMessage <- S.read inputStream
                     case sentMessage of
