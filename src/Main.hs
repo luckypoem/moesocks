@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ExistentialQuantification #-}
 
 module Main where
 
@@ -19,9 +20,16 @@ import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
 import qualified Data.ByteString as B
+import Data.Binary
+import Data.Binary.Put
+import Data.Binary.Get
+import Data.Monoid
 
 pute :: String -> IO ()
 pute = hPutStrLn stderr
+
+showBytes :: B.ByteString -> String
+showBytes = show . B.unpack
 
 safeSocketHandler :: String -> (Socket -> IO a) -> Socket -> IO a
 safeSocketHandler aID f aSocket =
@@ -47,7 +55,7 @@ data ConnectionType =
   deriving (Show, Eq)
 
 data AddressType = 
-    IPv4_address Word8 Word8 Word8 Word8
+    IPv4_address [Word8]
   | Domain_name B.ByteString
   | IPv6_address [Word8]
   deriving (Show, Eq)
@@ -98,11 +106,9 @@ socketHandler (aSocket, aSockAddr) = do
 
         __addressType <- choice
             [
-              IPv4_address 
-                <$> (word8 1 >> anyWord8) 
-                <*> anyWord8 
-                <*> anyWord8
-                <*> anyWord8
+              IPv4_address <$>  do
+                                  word8 1
+                                  count 4 anyWord8
             
             , Domain_name <$>   do 
                                   word8 3
@@ -118,6 +124,7 @@ socketHandler (aSocket, aSockAddr) = do
 
         __portNumber <- (,) <$> anyWord8 <*> anyWord8
 
+
         return - 
           ClientConnectionRequest
             __connectionType
@@ -130,11 +137,11 @@ socketHandler (aSocket, aSockAddr) = do
   
     let noAuthenticationMethodCode = 0
 
-    if r & elemOf (authenticationMethods . folded) noAuthenticationMethodCode 
+    if noAuthenticationMethodCode `elem` (r ^. authenticationMethods)
       then do
         let
           write x = do
-                      puts - show - B.unpack x
+                      puts - showBytes x
                       S.write (Just - x) outputStream
 
           push = write . B.singleton
@@ -146,33 +153,84 @@ socketHandler (aSocket, aSockAddr) = do
         conn <- parseFromStream connectionParser inputStream
         puts - show conn
 
-        serverSocks5
-        push 0
-        push reservedByte
 
-        case conn ^. addressType of
-          IPv4_address a1 a2 a3 a4 -> do
-                                        push 1
-                                        write - B.pack [a1, a2, a3, a4]
+        let 
+            fromWord8 :: forall t. Binary t => [Word8] -> t
+            fromWord8 = decode . runPut . mapM_ put
+      
+            handleRequest :: Socket -> ClientConnectionRequest -> IO Socket
+            handleRequest _localSocket _connection = do
+              {-puts "Handle Request"-}
 
-          Domain_name x ->            do
-                                        push 3
-                                        push - fromIntegral (B.length x)
-                                        write x
+              _remoteSocket <- socket AF_INET Stream defaultProtocol
 
-          IPv6_address xs ->          do
-                                        push 4
-                                        write - B.pack xs
+              let portNumber16 = 
+                    fromWord8 - _connection ^. portNumber . _1 :
+                                _connection ^. portNumber . _2 : []
+                    :: Word16
+                  
+                  (IPv4_address _address) = _connection ^. addressType
+              
+              puts - "ports: " <> show portNumber16
 
-        push - conn ^. portNumber . _1
-        push - conn ^. portNumber . _2
+              let 
+                  _socketAddr = SockAddrInet 
+                                  (fromIntegral portNumber16)
+                                  (fromWord8 - reverse _address)
 
-          
+              puts - "socketAddr: " <> show _socketAddr
 
-      else
+              connect _remoteSocket _socketAddr
+
+              return _remoteSocket
+              
+        _remoteSocket <- handleRequest aSocket conn
+     
+        let handleConnection aRemoteSocket = do
+              serverSocks5
+              push 0
+              push reservedByte
+
+              case conn ^. addressType of
+                IPv4_address xs ->  do
+                                      push 1
+                                      write - B.pack xs
+
+                Domain_name x ->    do
+                                      push 3
+                                      push - fromIntegral (B.length x)
+                                      write x
+
+                IPv6_address xs ->  do
+                                      push 4
+                                      write - B.pack xs
+
+              push - conn ^. portNumber . _1
+              push - conn ^. portNumber . _2
+
+
+              (remoteInputStream, remoteOutputStream) <- 
+                socketToStreams aRemoteSocket
+
+              msg <- S.read inputStream
+
+              puts - show - showBytes <$> msg
+
+              {-S.connect inputStream remoteOutputStream-}
+              {-S.connect remoteInputStream outputStream-}
+
+              return ()
+
+
+
+        safeSocketHandler "Connection Handler" handleConnection _remoteSocket
+
+        sClose aSocket
+        sClose _remoteSocket
+
+      else do
         pute - "Client does not support 0x00: No authentication method"
-    
-    sClose aSocket
+        sClose aSocket
 
 
 
@@ -184,7 +242,8 @@ main = do
   bindSocket mainSocket (SockAddrInet 1090 iNADDR_ANY)
   listen mainSocket 1
 
-  let handler _socket = accept _socket >>= fork . socketHandler
-      serverLoop = forever . safeSocketHandler "Connection Socket" handler
+  let handleConnection _socket = accept _socket >>= fork . socketHandler
+      serverLoop = 
+        forever . safeSocketHandler "Connection Socket" handleConnection
 
   safeSocketHandler "Main Socket" serverLoop mainSocket 
