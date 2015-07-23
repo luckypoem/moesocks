@@ -24,6 +24,7 @@ import Data.Binary
 import Data.Binary.Put
 import Data.Binary.Get
 import Data.Monoid
+import Control.Concurrent
 
 pute :: String -> IO ()
 pute = hPutStrLn stderr
@@ -240,19 +241,10 @@ socketHandler (aSocket, aSockAddr) = do
                         S.write receivedMessage outputStream
                         receiveMessageLoop
              
-              fork - receiveMessageLoop
-
-              sendMessageLoop
+              sendThreadID <- forkIO sendMessageLoop
               
-              {-let loop = do-}
-                    {-inputMessage <- S.read inputStream-}
-                    {-case inputMessage of-}
-                      {-Nothing -> return ()-}
-                      {-Just _ -> do-}
-                        {-S.write inputMessage remoteOutputStream-}
-              
-              {-S.connect inputStream remoteOutputStream-}
-              {-S.connect remoteInputStream outputStream-}
+              receiveMessageLoop
+              killThread sendThreadID 
 
               return ()
 
