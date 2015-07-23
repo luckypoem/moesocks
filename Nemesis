@@ -15,6 +15,7 @@ nemesis = do
   desc "test"
   task "test" - do
     forever - do
-      sh "telnet localhost 1090;exit 0"
+      -- sh "telnet localhost 1090;exit 0"*/
+      sh "curl -x socks5://localhost:1090 jinjing.cc;exit 0"
       sleep 1
 

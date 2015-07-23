@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Main where
 
@@ -8,11 +9,15 @@ import Air.Env hiding ((.))
 
 import Network.Socket
 import Control.Monad
+import Control.Applicative
 import System.Posix.Signals
 import Control.Exception
 import System.IO
 import System.IO.Streams.Network
 import qualified System.IO.Streams as S
+import Data.Attoparsec.ByteString
+import System.IO.Streams.Attoparsec
+import Data.Word
 
 pute :: String -> IO ()
 pute = hPutStrLn stderr
@@ -23,6 +28,45 @@ safeSocketHandler aID f aSocket =
       pute - "Exception in " + aID + ": " + show (e :: SomeException)
       sClose aSocket
       throw e
+
+    
+data ClientGreeting = ClientGreeting
+  {
+    _socksVersionNumber :: Word8
+  , _numberOfAuthenticationMethods :: Word8
+  , _authenticationMethods :: [Word8]
+  }
+  deriving (Show)
+
+makeLenses ''ClientGreeting
+
+socketHandler:: (Socket, SockAddr) -> IO ()
+socketHandler (aSocket, aSockAddr) = do
+  puts - "Connected: " + show aSockAddr
+
+  (inputStream, outputStream) <- socketToStreams aSocket
+
+       
+  let parser = do
+        socksVersionNumber_ <- word8 5
+        numberOfAuthentication_ <- satisfy - (<= 10)
+        authenticationMethods_ <- count (fromIntegral numberOfAuthentication_)
+                                    anyWord8
+
+        return - 
+          ClientGreeting 
+            socksVersionNumber_ 
+            numberOfAuthentication_
+            authenticationMethods_
+
+  flip catch (\e -> puts - show (e :: ParseException)) - do
+    r <- parseFromStream parser inputStream
+    puts - show r 
+  
+  S.write (Just "ByteString Stream!\n") outputStream
+  sClose aSocket
+
+
 
 main :: IO ()
 main = do
@@ -36,13 +80,3 @@ main = do
       serverLoop = forever . safeSocketHandler "Connection Socket" handler
 
   safeSocketHandler "Main Socket" serverLoop mainSocket 
-    
-
-socketHandler:: (Socket, SockAddr) -> IO ()
-socketHandler (aSocket, aSockAddr) = do
-  puts - "Connected: " + show aSockAddr
-
-  (_, outputStream) <- socketToStreams aSocket
-  S.write (Just "ByteString Stream!\n") outputStream
-  sClose aSocket
-
