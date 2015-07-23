@@ -5,7 +5,7 @@ module Main where
 
 import Control.Lens
 import Prelude ((.))
-import Air.Env hiding ((.), has) 
+import Air.Env hiding ((.), has, take) 
 
 import Network.Socket
 import Control.Monad
@@ -46,11 +46,17 @@ data ConnectionType =
   | UDP_port
   deriving (Show, Eq)
 
+data AddressType = 
+    IPv4_address Word8 Word8 Word8 Word8
+  | Domain_name B.ByteString
+  | IPv6_address [Word8]
+  deriving (Show, Eq)
+
+
 data ClientConnectionRequest = ClientConnectionRequest
   {
     _connectionType :: ConnectionType
-  , _addressType :: Word8
-  , _destinationAddress :: [Word8]
+  , _addressType :: AddressType
   , _portNumber :: (Word8, Word8)
   }
   deriving (Show)
@@ -67,7 +73,7 @@ socketHandler (aSocket, aSockAddr) = do
   let handshakeParser = do
         socksHeader
         let maxNoOfMethods = 5
-        __numberOfAuthenticationMethods <- satisfy - (<= maxNoOfMethods)
+        __numberOfAuthenticationMethods <- satisfy (<= maxNoOfMethods)
         __authenticationMethods <- 
           count (fromIntegral __numberOfAuthenticationMethods) anyWord8
 
@@ -81,20 +87,40 @@ socketHandler (aSocket, aSockAddr) = do
         socksHeader
         __connectionType <- choice
             [
-              TCP_IP_stream_connection <$ word8 1
+              TCP_IP_stream_connection <$ word8 1 
             , TCP_IP_port_binding <$ word8 2
             , UDP_port <$ word8 3
             ]
 
         byte0
 
-        __addressType <- satisfy - flip elem [1,3,4]
+        __addressType <- choice
+            [
+              IPv4_address 
+                <$> (word8 1 >> anyWord8) 
+                <*> anyWord8 
+                <*> anyWord8
+                <*> anyWord8
+            
+            , Domain_name <$>   do 
+                                  word8 3
+                                  let maxDomainNameLength = 32
+                                  _nameLength <- satisfy 
+                                                    (<= maxDomainNameLength)
+                                  take - fromIntegral _nameLength
+
+            , IPv6_address <$>  do
+                                  word8 4 
+                                  count 16 anyWord8
+            ]
+
+        __portNumber <- (,) <$> anyWord8 <*> anyWord8
+
         return - 
           ClientConnectionRequest
             __connectionType
             __addressType 
-            []
-            (0,0)
+            __portNumber
 
   flip catch (\e -> puts - show (e :: ParseException)) - do
     r <- parseFromStream handshakeParser inputStream
