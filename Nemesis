@@ -1,0 +1,12 @@
+import Prelude ()
+import System.Nemesis.Env
+import Air.Env
+
+main = run nemesis
+
+nemesis = do
+
+  desc "halive"
+  task "halive" - do
+    sh "halive src/Main.hs src"
+
