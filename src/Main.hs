@@ -33,9 +33,7 @@ syncLock = unsafePerformIO - newEmptyMVar
 sync :: IO a -> IO a
 sync io = do
   putMVar syncLock ()
-  r <- io 
-  takeMVar syncLock
-  return r
+  io <* takeMVar syncLock
 
 puts :: String -> IO ()
 puts = sync . putStrLn
