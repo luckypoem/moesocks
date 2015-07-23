@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Control.Lens
@@ -9,6 +11,8 @@ import Control.Monad
 import System.Posix.Signals
 import Control.Exception
 import System.IO
+import System.IO.Streams.Network
+import qualified System.IO.Streams as S
 
 pute :: String -> IO ()
 pute = hPutStrLn stderr
@@ -23,21 +27,22 @@ safeSocket aID aSocket f =
 main :: IO ()
 main = do
   puts "Started!"
-  _mainSocket <- socket AF_INET Stream defaultProtocol
-  setSocketOption _mainSocket ReuseAddr 1
-  bindSocket _mainSocket (SockAddrInet 1091 iNADDR_ANY)
-  listen _mainSocket 1
+  mainSocket <- socket AF_INET Stream defaultProtocol
+  setSocketOption mainSocket ReuseAddr 1
+  bindSocket mainSocket (SockAddrInet 1090 iNADDR_ANY)
+  listen mainSocket 1
 
-
-  let handler aSocket = safeSocket "Connection Socket" aSocket - \_socket ->
+  let handler aSocket = safeSocket "Connection Socket" aSocket - \_socket -> do
                   accept _socket >>= fork . socketHandler
 
-  safeSocket "Main Socket" _mainSocket - forever . handler 
+  safeSocket "Main Socket" mainSocket - forever . handler 
     
 
 socketHandler:: (Socket, SockAddr) -> IO ()
-socketHandler (_socket, _sockAddr) = do
-  puts - "Connected: " + show _sockAddr
-  send _socket - "Hi: " + show _sockAddr + "!\n"
-  sClose _socket
+socketHandler (aSocket, aSockAddr) = do
+  puts - "Connected: " + show aSockAddr
+
+  (_, outputStream) <- socketToStreams aSocket
+  S.write (Just "ByteString Stream!\n") outputStream
+  sClose aSocket
 

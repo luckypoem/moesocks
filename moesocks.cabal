@@ -26,5 +26,6 @@ executable moesocks
                       , air
                       , network
                       , enclosed-exceptions
+                      , io-streams
   hs-source-dirs:      src
   default-language:    Haskell2010
