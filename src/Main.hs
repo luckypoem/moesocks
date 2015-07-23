@@ -229,10 +229,18 @@ socketHandler (aSocket, aSockAddr) = do
                         S.write receivedMessage outputStream
                         receiveMessageLoop
              
-              sendThreadID <- forkIO sendMessageLoop
+              (sendThreadID, sendLock) <- do
+                _lock <- newEmptyMVar
+                _threadID <- forkFinally sendMessageLoop - 
+                              const - putMVar _lock ()
+                return (_threadID, _lock)
+                                            
+
+              receiveThreadID <- forkFinally receiveMessageLoop -
+                                    const - killThread sendThreadID 
               
-              receiveMessageLoop
-              killThread sendThreadID 
+              takeMVar sendLock
+              killThread receiveThreadID
 
               return ()
 
