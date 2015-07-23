@@ -214,8 +214,43 @@ socketHandler (aSocket, aSockAddr) = do
 
               msg <- S.read inputStream
 
-              puts - show - showBytes <$> msg
+              puts - show msg
 
+              S.write msg remoteOutputStream
+
+              msg <- S.read remoteInputStream
+              puts - show msg
+
+              S.write msg outputStream
+
+              
+              let sendMessageLoop = do
+                    sentMessage <- S.read inputStream
+                    case sentMessage of
+                      Nothing -> return ()
+                      Just _ -> do
+                        S.write sentMessage remoteOutputStream
+                        sendMessageLoop 
+                
+              let receiveMessageLoop = do
+                    receivedMessage <- S.read remoteInputStream 
+                    case receivedMessage of
+                      Nothing -> return ()
+                      Just _ -> do
+                        S.write receivedMessage outputStream
+                        receiveMessageLoop
+             
+              fork - receiveMessageLoop
+
+              sendMessageLoop
+              
+              {-let loop = do-}
+                    {-inputMessage <- S.read inputStream-}
+                    {-case inputMessage of-}
+                      {-Nothing -> return ()-}
+                      {-Just _ -> do-}
+                        {-S.write inputMessage remoteOutputStream-}
+              
               {-S.connect inputStream remoteOutputStream-}
               {-S.connect remoteInputStream outputStream-}
 
