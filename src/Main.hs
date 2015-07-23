@@ -61,6 +61,8 @@ data ClientConnectionRequest = ClientConnectionRequest
   }
   deriving (Show)
 
+makeLenses ''ClientConnectionRequest
+
 socketHandler:: (Socket, SockAddr) -> IO ()
 socketHandler (aSocket, aSockAddr) = do
   puts - "Connected: " + show aSockAddr
@@ -82,7 +84,7 @@ socketHandler (aSocket, aSockAddr) = do
             __numberOfAuthenticationMethods
             __authenticationMethods
 
-  let byte0 = word8 0
+  let reservedByte = 0
   let connectionParser = do
         socksHeader
         __connectionType <- choice
@@ -92,7 +94,7 @@ socketHandler (aSocket, aSockAddr) = do
             , UDP_port <$ word8 3
             ]
 
-        byte0
+        word8 reservedByte
 
         __addressType <- choice
             [
@@ -127,19 +129,44 @@ socketHandler (aSocket, aSockAddr) = do
     puts - show r 
   
     let noAuthenticationMethodCode = 0
+
     if r & elemOf (authenticationMethods . folded) noAuthenticationMethodCode 
       then do
-        let serverResponse = B.pack
-              [
-                socksVersion
-              , noAuthenticationMethodCode
-              ]
-        puts - concat - map show (B.unpack serverResponse)
-        S.write (Just - serverResponse) outputStream
+        let
+          write x = do
+                      puts - show - B.unpack x
+                      S.write (Just - x) outputStream
 
+          push = write . B.singleton
+          serverSocks5 = push socksVersion
+
+        serverSocks5
+        push noAuthenticationMethodCode
 
         conn <- parseFromStream connectionParser inputStream
         puts - show conn
+
+        serverSocks5
+        push 1
+        push reservedByte
+
+        case conn ^. addressType of
+          IPv4_address a1 a2 a3 a4 -> do
+                                        push 1
+                                        write - B.pack [a1, a2, a3, a4]
+          Domain_name x -> do
+                              push 3
+                              push - fromIntegral (B.length x)
+                              write x
+
+          IPv6_address xs -> do
+                                push 4
+                                write - B.pack xs
+
+        push - conn ^. portNumber . _1
+        push - conn ^. portNumber . _2
+
+          
 
       else
         pute - "Client does not support 0x00: No authentication method"
