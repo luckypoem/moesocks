@@ -5,7 +5,7 @@ module Main where
 
 import Control.Lens
 import Prelude ((.))
-import Air.Env hiding ((.)) 
+import Air.Env hiding ((.), has) 
 
 import Network.Socket
 import Control.Monad
@@ -18,6 +18,7 @@ import qualified System.IO.Streams as S
 import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
+import qualified Data.ByteString as B
 
 pute :: String -> IO ()
 pute = hPutStrLn stderr
@@ -29,16 +30,30 @@ safeSocketHandler aID f aSocket =
       sClose aSocket
       throw e
 
-    
+
 data ClientGreeting = ClientGreeting
   {
-    _socksVersionNumber :: Word8
-  , _numberOfAuthenticationMethods :: Word8
+    _numberOfAuthenticationMethods :: Word8
   , _authenticationMethods :: [Word8]
   }
   deriving (Show)
 
 makeLenses ''ClientGreeting
+
+data ConnectionType =
+    TCP_IP_stream_connection
+  | TCP_IP_port_binding
+  | UDP_port
+  deriving (Show, Eq)
+
+data ClientConnectionRequest = ClientConnectionRequest
+  {
+    _connectionType :: ConnectionType
+  , _addressType :: Word8
+  , _destinationAddress :: [Word8]
+  , _portNumber :: (Word8, Word8)
+  }
+  deriving (Show)
 
 socketHandler:: (Socket, SockAddr) -> IO ()
 socketHandler (aSocket, aSockAddr) = do
@@ -46,26 +61,64 @@ socketHandler (aSocket, aSockAddr) = do
 
   (inputStream, outputStream) <- socketToStreams aSocket
 
-       
-  let parser = do
-        __socksVersionNumber <- word8 5
-        let maxNoOfMethods = 10
+  let socksVersion = 5
+      socksHeader = word8 socksVersion
+  
+  let handshakeParser = do
+        socksHeader
+        let maxNoOfMethods = 5
         __numberOfAuthenticationMethods <- satisfy - (<= maxNoOfMethods)
         __authenticationMethods <- 
           count (fromIntegral __numberOfAuthenticationMethods) anyWord8
 
         return - 
           ClientGreeting 
-            __socksVersionNumber 
             __numberOfAuthenticationMethods
             __authenticationMethods
 
+  let byte0 = word8 0
+  let connectionParser = do
+        socksHeader
+        __connectionType <- choice
+            [
+              TCP_IP_stream_connection <$ word8 1
+            , TCP_IP_port_binding <$ word8 2
+            , UDP_port <$ word8 3
+            ]
+
+        byte0
+
+        __addressType <- satisfy - flip elem [1,3,4]
+        return - 
+          ClientConnectionRequest
+            __connectionType
+            __addressType 
+            []
+            (0,0)
+
   flip catch (\e -> puts - show (e :: ParseException)) - do
-    r <- parseFromStream parser inputStream
+    r <- parseFromStream handshakeParser inputStream
     puts - show r 
   
-  S.write (Just "ByteString Stream!\n") outputStream
-  sClose aSocket
+    let noAuthenticationMethodCode = 0
+    if r & elemOf (authenticationMethods . folded) noAuthenticationMethodCode 
+      then do
+        let serverResponse = B.pack
+              [
+                socksVersion
+              , noAuthenticationMethodCode
+              ]
+        puts - concat - map show (B.unpack serverResponse)
+        S.write (Just - serverResponse) outputStream
+
+
+        conn <- parseFromStream connectionParser inputStream
+        puts - show conn
+
+      else
+        pute - "Client does not support 0x00: No authentication method"
+    
+    sClose aSocket
 
 
 
