@@ -39,6 +39,20 @@ safeSocketHandler aID f aSocket =
       sClose aSocket
       throw e
 
+waitBoth :: IO a -> IO b -> IO ()
+waitBoth x y = do
+  (xThreadID, xLock) <- do
+    _lock <- newEmptyMVar
+    _threadID <- 
+      forkFinally x - const - putMVar _lock ()
+
+    return (_threadID, _lock)
+
+  yThreadID <- 
+    forkFinally y - const - killThread xThreadID 
+                
+  takeMVar xLock 
+  killThread yThreadID
 
 data ClientGreeting = ClientGreeting
   {
@@ -124,7 +138,6 @@ socketHandler (aSocket, aSockAddr) = do
             ]
 
         __portNumber <- (,) <$> anyWord8 <*> anyWord8
-
 
         return - 
           ClientConnectionRequest
@@ -229,22 +242,11 @@ socketHandler (aSocket, aSockAddr) = do
                         S.write receivedMessage outputStream
                         receiveMessageLoop
              
-              (sendThreadID, sendLock) <- do
-                _lock <- newEmptyMVar
-                _threadID <- 
-                  forkFinally (S.connect inputStream remoteOutputStream) - 
-                              const - putMVar _lock ()
-
-                return (_threadID, _lock)
-                                            
-
-              receiveThreadID <- 
-                forkFinally  (S.connect remoteInputStream outputStream) -
-                                    const - killThread sendThreadID 
               
-              takeMVar sendLock
-              killThread receiveThreadID
-
+              waitBoth
+                (S.connect inputStream remoteOutputStream)
+                (S.connect remoteInputStream outputStream)
+              
               return ()
 
 
