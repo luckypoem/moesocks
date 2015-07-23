@@ -276,6 +276,13 @@ socketHandler (aSocket, aSockAddr) = do
         sClose aSocket
 
 
+moeHandler:: (Socket, SockAddr) -> IO ()
+moeHandler (aSocket, aSockAddr) = do
+  puts - "Moe Connected: " + show aSockAddr
+  (inputStream, outputStream) <- socketToStreams aSocket
+
+ 
+  sClose aSocket
 
 main :: IO ()
 main = do
@@ -295,15 +302,6 @@ main = do
   bindSocket moeSocket (SockAddrInet 1190 iNADDR_ANY)
   listen moeSocket 1
 
-  let
-      moeHandler:: (Socket, SockAddr) -> IO ()
-      moeHandler (aSocket, aSockAddr) = do
-        puts - "Moe Connected: " + show aSockAddr
-        (inputStream, outputStream) <- socketToStreams aSocket
-
-       
-        sClose aSocket
-
   let handleMoe _socket = accept _socket >>= fork . moeHandler
       moeServerLoop _socket = do
         puts "moeServerLoop"
@@ -311,6 +309,8 @@ main = do
   
   safeSocketHandler "Main Socket" (\_mainSocket ->
     safeSocketHandler "Moe Socket" (\_moeSocket ->
-      waitBoth (socksServerLoop _mainSocket) (moeServerLoop _moeSocket))
-        moeSocket) mainSocket
+      waitBoth 
+        (socksServerLoop _mainSocket) 
+        (moeServerLoop _moeSocket)
+        ) moeSocket) mainSocket
 
