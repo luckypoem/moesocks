@@ -17,8 +17,8 @@ import qualified System.IO.Streams as S
 pute :: String -> IO ()
 pute = hPutStrLn stderr
 
-safeSocket :: String -> Socket -> (Socket -> IO a) -> IO a
-safeSocket aID aSocket f =
+safeSocketHandler :: String -> (Socket -> IO a) -> Socket -> IO a
+safeSocketHandler aID f aSocket =
   catch (f aSocket) - \e -> do
       pute - "Exception in " + aID + ": " + show (e :: SomeException)
       sClose aSocket
@@ -32,10 +32,10 @@ main = do
   bindSocket mainSocket (SockAddrInet 1090 iNADDR_ANY)
   listen mainSocket 1
 
-  let handler aSocket = safeSocket "Connection Socket" aSocket - \_socket -> do
-                  accept _socket >>= fork . socketHandler
+  let handler _socket = accept _socket >>= fork . socketHandler
+      serverLoop = forever . safeSocketHandler "Connection Socket" handler
 
-  safeSocket "Main Socket" mainSocket - forever . handler 
+  safeSocketHandler "Main Socket" serverLoop mainSocket 
     
 
 socketHandler:: (Socket, SockAddr) -> IO ()
