@@ -6,7 +6,7 @@ module Main where
 
 import Control.Lens
 import Prelude ((.))
-import Air.Env hiding ((.), has, take) 
+import Air.Env hiding ((.), has, take, puts) 
 
 import Network.Socket
 import Control.Monad
@@ -25,9 +25,24 @@ import Data.Binary.Put
 import Data.Binary.Get
 import Data.Monoid
 import Control.Concurrent
+import System.IO.Unsafe
+
+syncLock :: MVar ()
+syncLock = unsafePerformIO - newEmptyMVar
+
+sync :: IO a -> IO a
+sync io = do
+  putMVar syncLock ()
+  r <- io 
+  takeMVar syncLock
+  return r
+
+puts :: String -> IO ()
+puts = sync . putStrLn
+
 
 pute :: String -> IO ()
-pute = hPutStrLn stderr
+pute = sync . hPutStrLn stderr
 
 showBytes :: B.ByteString -> String
 showBytes = show . B.unpack
@@ -155,7 +170,7 @@ socketHandler (aSocket, aSockAddr) = do
       then do
         let
           write x = do
-                      puts - showBytes x
+                      {-puts - showBytes x-}
                       S.write (Just - x) outputStream
 
           push = write . B.singleton
@@ -185,14 +200,14 @@ socketHandler (aSocket, aSockAddr) = do
                   
                   (IPv4_address _address) = _connection ^. addressType
               
-              puts - "ports: " <> show portNumber16
+              {-puts - "ports: " <> show portNumber16-}
 
               let 
                   _socketAddr = SockAddrInet 
                                   (fromIntegral portNumber16)
                                   (fromWord8 - reverse _address)
 
-              puts - "socketAddr: " <> show _socketAddr
+              {-puts - "socketAddr: " <> show _socketAddr-}
 
               connect _remoteSocket _socketAddr
 
@@ -271,7 +286,31 @@ main = do
   listen mainSocket 1
 
   let handleConnection _socket = accept _socket >>= fork . socketHandler
-      serverLoop = 
+      socksServerLoop = 
         forever . safeSocketHandler "Connection Socket" handleConnection
 
-  safeSocketHandler "Main Socket" serverLoop mainSocket 
+
+  moeSocket <- socket AF_INET Stream defaultProtocol
+  setSocketOption moeSocket ReuseAddr 1
+  bindSocket moeSocket (SockAddrInet 1190 iNADDR_ANY)
+  listen moeSocket 1
+
+  let
+      moeHandler:: (Socket, SockAddr) -> IO ()
+      moeHandler (aSocket, aSockAddr) = do
+        puts - "Moe Connected: " + show aSockAddr
+        (inputStream, outputStream) <- socketToStreams aSocket
+
+       
+        sClose aSocket
+
+  let handleMoe _socket = accept _socket >>= fork . moeHandler
+      moeServerLoop _socket = do
+        puts "moeServerLoop"
+        forever . safeSocketHandler "Moe Connection Socket" handleMoe - _socket
+  
+  safeSocketHandler "Main Socket" (\_mainSocket ->
+    safeSocketHandler "Moe Socket" (\_moeSocket ->
+      waitBoth (socksServerLoop _mainSocket) (moeServerLoop _moeSocket))
+        moeSocket) mainSocket
+
