@@ -147,21 +147,22 @@ socketHandler (aSocket, aSockAddr) = do
         puts - show conn
 
         serverSocks5
-        push 1
+        push 0
         push reservedByte
 
         case conn ^. addressType of
           IPv4_address a1 a2 a3 a4 -> do
                                         push 1
                                         write - B.pack [a1, a2, a3, a4]
-          Domain_name x -> do
-                              push 3
-                              push - fromIntegral (B.length x)
-                              write x
 
-          IPv6_address xs -> do
-                                push 4
-                                write - B.pack xs
+          Domain_name x ->            do
+                                        push 3
+                                        push - fromIntegral (B.length x)
+                                        write x
+
+          IPv6_address xs ->          do
+                                        push 4
+                                        write - B.pack xs
 
         push - conn ^. portNumber . _1
         push - conn ^. portNumber . _2
