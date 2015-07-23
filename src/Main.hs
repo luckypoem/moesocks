@@ -48,17 +48,17 @@ socketHandler (aSocket, aSockAddr) = do
 
        
   let parser = do
-        socksVersionNumber_ <- word8 5
-        let maxNoOfMethods_ = 10
-        numberOfAuthenticationMethods_ <- satisfy - (<= maxNoOfMethods_)
-        authenticationMethods_ <- 
-          count (fromIntegral numberOfAuthenticationMethods_) anyWord8
+        __socksVersionNumber <- word8 5
+        let maxNoOfMethods = 10
+        __numberOfAuthenticationMethods <- satisfy - (<= maxNoOfMethods)
+        __authenticationMethods <- 
+          count (fromIntegral __numberOfAuthenticationMethods) anyWord8
 
         return - 
           ClientGreeting 
-            socksVersionNumber_ 
-            numberOfAuthenticationMethods_
-            authenticationMethods_
+            __socksVersionNumber 
+            __numberOfAuthenticationMethods
+            __authenticationMethods
 
   flip catch (\e -> puts - show (e :: ParseException)) - do
     r <- parseFromStream parser inputStream
