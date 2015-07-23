@@ -88,7 +88,7 @@ data AddressType =
   deriving (Show, Eq)
 
 
-data ClientConnectionRequest = ClientConnectionRequest
+data ClientRequest = ClientRequest
   {
     _connectionType :: ConnectionType
   , _addressType :: AddressType
@@ -96,10 +96,10 @@ data ClientConnectionRequest = ClientConnectionRequest
   }
   deriving (Show)
 
-makeLenses ''ClientConnectionRequest
+makeLenses ''ClientRequest
 
-socketHandler:: (Socket, SockAddr) -> IO ()
-socketHandler (aSocket, aSockAddr) = do
+localRequestHandler:: (Socket, SockAddr) -> IO ()
+localRequestHandler (aSocket, aSockAddr) = do
   puts - "Connected: " + show aSockAddr
 
   (inputStream, outputStream) <- socketToStreams aSocket
@@ -107,7 +107,7 @@ socketHandler (aSocket, aSockAddr) = do
   let socksVersion = 5
       socksHeader = word8 socksVersion
   
-  let handshakeParser = do
+  let greetingParser = do
         socksHeader
         let maxNoOfMethods = 5
         __numberOfAuthenticationMethods <- satisfy (<= maxNoOfMethods)
@@ -151,13 +151,13 @@ socketHandler (aSocket, aSockAddr) = do
         __portNumber <- (,) <$> anyWord8 <*> anyWord8
 
         return - 
-          ClientConnectionRequest
+          ClientRequest
             __connectionType
             __addressType 
             __portNumber
 
   flip catch (\e -> puts - show (e :: ParseException)) - do
-    r <- parseFromStream handshakeParser inputStream
+    r <- parseFromStream greetingParser inputStream
     puts - show r 
   
     let noAuthenticationMethodCode = 0
@@ -183,9 +183,9 @@ socketHandler (aSocket, aSockAddr) = do
             fromWord8 :: forall t. Binary t => [Word8] -> t
             fromWord8 = decode . runPut . mapM_ put
       
-            handleRequest :: Socket -> ClientConnectionRequest -> IO Socket
+            handleRequest :: Socket -> ClientRequest -> IO Socket
             handleRequest _localSocket _connection = do
-              {-puts "Handle Request"-}
+              {-puts "Local Handle Request"-}
 
               _remoteSocket <- socket AF_INET Stream defaultProtocol
 
@@ -211,7 +211,7 @@ socketHandler (aSocket, aSockAddr) = do
               
         _remoteSocket <- handleRequest aSocket conn
      
-        let handleConnection aRemoteSocket = do
+        let handleLocal aRemoteSocket = do
               serverSocks5
               push 0
               push reservedByte
@@ -262,7 +262,8 @@ socketHandler (aSocket, aSockAddr) = do
 
 
 
-        safeSocketHandler "Connection Handler" handleConnection _remoteSocket
+        safeSocketHandler "Local Connection Handler" 
+          handleLocal _remoteSocket
 
         sClose aSocket
         sClose _remoteSocket
@@ -272,9 +273,9 @@ socketHandler (aSocket, aSockAddr) = do
         sClose aSocket
 
 
-moeHandler:: (Socket, SockAddr) -> IO ()
-moeHandler (aSocket, aSockAddr) = do
-  puts - "Moe Connected: " + show aSockAddr
+remoteRequestHandler:: (Socket, SockAddr) -> IO ()
+remoteRequestHandler (aSocket, aSockAddr) = do
+  puts - "Remote Connected: " + show aSockAddr
   (inputStream, outputStream) <- socketToStreams aSocket
 
  
@@ -283,30 +284,29 @@ moeHandler (aSocket, aSockAddr) = do
 main :: IO ()
 main = do
   puts "Started!"
-  mainSocket <- socket AF_INET Stream defaultProtocol
-  setSocketOption mainSocket ReuseAddr 1
-  bindSocket mainSocket (SockAddrInet 1090 iNADDR_ANY)
-  listen mainSocket 1
+  localSocket <- socket AF_INET Stream defaultProtocol
+  setSocketOption localSocket ReuseAddr 1
+  bindSocket localSocket (SockAddrInet 1090 iNADDR_ANY)
+  listen localSocket 1
 
-  let handleConnection _socket = accept _socket >>= fork . socketHandler
+  let handleLocal _socket = accept _socket >>= fork . localRequestHandler
       socksServerLoop = 
-        forever . safeSocketHandler "Connection Socket" handleConnection
+        forever . safeSocketHandler "Local Connection Socket" handleLocal
 
 
-  moeSocket <- socket AF_INET Stream defaultProtocol
-  setSocketOption moeSocket ReuseAddr 1
-  bindSocket moeSocket (SockAddrInet 1190 iNADDR_ANY)
-  listen moeSocket 1
+  remoteSocket <- socket AF_INET Stream defaultProtocol
+  setSocketOption remoteSocket ReuseAddr 1
+  bindSocket remoteSocket (SockAddrInet 1190 iNADDR_ANY)
+  listen remoteSocket 1
 
-  let handleMoe _socket = accept _socket >>= fork . moeHandler
-      moeServerLoop _socket = do
-        puts "moeServerLoop"
-        forever . safeSocketHandler "Moe Connection Socket" handleMoe - _socket
+  let handleRemote _socket = accept _socket >>= fork . remoteRequestHandler
+      remoteServerLoop = 
+        forever . safeSocketHandler "Remote Connection Socket" handleRemote
   
-  safeSocketHandler "Main Socket" (\_mainSocket ->
-    safeSocketHandler "Moe Socket" (\_moeSocket ->
+  safeSocketHandler "Main Socket" (\_localSocket ->
+    safeSocketHandler "Remote Socket" (\_remoteSocket ->
       waitBoth 
-        (socksServerLoop _mainSocket) 
-        (moeServerLoop _moeSocket)
-        ) moeSocket) mainSocket
+        (socksServerLoop _localSocket) 
+        (remoteServerLoop _remoteSocket)
+        ) remoteSocket) localSocket
 
