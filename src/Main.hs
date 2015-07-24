@@ -173,21 +173,31 @@ localRequestHandler config (aSocket, aSockAddr) = do
                 _stdGen <- newStdGen
 
                 let _iv = S.pack - P.take _BlockSize - randoms _stdGen
-
-
+                puts - "local IV: " <> show _iv
+                
+                pushStream remoteOutputStream - B.byteString _iv
+                
+                let
                     _aesKey = aesKey config
                     _encrypt = encryptCTR _aesKey _iv
                     _decrypt = decryptCTR _aesKey _iv
+                
+                encryptedRemoteOutputStream <- 
+                  Stream.contramap _encrypt remoteOutputStream
 
-                    _header =    B.byteString _iv
-                              <> foldMap B.word8 _address 
+                decryptedRemoteInputStream <-
+                  Stream.map _decrypt remoteInputStream
+
+                let
+                    _header =    
+                                 foldMap B.word8 _address 
                               <> foldMapOf each B.word8 (conn ^. portNumber)
 
-                pushStream remoteOutputStream _header
+                pushStream encryptedRemoteOutputStream _header
 
                 waitBoth
-                  (Stream.connect inputStream remoteOutputStream)
-                  (Stream.connect remoteInputStream outputStream)
+                  (Stream.connect inputStream encryptedRemoteOutputStream)
+                  (Stream.connect decryptedRemoteInputStream outputStream)
                 
 
           safeSocketHandler "Local Request Handler" 
@@ -205,20 +215,26 @@ remoteRequestHandler aConfig (aSocket, aSockAddr) = do
 
   _iv <- parseFromStream (take _BlockSize) remoteInputStream
 
+  puts - "remote IV: " <> show _iv
+
+  let 
+      _aesKey = aesKey aConfig
+      _encrypt = encryptCTR _aesKey _iv
+      _decrypt = decryptCTR _aesKey _iv
+  
+  encryptedRemoteOutputStream <- 
+    Stream.contramap _encrypt remoteOutputStream
+
+  decryptedRemoteInputStream <-
+    Stream.map _decrypt remoteInputStream
+
   let headerParser = do
         _address <- count 4 anyWord8
         _port <- (,) <$> anyWord8 <*> anyWord8
         
         return (_address, _port)
-
-  (_address, _port) <- parseFromStream headerParser remoteInputStream
-
-  -- puts - showBytes _token
   
-  let 
-      _aesKey = aesKey aConfig
-      _encrypt = encryptCTR _aesKey _iv
-      _decrypt = decryptCTR _aesKey _iv
+  (_address, _port) <- parseFromStream headerParser decryptedRemoteInputStream
   
   let
       connectTarget :: [Word8] -> (Word8, Word8) -> IO Socket
@@ -244,8 +260,8 @@ remoteRequestHandler aConfig (aSocket, aSockAddr) = do
           socketToStreams _targetSocket
 
         waitBoth
-          (Stream.connect remoteInputStream targetOutputStream)
-          (Stream.connect targetInputStream remoteOutputStream)
+          (Stream.connect decryptedRemoteInputStream targetOutputStream)
+          (Stream.connect targetInputStream encryptedRemoteOutputStream)
         
         pure ()
   
