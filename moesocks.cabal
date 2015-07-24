@@ -31,6 +31,8 @@ executable moesocks
                       , unix
                       , attoparsec
                       , text
+                      , random
+                      , cipher-aes
 
   hs-source-dirs:      src
   default-language:    Haskell2010

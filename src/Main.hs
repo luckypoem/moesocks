@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE PackageImports #-}
 
 module Main where
 
@@ -14,7 +15,7 @@ import System.Posix.Signals
 import Control.Exception
 import System.IO
 import System.IO.Streams.Network
-import qualified System.IO.Streams as S
+import qualified System.IO.Streams as Stream
 import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
@@ -31,6 +32,7 @@ import qualified Data.ByteString.Builder.Extra as BE
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Strict.Lens as TS
 import Data.Text.Lens
 
 import Network.MoeSocks.Config
@@ -38,6 +40,27 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.MoeSocks.Constant
 
+import Data.ByteString.Lens
+import System.Random
+import qualified Prelude as P
+import "cipher-aes" Crypto.Cipher.AES
+
+_BlockSize :: Int
+_BlockSize = 16
+
+_KeySize :: Int
+_KeySize = 32
+
+type Cipher = (ByteString -> ByteString, ByteString -> ByteString)
+
+aesKey :: MoeConfig -> AES
+aesKey _config =
+  let __password = 
+        _config ^. password & review TS.utf8 :: ByteString
+
+      _key = S.take _KeySize - __password <> S.pack (replicate _KeySize 0)
+  in
+  initAES _key
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (aSocket, aSockAddr) = do
@@ -96,8 +119,12 @@ localRequestHandler config (aSocket, aSockAddr) = do
   flip catch (\e -> puts - show (e :: ParseException)) - do
     r <- parseFromStream greetingParser inputStream
     puts - show r 
-    if _No_authentication `elem` (r ^. authenticationMethods)
+    if not - _No_authentication `elem` (r ^. authenticationMethods)
       then do
+        pute - "Client does not support 0x00: No authentication method"
+        sClose aSocket
+
+      else do
         pushStream outputStream - B.word8 socksVersion
                                 <> B.word8 _No_authentication
 
@@ -105,91 +132,94 @@ localRequestHandler config (aSocket, aSockAddr) = do
         conn <- parseFromStream connectionParser inputStream
         puts - show conn
 
-        let 
-            connectRemote :: [Word8] -> Int -> IO Socket
-            connectRemote _address _port = do
-              {-puts "Local Handle Request"-}
+        _remoteSocket <- socket AF_INET Stream defaultProtocol
+        
+        tryAddr (config ^. server) (config ^. serverPort) - \_remoteAddr -> do
+          connect _remoteSocket _remoteAddr
 
-              _remoteSocket <- socket AF_INET Stream defaultProtocol
-              let 
-                  _socketAddr = SockAddrInet 
-                                  (fromIntegral _port)
-                                  (fromWord8 - reverse - 
-                                      map fromIntegral _address)
-              
-              connect _remoteSocket _socketAddr
+          let handleLocal _remoteSocket = do
+                let
+                  write x = Stream.write (Just - x) outputStream
+                  push = write . S.singleton
 
-              return _remoteSocket
-             
-        _remoteSocket <- connectRemote [127, 0, 0, 1] - config ^. serverPort
-     
-        let handleLocal _remoteSocket = do
-              let
-                write x = S.write (Just - x) outputStream
-                push = write . S.singleton
+                push socksVersion
+                push _Request_Granted 
+                push _ReservedByte
 
-              push socksVersion
-              push _Request_Granted 
-              push _ReservedByte
+                case conn ^. addressType of
+                  IPv4_address xs ->  do
+                                        push 1
+                                        write - S.pack xs
 
-              case conn ^. addressType of
-                IPv4_address xs ->  do
-                                      push 1
-                                      write - S.pack xs
+                  Domain_name x ->    do
+                                        push 3
+                                        push - fromIntegral (S.length x)
+                                        write x
 
-                Domain_name x ->    do
-                                      push 3
-                                      push - fromIntegral (S.length x)
-                                      write x
+                  IPv6_address xs ->  do
+                                        push 4
+                                        write - S.pack xs
 
-                IPv6_address xs ->  do
-                                      push 4
-                                      write - S.pack xs
+                traverseOf both push - conn ^. portNumber
 
-              traverseOf both push - conn ^. portNumber
+                (remoteInputStream, remoteOutputStream) <- 
+                  socketToStreams _remoteSocket
 
-              (remoteInputStream, remoteOutputStream) <- 
-                socketToStreams _remoteSocket
+                let IPv4_address _address = conn ^. addressType
 
-              let IPv4_address _address = conn ^. addressType
+                    _password = review TS.utf8 - config ^. password
+                    _fill = S.replicate (_BlockSize + (-S.length _password)) 0 
+                    
+                _stdGen <- newStdGen
 
-                  _header = foldMap B.word8 _address 
-                            <> foldMapOf both B.word8 (conn ^. portNumber)
-
-              pushStream remoteOutputStream _header
-
-              waitBoth
-                (S.connect inputStream remoteOutputStream)
-                (S.connect remoteInputStream outputStream)
-              
-              pure ()
+                let _iv = S.pack - P.take _BlockSize - randoms _stdGen
 
 
+                    _aesKey = aesKey config
+                    _encrypt = encryptCTR _aesKey _iv
+                    _decrypt = decryptCTR _aesKey _iv
 
-        safeSocketHandler "Local Request Handler" 
-          handleLocal _remoteSocket
+                    _header =    B.byteString _iv
+                              <> foldMap B.word8 _address 
+                              <> foldMapOf each B.word8 (conn ^. portNumber)
+
+                pushStream remoteOutputStream _header
+
+                waitBoth
+                  (Stream.connect inputStream remoteOutputStream)
+                  (Stream.connect remoteInputStream outputStream)
+                
+
+          safeSocketHandler "Local Request Handler" 
+            handleLocal _remoteSocket
 
         sClose aSocket
         sClose _remoteSocket
 
-      else do
-        pute - "Client does not support 0x00: No authentication method"
-        sClose aSocket
 
 
-remoteRequestHandler:: (Socket, SockAddr) -> IO ()
-remoteRequestHandler (aSocket, aSockAddr) = do
+remoteRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
+remoteRequestHandler aConfig (aSocket, aSockAddr) = do
   puts - "Remote Connected: " + show aSockAddr
   (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
+
+  _iv <- parseFromStream (take _BlockSize) remoteInputStream
+
   let headerParser = do
         _address <- count 4 anyWord8
         _port <- (,) <$> anyWord8 <*> anyWord8
         
         return (_address, _port)
 
-        
   (_address, _port) <- parseFromStream headerParser remoteInputStream
 
+  -- puts - showBytes _token
+  
+  let 
+      _aesKey = aesKey aConfig
+      _encrypt = encryptCTR _aesKey _iv
+      _decrypt = decryptCTR _aesKey _iv
+  
   let
       connectTarget :: [Word8] -> (Word8, Word8) -> IO Socket
       connectTarget _address _port = do
@@ -214,8 +244,8 @@ remoteRequestHandler (aSocket, aSockAddr) = do
           socketToStreams _targetSocket
 
         waitBoth
-          (S.connect remoteInputStream targetOutputStream)
-          (S.connect targetInputStream remoteOutputStream)
+          (Stream.connect remoteInputStream targetOutputStream)
+          (Stream.connect targetInputStream remoteOutputStream)
         
         pure ()
   
@@ -225,70 +255,49 @@ remoteRequestHandler (aSocket, aSockAddr) = do
   sClose _targetSocket
   sClose aSocket
 
+
 main :: IO ()
 main = do
   puts "Started!"
   config <- pure defaultMoeConfig
 
-  let 
-      _localName = config ^. local . unpacked
-      _localPort = show - config ^. localPort
-  
-  localAddrInfo <- getAddrInfo Nothing 
-                    (Just _localName) 
-                    (Just _localPort)
-  
-  let maybeLocalAddr = localAddrInfo ^? traverse . to addrAddress
+  tryAddr (config ^. local) (config ^. localPort) - \_localAddr -> do
+    puts - "localAddr: " <> show _localAddr
 
-  case maybeLocalAddr of 
-    Nothing -> pute - "Can not resolve localhost: " <> _localName
+    localSocket <- socket AF_INET Stream defaultProtocol
+    setSocketOption localSocket ReuseAddr 1
+    bindSocket localSocket _localAddr
 
-    Just _localAddr -> do
+    listen localSocket 1
 
-      puts - "localAddr: " <> show _localAddr
+    let handleLocal _socket = 
+          accept _socket >>= 
+            fork . localRequestHandler config
 
-      localSocket <- socket AF_INET Stream defaultProtocol
-      setSocketOption localSocket ReuseAddr 1
-      bindSocket localSocket _localAddr
+        socksServerLoop = 
+          forever . safeSocketHandler "Local Connection Socket" handleLocal
 
-      listen localSocket 1
+    
+    tryAddr (config ^. server) (config ^. serverPort) - \_remoteAddr -> do
+      puts - "remoteAddr: " <> show _remoteAddr
 
-      let handleLocal _socket = 
-            accept _socket >>= fork . localRequestHandler config
+      remoteSocket <- socket AF_INET Stream defaultProtocol
+      setSocketOption remoteSocket ReuseAddr 1
+      bindSocket remoteSocket _remoteAddr
+      listen remoteSocket 1
 
-          socksServerLoop = 
-            forever . safeSocketHandler "Local Connection Socket" handleLocal
+      let handleRemote _socket = 
+            accept _socket >>= 
+              fork . remoteRequestHandler config
 
-
-      let 
-          _remoteName = config ^. server . unpacked
-          _remotePort = show - config ^. serverPort
+          remoteServerLoop = 
+            forever . 
+            safeSocketHandler "Remote Connection Socket" handleRemote
       
-      remoteAddrInfo <- getAddrInfo Nothing 
-                        (Just _remoteName) 
-                        (Just _remotePort)
-      
-      let maybeRemoteAddr = remoteAddrInfo ^? traverse . to addrAddress
-
-      case maybeRemoteAddr of
-        Nothing -> pute - "Can not resolve remote: " <> _remoteName
-        Just _remoteAddr -> do
-          puts - "remoteAddr: " <> show _remoteAddr
-          remoteSocket <- socket AF_INET Stream defaultProtocol
-          setSocketOption remoteSocket ReuseAddr 1
-          bindSocket remoteSocket _remoteAddr
-          listen remoteSocket 1
-
-          let handleRemote _socket = 
-                accept _socket >>= fork . remoteRequestHandler
-              remoteServerLoop = 
-                forever . 
-                safeSocketHandler "Remote Connection Socket" handleRemote
-          
-          safeSocketHandler "Local Socket" (\_localSocket ->
-            safeSocketHandler "Remote Socket" (\_remoteSocket ->
-              waitBoth 
-                (socksServerLoop _localSocket) 
-                (remoteServerLoop _remoteSocket)
-                ) remoteSocket) localSocket
+      safeSocketHandler "Local Socket" (\_localSocket ->
+        safeSocketHandler "Remote Socket" (\_remoteSocket ->
+          waitBoth 
+            (socksServerLoop _localSocket) 
+            (remoteServerLoop _remoteSocket)
+            ) remoteSocket) localSocket
 

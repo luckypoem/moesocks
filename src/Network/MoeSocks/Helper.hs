@@ -82,3 +82,13 @@ pushStream s b = do
   S.write (Just b) _builderStream
   S.write (Just BE.flush) _builderStream
 
+tryAddr :: Text -> Int -> (SockAddr -> IO a) -> IO ()
+tryAddr aHostName aPort f = do
+  addrInfo <- getAddrInfo Nothing 
+                    (Just - aHostName ^. _Text) 
+                    (Just - show aPort)
+  
+  let maybeAddr = addrInfo ^? traverse . to addrAddress
+  case maybeAddr of 
+    Nothing -> pute - "Can not resolve: " <> aHostName ^. _Text
+    Just _addr -> () <$ f _addr
