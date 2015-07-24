@@ -319,17 +319,17 @@ main = do
   config <- pure defaultMoeConfig
 
   let 
-      _hostName = "localhost"
+      _localName = config ^. local . unpacked
       _localPort = show - config ^. localPort
   
   localAddrInfo <- getAddrInfo Nothing 
-                    (Just _hostName) 
+                    (Just _localName) 
                     (Just _localPort)
   
   let maybeLocalAddr = localAddrInfo ^? traverse . to addrAddress
 
   case maybeLocalAddr of 
-    Nothing -> pute - "Can not resolve localhost: " <> _hostName
+    Nothing -> pute - "Can not resolve localhost: " <> _localName
 
     Just _localAddr -> do
 
@@ -367,9 +367,11 @@ main = do
           bindSocket remoteSocket _remoteAddr
           listen remoteSocket 1
 
-          let handleRemote _socket = accept _socket >>= fork . remoteRequestHandler
+          let handleRemote _socket = 
+                accept _socket >>= fork . remoteRequestHandler
               remoteServerLoop = 
-                forever . safeSocketHandler "Remote Connection Socket" handleRemote
+                forever . 
+                safeSocketHandler "Remote Connection Socket" handleRemote
           
           safeSocketHandler "Local Socket" (\_localSocket ->
             safeSocketHandler "Remote Socket" (\_remoteSocket ->

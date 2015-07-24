@@ -10,6 +10,7 @@ data MoeConfig = MoeConfig
   {
     _server :: Text
   , _serverPort :: Int
+  , _local :: Text
   , _localPort :: Int
   , _password :: Text
   , _method :: Text
@@ -23,6 +24,7 @@ defaultMoeConfig = MoeConfig
   {
     _server = "localhost"
   , _serverPort = 1190
+  , _local = "0.0.0.0"
   , _localPort = 1090
   , _password = "moesocks"
   , _method = "none"
