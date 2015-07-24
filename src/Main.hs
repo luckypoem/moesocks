@@ -19,13 +19,16 @@ import qualified System.IO.Streams as S
 import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
-import qualified Data.ByteString as B
+import qualified Data.ByteString as S
+import Data.ByteString (ByteString)
 import Data.Binary
 import Data.Binary.Put
 import Data.Binary.Get
 import Data.Monoid
 import Control.Concurrent
 import System.IO.Unsafe
+import qualified Data.ByteString.Builder as B
+import qualified Data.ByteString.Builder.Extra as BE
 
 syncLock :: MVar ()
 syncLock = unsafePerformIO - newEmptyMVar
@@ -42,9 +45,12 @@ puts = sync . putStrLn
 pute :: String -> IO ()
 pute = sync . hPutStrLn stderr
 
-showBytes :: B.ByteString -> String
-showBytes = show . B.unpack
+showBytes :: ByteString -> String
+showBytes = show . S.unpack
 
+fromWord8 :: forall t. Binary t => [Word8] -> t
+fromWord8 = decode . runPut . mapM_ put
+      
 safeSocketHandler :: String -> (Socket -> IO a) -> Socket -> IO a
 safeSocketHandler aID f aSocket =
   catch (f aSocket) - \e -> do
@@ -83,7 +89,7 @@ data ConnectionType =
 
 data AddressType = 
     IPv4_address [Word8]
-  | Domain_name B.ByteString
+  | Domain_name ByteString
   | IPv6_address [Word8]
   deriving (Show, Eq)
 
@@ -169,7 +175,7 @@ localRequestHandler (aSocket, aSockAddr) = do
                       {-puts - showBytes x-}
                       S.write (Just - x) outputStream
 
-          push = write . B.singleton
+          push = write . S.singleton
           serverSocks5 = push socksVersion
 
         serverSocks5
@@ -180,38 +186,24 @@ localRequestHandler (aSocket, aSockAddr) = do
 
 
         let 
-            fromWord8 :: forall t. Binary t => [Word8] -> t
-            fromWord8 = decode . runPut . mapM_ put
-      
-            handleRequest :: Socket -> ClientRequest -> IO Socket
-            handleRequest _localSocket _connection = do
+            connectRemote :: [Word8] -> Int -> IO Socket
+            connectRemote _address _port = do
               {-puts "Local Handle Request"-}
 
               _remoteSocket <- socket AF_INET Stream defaultProtocol
-
-              let portNumber16 = 
-                    fromWord8 - _connection ^. portNumber . _1 :
-                                _connection ^. portNumber . _2 : []
-                    :: Word16
-                  
-                  (IPv4_address _address) = _connection ^. addressType
-              
-              {-puts - "ports: " <> show portNumber16-}
-
               let 
                   _socketAddr = SockAddrInet 
-                                  (fromIntegral portNumber16)
-                                  (fromWord8 - reverse _address)
-
-              {-puts - "socketAddr: " <> show _socketAddr-}
-
+                                  (fromIntegral _port)
+                                  (fromWord8 - reverse - 
+                                      map fromIntegral _address)
+              
               connect _remoteSocket _socketAddr
 
               return _remoteSocket
-              
-        _remoteSocket <- handleRequest aSocket conn
+             
+        _remoteSocket <- connectRemote [127, 0, 0, 1] 1190
      
-        let handleLocal aRemoteSocket = do
+        let handleLocal _remoteSocket = do
               serverSocks5
               push 0
               push reservedByte
@@ -219,40 +211,31 @@ localRequestHandler (aSocket, aSockAddr) = do
               case conn ^. addressType of
                 IPv4_address xs ->  do
                                       push 1
-                                      write - B.pack xs
+                                      write - S.pack xs
 
                 Domain_name x ->    do
                                       push 3
-                                      push - fromIntegral (B.length x)
+                                      push - fromIntegral (S.length x)
                                       write x
 
                 IPv6_address xs ->  do
                                       push 4
-                                      write - B.pack xs
+                                      write - S.pack xs
 
-              push - conn ^. portNumber . _1
-              push - conn ^. portNumber . _2
-
+              traverseOf both push - conn ^. portNumber
 
               (remoteInputStream, remoteOutputStream) <- 
-                socketToStreams aRemoteSocket
+                socketToStreams _remoteSocket
 
-              let sendMessageLoop = do
-                    sentMessage <- S.read inputStream
-                    case sentMessage of
-                      Nothing -> return ()
-                      Just _ -> do
-                        S.write sentMessage remoteOutputStream
-                        sendMessageLoop 
-                
-              let receiveMessageLoop = do
-                    receivedMessage <- S.read remoteInputStream 
-                    case receivedMessage of
-                      Nothing -> return ()
-                      Just _ -> do
-                        S.write receivedMessage outputStream
-                        receiveMessageLoop
-             
+              _builderStream <- S.builderStream remoteOutputStream
+
+              let IPv4_address _address = conn ^. addressType
+
+                  _header = foldMap B.word8 _address 
+                            <> foldMapOf both B.word8 (conn ^. portNumber)
+
+              S.write (Just _header) _builderStream
+              S.write (Just BE.flush) _builderStream
               
               waitBoth
                 (S.connect inputStream remoteOutputStream)
@@ -262,7 +245,7 @@ localRequestHandler (aSocket, aSockAddr) = do
 
 
 
-        safeSocketHandler "Local Connection Handler" 
+        safeSocketHandler "Local Request Handler" 
           handleLocal _remoteSocket
 
         sClose aSocket
@@ -276,9 +259,49 @@ localRequestHandler (aSocket, aSockAddr) = do
 remoteRequestHandler:: (Socket, SockAddr) -> IO ()
 remoteRequestHandler (aSocket, aSockAddr) = do
   puts - "Remote Connected: " + show aSockAddr
-  (inputStream, outputStream) <- socketToStreams aSocket
+  (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
+  let headerParser = do
+        _address <- count 4 anyWord8
+        _port <- (,) <$> anyWord8 <*> anyWord8
+        
+        return (_address, _port)
 
+        
+  (_address, _port) <- parseFromStream headerParser remoteInputStream
+
+  let
+      connectTarget :: [Word8] -> (Word8, Word8) -> IO Socket
+      connectTarget _address _port = do
+        _targetSocket <- socket AF_INET Stream defaultProtocol
+
+        let portNumber16 = fromWord8 - toListOf both _port :: Word16
+            _socketAddr = SockAddrInet 
+                            (fromIntegral portNumber16)
+                            (fromWord8 - reverse _address)
+
+
+        puts - "Connecting Target: " <> show _socketAddr
+        connect _targetSocket _socketAddr
+
+        return _targetSocket
+
+  _targetSocket <- connectTarget _address _port
+
+  let 
+      handleTarget _targetSocket = do
+        (targetInputStream, targetOutputStream) <- 
+          socketToStreams _targetSocket
+
+        waitBoth
+          (S.connect remoteInputStream targetOutputStream)
+          (S.connect targetInputStream remoteOutputStream)
+        
+        return ()
+  
+  safeSocketHandler "Target Connection Handler" 
+    handleTarget _targetSocket
  
+  sClose _targetSocket
   sClose aSocket
 
 main :: IO ()
@@ -303,7 +326,7 @@ main = do
       remoteServerLoop = 
         forever . safeSocketHandler "Remote Connection Socket" handleRemote
   
-  safeSocketHandler "Main Socket" (\_localSocket ->
+  safeSocketHandler "Local Socket" (\_localSocket ->
     safeSocketHandler "Remote Socket" (\_remoteSocket ->
       waitBoth 
         (socksServerLoop _localSocket) 
