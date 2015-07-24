@@ -110,7 +110,7 @@ localRequestHandler config (aSocket, aSockAddr) = do
 
         __portNumber <- (,) <$> anyWord8 <*> anyWord8
 
-        return - 
+        pure - 
           ClientRequest
             __connectionType
             __addressType 
@@ -232,7 +232,7 @@ remoteRequestHandler aConfig (aSocket, aSockAddr) = do
         _address <- count 4 anyWord8
         _port <- (,) <$> anyWord8 <*> anyWord8
         
-        return (_address, _port)
+        pure (_address, _port)
   
   (_address, _port) <- parseFromStream headerParser decryptedRemoteInputStream
   
@@ -250,7 +250,7 @@ remoteRequestHandler aConfig (aSocket, aSockAddr) = do
         puts - "Connecting Target: " <> show _socketAddr
         connect _targetSocket _socketAddr
 
-        return _targetSocket
+        pure _targetSocket
 
   _targetSocket <- connectTarget _address _port
 
