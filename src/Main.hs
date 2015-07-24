@@ -62,6 +62,20 @@ addressTypeBuilder aAddressType =
                           B.word8 4
                        <> B.byteString (S.pack xs)
 
+
+
+connectionType_To_Word8 :: ConnectionType -> Word8
+connectionType_To_Word8 TCP_IP_stream_connection = 1
+connectionType_To_Word8 TCP_IP_port_binding = 2
+connectionType_To_Word8 UDP_port = 3
+
+requestBuilder :: ClientRequest -> B.Builder
+requestBuilder aClientRequest = 
+     B.word8 (connectionType_To_Word8 - aClientRequest ^. connectionType)
+  <> B.word8 _ReservedByte
+  <> addressTypeBuilder (aClientRequest ^. addressType)
+  <> foldMapOf each B.word8 (aClientRequest ^. portNumber)
+
 addressTypeParser :: Parser AddressType
 addressTypeParser = choice
   [
@@ -183,10 +197,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                     Stream.map _decrypt remoteInputStream
 
                   let 
-                      _header =    B.word8 1
-                                <> B.word8 _ReservedByte
-                                <> addressTypeBuilder (conn ^. addressType)
-                                <> foldMapOf each B.word8 (conn ^. portNumber)
+                      _header = requestBuilder conn
 
                   pushStream encryptedRemoteOutputStream _header
 
