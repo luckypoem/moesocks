@@ -46,8 +46,13 @@ import qualified Prelude as P
 import "cipher-aes" Crypto.Cipher.AES
 
 
+withSocket :: Socket -> (Socket -> IO ()) -> IO ()
+withSocket aSocket f = do
+  f aSocket 
+  sClose aSocket
+
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
-localRequestHandler config (aSocket, aSockAddr) = do
+localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
   puts - "Connected: " + show aSockAddr
 
   (inputStream, outputStream) <- socketToStreams aSocket
@@ -100,7 +105,7 @@ localRequestHandler config (aSocket, aSockAddr) = do
             __addressType 
             __portNumber
 
-  flip catch (\e -> puts - show (e :: ParseException)) - do
+  tryParse - do
     r <- parseFromStream greetingParser inputStream
     puts - show r 
     if not - _No_authentication `elem` (r ^. authenticationMethods)
@@ -118,142 +123,139 @@ localRequestHandler config (aSocket, aSockAddr) = do
 
         _remoteSocket <- socket AF_INET Stream defaultProtocol
         
-        tryAddr (config ^. server) (config ^. serverPort) - \_remoteAddr -> do
-          connect _remoteSocket _remoteAddr
+        withSocket _remoteSocket - \_remoteSocket -> do
+          tryAddr (config ^. server) (config ^. serverPort) - \_remoteAddr -> do
+            connect _remoteSocket _remoteAddr
 
-          let handleLocal _remoteSocket = do
-                let
-                  write x = Stream.write (Just - x) outputStream
-                  push = write . S.singleton
+            let handleLocal _remoteSocket = do
+                  let
+                    write x = Stream.write (Just - x) outputStream
+                    push = write . S.singleton
 
-                push socksVersion
-                push _Request_Granted 
-                push _ReservedByte
+                  push socksVersion
+                  push _Request_Granted 
+                  push _ReservedByte
 
-                case conn ^. addressType of
-                  IPv4_address xs ->  do
-                                        push 1
-                                        write - S.pack xs
+                  case conn ^. addressType of
+                    IPv4_address xs ->  do
+                                          push 1
+                                          write - S.pack xs
 
-                  Domain_name x ->    do
-                                        push 3
-                                        push - fromIntegral (S.length x)
-                                        write x
+                    Domain_name x ->    do
+                                          push 3
+                                          push - fromIntegral (S.length x)
+                                          write x
 
-                  IPv6_address xs ->  do
-                                        push 4
-                                        write - S.pack xs
+                    IPv6_address xs ->  do
+                                          push 4
+                                          write - S.pack xs
 
-                traverseOf both push - conn ^. portNumber
+                  traverseOf both push - conn ^. portNumber
 
-                (remoteInputStream, remoteOutputStream) <- 
-                  socketToStreams _remoteSocket
+                  (remoteInputStream, remoteOutputStream) <- 
+                    socketToStreams _remoteSocket
 
-                let IPv4_address _address = conn ^. addressType
+                  let IPv4_address _address = conn ^. addressType
 
-                    _password = review TS.utf8 - config ^. password
-                    _fill = S.replicate (_BlockSize + (-S.length _password)) 0 
-                    
-                _stdGen <- newStdGen
+                      _password = review TS.utf8 - config ^. password
+                      _fill = S.replicate 
+                                (_BlockSize + (-S.length _password)) 0 
+                      
+                  _stdGen <- newStdGen
 
-                let _iv = S.pack - P.take _BlockSize - randoms _stdGen
-                puts - "local IV: " <> show _iv
-                
-                pushStream remoteOutputStream - B.byteString _iv
-                
-                let
-                    _aesKey = aesKey config
-                    _encrypt = encryptCTR _aesKey _iv
-                    _decrypt = decryptCTR _aesKey _iv
-                
-                encryptedRemoteOutputStream <- 
-                  Stream.contramap _encrypt remoteOutputStream
+                  let _iv = S.pack - P.take _BlockSize - randoms _stdGen
+                  puts - "local IV: " <> show _iv
+                  
+                  pushStream remoteOutputStream - B.byteString _iv
+                  
+                  let
+                      _aesKey = aesKey config
+                      _encrypt = encryptCTR _aesKey _iv
+                      _decrypt = decryptCTR _aesKey _iv
+                  
+                  encryptedRemoteOutputStream <- 
+                    Stream.contramap _encrypt remoteOutputStream
 
-                decryptedRemoteInputStream <-
-                  Stream.map _decrypt remoteInputStream
+                  decryptedRemoteInputStream <-
+                    Stream.map _decrypt remoteInputStream
 
-                let
-                    _header =    
-                                 foldMap B.word8 _address 
-                              <> foldMapOf each B.word8 (conn ^. portNumber)
+                  let
+                      _header =    
+                                   foldMap B.word8 _address 
+                                <> foldMapOf each B.word8 (conn ^. portNumber)
 
-                pushStream encryptedRemoteOutputStream _header
+                  pushStream encryptedRemoteOutputStream _header
 
-                waitBoth
-                  (Stream.connect inputStream encryptedRemoteOutputStream)
-                  (Stream.connect decryptedRemoteInputStream outputStream)
-                
+                  waitBoth
+                    (Stream.connect inputStream encryptedRemoteOutputStream)
+                    (Stream.connect decryptedRemoteInputStream outputStream)
+                  
 
-          safeSocketHandler "Local Request Handler" 
-            handleLocal _remoteSocket
-
-        sClose aSocket
-        sClose _remoteSocket
-
+            safeSocketHandler "Local Request Handler" 
+              handleLocal _remoteSocket
 
 
 remoteRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
-remoteRequestHandler aConfig (aSocket, aSockAddr) = do
+remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
   puts - "Remote Connected: " + show aSockAddr
   (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
 
-  _iv <- parseFromStream (take _BlockSize) remoteInputStream
+  tryParse - do
+    _iv <- parseFromStream (take _BlockSize) remoteInputStream
 
-  puts - "remote IV: " <> show _iv
+    puts - "remote IV: " <> show _iv
 
-  let 
-      _aesKey = aesKey aConfig
-      _encrypt = encryptCTR _aesKey _iv
-      _decrypt = decryptCTR _aesKey _iv
-  
-  encryptedRemoteOutputStream <- 
-    Stream.contramap _encrypt remoteOutputStream
+    let 
+        _aesKey = aesKey aConfig
+        _encrypt = encryptCTR _aesKey _iv
+        _decrypt = decryptCTR _aesKey _iv
+    
+    encryptedRemoteOutputStream <- 
+      Stream.contramap _encrypt remoteOutputStream
 
-  decryptedRemoteInputStream <-
-    Stream.map _decrypt remoteInputStream
+    decryptedRemoteInputStream <-
+      Stream.map _decrypt remoteInputStream
 
-  let headerParser = do
-        _address <- count 4 anyWord8
-        _port <- (,) <$> anyWord8 <*> anyWord8
-        
-        pure (_address, _port)
-  
-  (_address, _port) <- parseFromStream headerParser decryptedRemoteInputStream
-  
-  let
-      connectTarget :: [Word8] -> (Word8, Word8) -> IO Socket
-      connectTarget _address _port = do
-        _targetSocket <- socket AF_INET Stream defaultProtocol
+    let headerParser = do
+          _address <- count 4 anyWord8
+          _port <- (,) <$> anyWord8 <*> anyWord8
+          
+          pure (_address, _port)
+    
+    (_address, _port) <- parseFromStream headerParser decryptedRemoteInputStream
+    
+    let
+        connectTarget :: [Word8] -> (Word8, Word8) -> IO Socket
+        connectTarget _address _port = do
+          _targetSocket <- socket AF_INET Stream defaultProtocol
 
-        let portNumber16 = fromWord8 - toListOf both _port :: Word16
-            _socketAddr = SockAddrInet 
-                            (fromIntegral portNumber16)
-                            (fromWord8 - reverse _address)
+          let portNumber16 = fromWord8 - toListOf both _port :: Word16
+              _socketAddr = SockAddrInet 
+                              (fromIntegral portNumber16)
+                              (fromWord8 - reverse _address)
 
 
-        puts - "Connecting Target: " <> show _socketAddr
-        connect _targetSocket _socketAddr
+          puts - "Connecting Target: " <> show _socketAddr
+          connect _targetSocket _socketAddr
 
-        pure _targetSocket
+          pure _targetSocket
 
-  _targetSocket <- connectTarget _address _port
+    _targetSocket <- connectTarget _address _port
+    
+    withSocket _targetSocket - \_targetSocket -> do
+      let 
+          handleTarget _targetSocket = do
+            (targetInputStream, targetOutputStream) <- 
+              socketToStreams _targetSocket
 
-  let 
-      handleTarget _targetSocket = do
-        (targetInputStream, targetOutputStream) <- 
-          socketToStreams _targetSocket
-
-        waitBoth
-          (Stream.connect decryptedRemoteInputStream targetOutputStream)
-          (Stream.connect targetInputStream encryptedRemoteOutputStream)
-        
-        pure ()
-  
-  safeSocketHandler "Target Connection Handler" 
-    handleTarget _targetSocket
- 
-  sClose _targetSocket
-  sClose aSocket
+            waitBoth
+              (Stream.connect decryptedRemoteInputStream targetOutputStream)
+              (Stream.connect targetInputStream encryptedRemoteOutputStream)
+            
+            pure ()
+      
+      safeSocketHandler "Target Connection Handler" 
+        handleTarget _targetSocket
 
 
 main :: IO ()

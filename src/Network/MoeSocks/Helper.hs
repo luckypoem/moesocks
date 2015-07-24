@@ -94,3 +94,5 @@ tryAddr aHostName aPort f = do
     Just _addr -> () <$ f _addr
 
 
+tryParse :: IO a -> IO ()
+tryParse io = flip catch (\e -> puts - show (e :: ParseException)) - () <$ io
