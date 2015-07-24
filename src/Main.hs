@@ -73,6 +73,12 @@ waitBoth x y = do
   takeMVar xLock 
   killThread yThreadID
 
+pushStream :: (S.OutputStream ByteString) -> B.Builder -> IO ()
+pushStream s b = do
+  _builderStream <- S.builderStream s 
+  S.write (Just b) _builderStream
+  S.write (Just BE.flush) _builderStream
+
 data ClientGreeting = ClientGreeting
   {
     _authenticationMethods :: [Word8]
@@ -170,16 +176,9 @@ localRequestHandler (aSocket, aSockAddr) = do
 
     if noAuthenticationMethodCode `elem` (r ^. authenticationMethods)
       then do
-        let
-          write x = do
-                      {-puts - showBytes x-}
-                      S.write (Just - x) outputStream
+        pushStream outputStream - B.word8 socksVersion
+                                <> B.word8 noAuthenticationMethodCode
 
-          push = write . S.singleton
-          serverSocks5 = push socksVersion
-
-        serverSocks5
-        push noAuthenticationMethodCode
 
         conn <- parseFromStream connectionParser inputStream
         puts - show conn
@@ -204,7 +203,11 @@ localRequestHandler (aSocket, aSockAddr) = do
         _remoteSocket <- connectRemote [127, 0, 0, 1] 1190
      
         let handleLocal _remoteSocket = do
-              serverSocks5
+              let
+                write x = S.write (Just - x) outputStream
+                push = write . S.singleton
+
+              push socksVersion
               push 0
               push reservedByte
 
@@ -227,16 +230,13 @@ localRequestHandler (aSocket, aSockAddr) = do
               (remoteInputStream, remoteOutputStream) <- 
                 socketToStreams _remoteSocket
 
-              _builderStream <- S.builderStream remoteOutputStream
-
               let IPv4_address _address = conn ^. addressType
 
                   _header = foldMap B.word8 _address 
                             <> foldMapOf both B.word8 (conn ^. portNumber)
 
-              S.write (Just _header) _builderStream
-              S.write (Just BE.flush) _builderStream
-              
+              pushStream remoteOutputStream _header
+
               waitBoth
                 (S.connect inputStream remoteOutputStream)
                 (S.connect remoteInputStream outputStream)
