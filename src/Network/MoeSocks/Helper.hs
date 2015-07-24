@@ -61,6 +61,10 @@ safeSocketHandler aID f aSocket =
       sClose aSocket
       throw e
 
+catchAll :: IO a -> IO ()
+catchAll io = catch (() <$ io) - \e -> 
+                pute - "CatcheAll: " <> show (e :: SomeException)
+
 waitBoth :: IO a -> IO b -> IO ()
 waitBoth x y = do
   (xThreadID, xLock) <- do
@@ -96,3 +100,10 @@ tryAddr aHostName aPort f = do
 
 tryParse :: IO a -> IO ()
 tryParse io = flip catch (\e -> puts - show (e :: ParseException)) - () <$ io
+
+withSocket :: Socket -> (Socket -> IO ()) -> IO ()
+withSocket aSocket f = do
+  f aSocket 
+  sClose aSocket
+
+

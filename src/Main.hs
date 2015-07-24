@@ -46,11 +46,6 @@ import qualified Prelude as P
 import "cipher-aes" Crypto.Cipher.AES
 
 
-withSocket :: Socket -> (Socket -> IO ()) -> IO ()
-withSocket aSocket f = do
-  f aSocket 
-  sClose aSocket
-
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
   puts - "Connected: " + show aSockAddr
@@ -164,7 +159,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   _stdGen <- newStdGen
 
                   let _iv = S.pack - P.take _BlockSize - randoms _stdGen
-                  puts - "local IV: " <> show _iv
+                  puts - "local  IV: " <> show _iv
                   
                   pushStream remoteOutputStream - B.byteString _iv
                   
@@ -295,10 +290,11 @@ main = do
             forever . 
             safeSocketHandler "Remote Connection Socket" handleRemote
       
-      safeSocketHandler "Local Socket" (\_localSocket ->
-        safeSocketHandler "Remote Socket" (\_remoteSocket ->
-          waitBoth 
-            (socksServerLoop _localSocket) 
-            (remoteServerLoop _remoteSocket)
-            ) remoteSocket) localSocket
+      catchAll - do
+        safeSocketHandler "Local Socket" (\_localSocket ->
+          safeSocketHandler "Remote Socket" (\_remoteSocket ->
+            waitBoth 
+              (socksServerLoop _localSocket) 
+              (remoteServerLoop _remoteSocket)
+              ) remoteSocket) localSocket
 
