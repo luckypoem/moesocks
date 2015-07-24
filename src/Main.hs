@@ -36,6 +36,7 @@ import Data.Text.Lens
 import Network.MoeSocks.Config
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import Network.MoeSocks.Constant
 
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
@@ -50,15 +51,11 @@ localRequestHandler config (aSocket, aSockAddr) = do
   let greetingParser = do
         socksHeader
         let maxNoOfMethods = 5
-        __numberOfAuthenticationMethods <- satisfy (<= maxNoOfMethods)
-        __authenticationMethods <- 
-          count (fromIntegral __numberOfAuthenticationMethods) anyWord8
+        _numberOfAuthenticationMethods <- satisfy (<= maxNoOfMethods)
 
-        return - 
-          ClientGreeting 
-            __authenticationMethods
+        ClientGreeting <$>
+          count (fromIntegral _numberOfAuthenticationMethods) anyWord8
 
-  let _ReservedByte = 0
   let connectionParser = do
         socksHeader
         __connectionType <- choice
@@ -99,18 +96,14 @@ localRequestHandler config (aSocket, aSockAddr) = do
   flip catch (\e -> puts - show (e :: ParseException)) - do
     r <- parseFromStream greetingParser inputStream
     puts - show r 
-  
-    let noAuthenticationMethodCode = 0
-
-    if noAuthenticationMethodCode `elem` (r ^. authenticationMethods)
+    if _No_authentication `elem` (r ^. authenticationMethods)
       then do
         pushStream outputStream - B.word8 socksVersion
-                                <> B.word8 noAuthenticationMethodCode
+                                <> B.word8 _No_authentication
 
 
         conn <- parseFromStream connectionParser inputStream
         puts - show conn
-
 
         let 
             connectRemote :: [Word8] -> Int -> IO Socket
@@ -136,7 +129,6 @@ localRequestHandler config (aSocket, aSockAddr) = do
                 push = write . S.singleton
 
               push socksVersion
-              let _Request_Granted = 0
               push _Request_Granted 
               push _ReservedByte
 
