@@ -30,6 +30,12 @@ import System.IO.Unsafe
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 
+import Data.Text (Text)
+import qualified Data.Text as T
+
+import Network.MoeSocks.Config
+import Data.Text.Lens
+
 syncLock :: MVar ()
 syncLock = unsafePerformIO - newEmptyMVar
 
@@ -79,6 +85,7 @@ pushStream s b = do
   S.write (Just b) _builderStream
   S.write (Just BE.flush) _builderStream
 
+
 data ClientGreeting = ClientGreeting
   {
     _authenticationMethods :: [Word8]
@@ -110,8 +117,8 @@ data ClientRequest = ClientRequest
 
 makeLenses ''ClientRequest
 
-localRequestHandler:: (Socket, SockAddr) -> IO ()
-localRequestHandler (aSocket, aSockAddr) = do
+localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
+localRequestHandler config (aSocket, aSockAddr) = do
   puts - "Connected: " + show aSockAddr
 
   (inputStream, outputStream) <- socketToStreams aSocket
@@ -200,7 +207,7 @@ localRequestHandler (aSocket, aSockAddr) = do
 
               return _remoteSocket
              
-        _remoteSocket <- connectRemote [127, 0, 0, 1] 1190
+        _remoteSocket <- connectRemote [127, 0, 0, 1] - config ^. serverPort
      
         let handleLocal _remoteSocket = do
               let
@@ -307,29 +314,67 @@ remoteRequestHandler (aSocket, aSockAddr) = do
 main :: IO ()
 main = do
   puts "Started!"
-  localSocket <- socket AF_INET Stream defaultProtocol
-  setSocketOption localSocket ReuseAddr 1
-  bindSocket localSocket (SockAddrInet 1090 iNADDR_ANY)
-  listen localSocket 1
-
-  let handleLocal _socket = accept _socket >>= fork . localRequestHandler
-      socksServerLoop = 
-        forever . safeSocketHandler "Local Connection Socket" handleLocal
 
 
-  remoteSocket <- socket AF_INET Stream defaultProtocol
-  setSocketOption remoteSocket ReuseAddr 1
-  bindSocket remoteSocket (SockAddrInet 1190 iNADDR_ANY)
-  listen remoteSocket 1
+  config <- pure defaultMoeConfig
 
-  let handleRemote _socket = accept _socket >>= fork . remoteRequestHandler
-      remoteServerLoop = 
-        forever . safeSocketHandler "Remote Connection Socket" handleRemote
+  let 
+      _hostName = "localhost"
+      _localPort = show - config ^. localPort
   
-  safeSocketHandler "Local Socket" (\_localSocket ->
-    safeSocketHandler "Remote Socket" (\_remoteSocket ->
-      waitBoth 
-        (socksServerLoop _localSocket) 
-        (remoteServerLoop _remoteSocket)
-        ) remoteSocket) localSocket
+  localAddrInfo <- getAddrInfo Nothing 
+                    (Just _hostName) 
+                    (Just _localPort)
+  
+  let maybeLocalAddr = localAddrInfo ^? traverse . to addrAddress
+
+  case maybeLocalAddr of 
+    Nothing -> pute - "Can not resolve localhost: " <> _hostName
+
+    Just _localAddr -> do
+
+      puts - "localAddr: " <> show _localAddr
+
+      localSocket <- socket AF_INET Stream defaultProtocol
+      setSocketOption localSocket ReuseAddr 1
+      bindSocket localSocket _localAddr
+
+      listen localSocket 1
+
+      let handleLocal _socket = 
+            accept _socket >>= fork . localRequestHandler config
+
+          socksServerLoop = 
+            forever . safeSocketHandler "Local Connection Socket" handleLocal
+
+
+      let 
+          _remoteName = config ^. server . unpacked
+          _remotePort = show - config ^. serverPort
+      
+      remoteAddrInfo <- getAddrInfo Nothing 
+                        (Just _remoteName) 
+                        (Just _remotePort)
+      
+      let maybeRemoteAddr = remoteAddrInfo ^? traverse . to addrAddress
+
+      case maybeRemoteAddr of
+        Nothing -> pute - "Can not resolve remote: " <> _remoteName
+        Just _remoteAddr -> do
+          puts - "remoteAddr: " <> show _remoteAddr
+          remoteSocket <- socket AF_INET Stream defaultProtocol
+          setSocketOption remoteSocket ReuseAddr 1
+          bindSocket remoteSocket _remoteAddr
+          listen remoteSocket 1
+
+          let handleRemote _socket = accept _socket >>= fork . remoteRequestHandler
+              remoteServerLoop = 
+                forever . safeSocketHandler "Remote Connection Socket" handleRemote
+          
+          safeSocketHandler "Local Socket" (\_localSocket ->
+            safeSocketHandler "Remote Socket" (\_remoteSocket ->
+              waitBoth 
+                (socksServerLoop _localSocket) 
+                (remoteServerLoop _remoteSocket)
+                ) remoteSocket) localSocket
 
