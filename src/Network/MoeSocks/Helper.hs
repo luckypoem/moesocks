@@ -92,3 +92,5 @@ tryAddr aHostName aPort f = do
   case maybeAddr of 
     Nothing -> pute - "Can not resolve: " <> aHostName ^. _Text
     Just _addr -> () <$ f _addr
+
+

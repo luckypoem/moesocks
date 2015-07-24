@@ -11,5 +11,8 @@ _Request_Granted = 0
 _ReservedByte :: Word8
 _ReservedByte = 0
 
+_KeySize :: Int
+_KeySize = 32
 
-
+_BlockSize :: Int
+_BlockSize = 16

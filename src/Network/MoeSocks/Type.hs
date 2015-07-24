@@ -7,6 +7,7 @@ module Network.MoeSocks.Type where
 import Control.Lens
 import Data.Word
 import Data.ByteString (ByteString)
+import Data.Text (Text)
 
 data ClientGreeting = ClientGreeting
   {
@@ -38,3 +39,16 @@ data ClientRequest = ClientRequest
   deriving (Show)
 
 makeLenses ''ClientRequest
+
+data MoeConfig = MoeConfig
+  {
+    _server :: Text
+  , _serverPort :: Int
+  , _local :: Text
+  , _localPort :: Int
+  , _password :: Text
+  , _method :: Text
+  }
+  deriving (Show, Eq)
+
+makeLenses ''MoeConfig

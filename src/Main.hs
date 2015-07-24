@@ -45,22 +45,6 @@ import System.Random
 import qualified Prelude as P
 import "cipher-aes" Crypto.Cipher.AES
 
-_BlockSize :: Int
-_BlockSize = 16
-
-_KeySize :: Int
-_KeySize = 32
-
-type Cipher = (ByteString -> ByteString, ByteString -> ByteString)
-
-aesKey :: MoeConfig -> AES
-aesKey _config =
-  let __password = 
-        _config ^. password & review TS.utf8 :: ByteString
-
-      _key = S.take _KeySize - __password <> S.pack (replicate _KeySize 0)
-  in
-  initAES _key
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (aSocket, aSockAddr) = do
