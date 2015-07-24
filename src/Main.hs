@@ -222,7 +222,8 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
           
           pure (_address, _port)
     
-    (_address, _port) <- parseFromStream headerParser decryptedRemoteInputStream
+    (_address, _port) <- parseFromStream headerParser 
+                            decryptedRemoteInputStream
     
     let
         connectTarget :: [Word8] -> (Word8, Word8) -> IO Socket
@@ -252,8 +253,6 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               (Stream.connect decryptedRemoteInputStream targetOutputStream)
               (Stream.connect targetInputStream encryptedRemoteOutputStream)
             
-            pure ()
-      
       safeSocketHandler "Target Connection Handler" 
         handleTarget _targetSocket
 
