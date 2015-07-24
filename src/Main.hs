@@ -20,6 +20,7 @@ import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
 import qualified Data.ByteString as S
+import qualified Data.ByteString.Lazy as LB
 import Data.ByteString (ByteString)
 import Data.Binary
 import Data.Binary.Put
@@ -45,6 +46,58 @@ import System.Random
 import qualified Prelude as P
 import "cipher-aes" Crypto.Cipher.AES
 
+addressTypeBuilder :: AddressType -> B.Builder
+addressTypeBuilder aAddressType = 
+  case aAddressType of
+    IPv4_address _address -> 
+                          B.word8 1
+                       <> foldMap B.word8 _address 
+    Domain_name x ->   
+                          B.word8 3
+                       <> B.word8  
+                            (fromIntegral (S.length x))
+                       <> B.byteString x
+
+    IPv6_address xs ->  
+                          B.word8 4
+                       <> B.byteString (S.pack xs)
+
+addressTypeParser :: Parser AddressType
+addressTypeParser = choice
+  [
+    IPv4_address <$>  do
+                        word8 1
+                        count 4 anyWord8
+  
+  , Domain_name <$>   do 
+                        word8 3
+                        let maxDomainNameLength = 32
+                        _nameLength <- satisfy 
+                                          (<= maxDomainNameLength)
+                        take - fromIntegral _nameLength
+
+  , IPv6_address <$>  do
+                        word8 4 
+                        count 16 anyWord8
+  ]
+
+requestParser :: Parser ClientRequest
+requestParser = do
+  __connectionType <- choice
+      [
+        TCP_IP_stream_connection <$ word8 1 
+      , TCP_IP_port_binding <$ word8 2
+      , UDP_port <$ word8 3
+      ]
+
+  word8 _ReservedByte
+  __addressType <- addressTypeParser
+  __portNumber <- (,) <$> anyWord8 <*> anyWord8
+  pure - 
+          ClientRequest
+            __connectionType
+            __addressType 
+            __portNumber
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
@@ -65,40 +118,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
   let connectionParser = do
         socksHeader
-        __connectionType <- choice
-            [
-              TCP_IP_stream_connection <$ word8 1 
-            , TCP_IP_port_binding <$ word8 2
-            , UDP_port <$ word8 3
-            ]
-
-        word8 _ReservedByte
-
-        __addressType <- choice
-            [
-              IPv4_address <$>  do
-                                  word8 1
-                                  count 4 anyWord8
-            
-            , Domain_name <$>   do 
-                                  word8 3
-                                  let maxDomainNameLength = 32
-                                  _nameLength <- satisfy 
-                                                    (<= maxDomainNameLength)
-                                  take - fromIntegral _nameLength
-
-            , IPv6_address <$>  do
-                                  word8 4 
-                                  count 16 anyWord8
-            ]
-
-        __portNumber <- (,) <$> anyWord8 <*> anyWord8
-
-        pure - 
-          ClientRequest
-            __connectionType
-            __addressType 
-            __portNumber
+        requestParser
 
   tryParse - do
     r <- parseFromStream greetingParser inputStream
@@ -131,27 +151,15 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   push _Request_Granted 
                   push _ReservedByte
 
-                  case conn ^. addressType of
-                    IPv4_address xs ->  do
-                                          push 1
-                                          write - S.pack xs
-
-                    Domain_name x ->    do
-                                          push 3
-                                          push - fromIntegral (S.length x)
-                                          write x
-
-                    IPv6_address xs ->  do
-                                          push 4
-                                          write - S.pack xs
+                  write - LB.toStrict - B.toLazyByteString -
+                      addressTypeBuilder (conn ^. addressType)
 
                   traverseOf both push - conn ^. portNumber
 
                   (remoteInputStream, remoteOutputStream) <- 
                     socketToStreams _remoteSocket
 
-                  let IPv4_address _address = conn ^. addressType
-
+                  let
                       _password = review TS.utf8 - config ^. password
                       _fill = S.replicate 
                                 (_BlockSize + (-S.length _password)) 0 
@@ -174,9 +182,10 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   decryptedRemoteInputStream <-
                     Stream.map _decrypt remoteInputStream
 
-                  let
-                      _header =    
-                                   foldMap B.word8 _address 
+                  let 
+                      _header =    B.word8 1
+                                <> B.word8 _ReservedByte
+                                <> addressTypeBuilder (conn ^. addressType)
                                 <> foldMapOf each B.word8 (conn ^. portNumber)
 
                   pushStream encryptedRemoteOutputStream _header
@@ -210,33 +219,48 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
     decryptedRemoteInputStream <-
       Stream.map _decrypt remoteInputStream
-
-    let headerParser = do
-          _address <- count 4 anyWord8
-          _port <- (,) <$> anyWord8 <*> anyWord8
-          
-          pure (_address, _port)
     
-    (_address, _port) <- parseFromStream headerParser 
+    _clientRequest <- parseFromStream requestParser
                             decryptedRemoteInputStream
     
     let
-        connectTarget :: [Word8] -> (Word8, Word8) -> IO Socket
-        connectTarget _address _port = do
+        connectTarget :: ClientRequest -> IO Socket
+        connectTarget _clientRequest = do
           _targetSocket <- socket AF_INET Stream defaultProtocol
 
-          let portNumber16 = fromWord8 - toListOf both _port :: Word16
-              _socketAddr = SockAddrInet 
-                              (fromIntegral portNumber16)
-                              (fromWord8 - reverse _address)
+          let portNumber16 = fromWord8 - toListOf both 
+                              (_clientRequest ^. portNumber) :: Word16
+          
+          let addressType_To_SockAddr :: ClientRequest -> SockAddr
+              addressType_To_SockAddr aClientRequest =
+                case aClientRequest ^. addressType of
+                  IPv4_address _address -> SockAddrInet 
+                                            (fromIntegral portNumber16)
+                                            (fromWord8 - reverse _address)
 
+                  Domain_name x -> SockAddrUnix - "" -- preview TS.utf8 x
+                  IPv6_address xs -> 
+                                      let rs = reverse xs
+                                      in
+                                      SockAddrInet6 
+                                        (fromIntegral portNumber16)
+                                        0
+                                        ( fromWord8 - P.take 4 - rs
+                                        , fromWord8 - P.drop 4 - P.take 4 - rs
+                                        , fromWord8 - P.drop 8 - P.take 4 - rs
+                                        , fromWord8 - P.drop 8 - P.take 4 - rs
+                                        )
+                                        0
+          
+          let 
+              _socketAddr = addressType_To_SockAddr _clientRequest
 
           puts - "Connecting Target: " <> show _socketAddr
           connect _targetSocket _socketAddr
 
           pure _targetSocket
 
-    _targetSocket <- connectTarget _address _port
+    _targetSocket <- connectTarget _clientRequest
     
     withSocket _targetSocket - \_targetSocket -> do
       let 
