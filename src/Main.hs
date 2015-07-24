@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExistentialQuantification #-}
 
 module Main where
@@ -32,90 +31,12 @@ import qualified Data.ByteString.Builder.Extra as BE
 
 import Data.Text (Text)
 import qualified Data.Text as T
-
-import Network.MoeSocks.Config
 import Data.Text.Lens
 
-syncLock :: MVar ()
-syncLock = unsafePerformIO - newEmptyMVar
+import Network.MoeSocks.Config
+import Network.MoeSocks.Helper
+import Network.MoeSocks.Type
 
-sync :: IO a -> IO a
-sync io = do
-  putMVar syncLock ()
-  io <* takeMVar syncLock
-
-puts :: String -> IO ()
-puts = sync . putStrLn
-
-
-pute :: String -> IO ()
-pute = sync . hPutStrLn stderr
-
-showBytes :: ByteString -> String
-showBytes = show . S.unpack
-
-fromWord8 :: forall t. Binary t => [Word8] -> t
-fromWord8 = decode . runPut . mapM_ put
-      
-safeSocketHandler :: String -> (Socket -> IO a) -> Socket -> IO a
-safeSocketHandler aID f aSocket =
-  catch (f aSocket) - \e -> do
-      pute - "Exception in " + aID + ": " + show (e :: SomeException)
-      sClose aSocket
-      throw e
-
-waitBoth :: IO a -> IO b -> IO ()
-waitBoth x y = do
-  (xThreadID, xLock) <- do
-    _lock <- newEmptyMVar
-    _threadID <- 
-      forkFinally x - const - putMVar _lock ()
-
-    return (_threadID, _lock)
-
-  yThreadID <- 
-    forkFinally y - const - killThread xThreadID 
-                
-  takeMVar xLock 
-  killThread yThreadID
-
-pushStream :: (S.OutputStream ByteString) -> B.Builder -> IO ()
-pushStream s b = do
-  _builderStream <- S.builderStream s 
-  S.write (Just b) _builderStream
-  S.write (Just BE.flush) _builderStream
-
-
-data ClientGreeting = ClientGreeting
-  {
-    _authenticationMethods :: [Word8]
-  }
-  deriving (Show)
-
-makeLenses ''ClientGreeting
-
-data ConnectionType =
-    TCP_IP_stream_connection
-  | TCP_IP_port_binding
-  | UDP_port
-  deriving (Show, Eq)
-
-data AddressType = 
-    IPv4_address [Word8]
-  | Domain_name ByteString
-  | IPv6_address [Word8]
-  deriving (Show, Eq)
-
-
-data ClientRequest = ClientRequest
-  {
-    _connectionType :: ConnectionType
-  , _addressType :: AddressType
-  , _portNumber :: (Word8, Word8)
-  }
-  deriving (Show)
-
-makeLenses ''ClientRequest
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (aSocket, aSockAddr) = do
@@ -137,7 +58,7 @@ localRequestHandler config (aSocket, aSockAddr) = do
           ClientGreeting 
             __authenticationMethods
 
-  let reservedByte = 0
+  let _ReservedByte = 0
   let connectionParser = do
         socksHeader
         __connectionType <- choice
@@ -147,7 +68,7 @@ localRequestHandler config (aSocket, aSockAddr) = do
             , UDP_port <$ word8 3
             ]
 
-        word8 reservedByte
+        word8 _ReservedByte
 
         __addressType <- choice
             [
@@ -215,8 +136,9 @@ localRequestHandler config (aSocket, aSockAddr) = do
                 push = write . S.singleton
 
               push socksVersion
-              push 0
-              push reservedByte
+              let _Request_Granted = 0
+              push _Request_Granted 
+              push _ReservedByte
 
               case conn ^. addressType of
                 IPv4_address xs ->  do
@@ -248,7 +170,7 @@ localRequestHandler config (aSocket, aSockAddr) = do
                 (S.connect inputStream remoteOutputStream)
                 (S.connect remoteInputStream outputStream)
               
-              return ()
+              pure ()
 
 
 
@@ -303,7 +225,7 @@ remoteRequestHandler (aSocket, aSockAddr) = do
           (S.connect remoteInputStream targetOutputStream)
           (S.connect targetInputStream remoteOutputStream)
         
-        return ()
+        pure ()
   
   safeSocketHandler "Target Connection Handler" 
     handleTarget _targetSocket
@@ -314,8 +236,6 @@ remoteRequestHandler (aSocket, aSockAddr) = do
 main :: IO ()
 main = do
   puts "Started!"
-
-
   config <- pure defaultMoeConfig
 
   let 
