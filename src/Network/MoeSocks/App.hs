@@ -64,7 +64,7 @@ import qualified Data.HashMap.Strict as H
 splitTokens :: Int -> ByteString -> [ByteString]
 splitTokens l x  
   | l <= 1 = [x]
-  | x == mempty = [S.replicate l 0]
+  | x == mempty = []
   | otherwise = 
       let 
           byteLength = l + (-1)
@@ -82,8 +82,15 @@ decodeToken x
   | x == mempty = mempty
   | otherwise = S.take (fromIntegral - S.head x) - S.tail x
 
-detokenizeStream :: InputStream ByteString -> IO (InputStream ByteString)
-detokenizeStream = Stream.map decodeToken 
+detokenizeStream :: InputStream ByteString -> 
+                        IO (InputStream ByteString)
+detokenizeStream input = Stream.fromGenerator - go
+  where
+    l = fromIntegral _PacketSize
+    go = liftIO (Stream.read input) >>= maybe (return $! ()) chunk
+    chunk x 
+      | S.length x >= l = Stream.yield (S.take l x) >> chunk (S.drop l x)
+      | otherwise = Stream.yield x
 
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
@@ -173,7 +180,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   inputBlockStream <- tokenizeStream inputStream
                   {-inputBlockStream <- pure - inputStream-}
                   
-                  inputBlockStreamDebug <- debugInputBS "LIB:" Stream.stderr 
+                  inputBlockStreamDebug <- debugInputBS "LI:" Stream.stderr 
                                     inputBlockStream
 
                   {-decryptedRemoteInputStream <- detokenizeStream -}
@@ -281,6 +288,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             
             remoteInputBlockStream <- detokenizeStream remoteInputStream
             {-remoteInputBlockStream <- pure - remoteInputStream-}
+
             remoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
               remoteInputBlockStream 
 
