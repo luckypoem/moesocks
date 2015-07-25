@@ -166,29 +166,25 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                             decryptedRemoteInputStream
     
     let
-        connectTarget :: ClientRequest -> IO (Maybe Socket)
+        connectTarget :: ClientRequest -> IO Socket
         connectTarget _clientRequest = do
           _targetSocket <- socket AF_INET Stream defaultProtocol
 
           let portNumber16 = fromWord8 - toListOf both 
                               (_clientRequest ^. portNumber) :: Word16
           
-          let addressType_To_SockAddr :: ClientRequest -> Either String SockAddr
+          let addressType_To_SockAddr :: ClientRequest -> SockAddr
               addressType_To_SockAddr aClientRequest =
                 case aClientRequest ^. addressType of
-                  IPv4_address _address -> Right - SockAddrInet 
+                  IPv4_address _address -> SockAddrInet 
                                             (fromIntegral portNumber16)
                                             (fromWord8 - reverse _address)
 
-                  Domain_name x -> case x ^? TS.utf8 . _Text of
-                                      Nothing -> Left -  
-                                                    "Invalid Domain Name: "
-                                                    <> show x
-                                      Just _name -> Right - SockAddrUnix _name
+                  Domain_name x -> SockAddrUnix -  x ^. TS.utf8 . _Text
                   IPv6_address xs -> 
                                       let rs = reverse xs
                                       in
-                                      Right - SockAddrInet6 
+                                      SockAddrInet6 
                                         (fromIntegral portNumber16)
                                         0
                                         ( fromWord8 - P.take 4 - rs
@@ -198,18 +194,15 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                                         )
                                         0
           
-          case addressType_To_SockAddr _clientRequest of
-            Left err -> do
-              pute err
-              pure - Nothing
-            Right _socketAddr -> do
-              puts - "Connecting Target: " <> show _socketAddr
-              connect _targetSocket _socketAddr
-              pure - Just _targetSocket
+          let _socketAddr = addressType_To_SockAddr _clientRequest
+          
+          puts - "Connecting Target: " <> show _socketAddr
+          connect _targetSocket _socketAddr
+          pure - _targetSocket
 
     _targetSocket <- connectTarget _clientRequest
     
-    forM_ _targetSocket - flip withSocket - \_targetSocket -> do
+    withSocket _targetSocket - \_targetSocket -> do
       let 
           handleTarget _targetSocket = do
             (targetInputStream, targetOutputStream) <- 
