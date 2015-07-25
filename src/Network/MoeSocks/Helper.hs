@@ -97,7 +97,7 @@ tryAddr' aHostName aPort aHint f = do
                     (fmap (view _Text) aHostName) 
                     (fmap show aPort)
   
-  puts - show addrInfo
+  puts - "tryAddr':" <> show addrInfo
   let maybeAddr = addrInfo ^? traverse . to addrAddress
   case maybeAddr of 
     Nothing -> pute - "Can not resolve: " <> show aHostName

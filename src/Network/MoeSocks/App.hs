@@ -127,7 +127,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
   tryParse - do
     r <- parseFromStream greetingParser inputStream
-    puts - show r 
+    puts - "Gretting: " <> show r 
     if not - _No_authentication `elem` (r ^. authenticationMethods)
       then do
         pute - "Client does not support 0x00: No authentication method"
@@ -139,7 +139,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
 
         conn <- parseFromStream connectionParser inputStream
-        puts - show conn
+        puts - "Connection: " <> show conn
 
         _remoteSocket <- socket AF_INET Stream defaultProtocol
         
@@ -269,7 +269,6 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                               _clientRequest ^. connectionType
 
           
-          _targetSocket <- initSocketForType _socketAddr - _socketType
 
           let hints = defaultHints
                         {
@@ -295,8 +294,12 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
           case _maybeAddrInfo of
             Nothing -> return Nothing
             Just _addrInfo -> do
-                                connect _targetSocket - addrAddress _addrInfo
-                                pure - Just _targetSocket
+                _targetSocket <- initSocketForType 
+                                    (addrAddress _addrInfo)
+                                    (addrSocketType _addrInfo)
+
+                connect _targetSocket - addrAddress _addrInfo
+                pure - Just _targetSocket
 
     _targetSocket <- connectTarget _clientRequest
     
@@ -359,7 +362,7 @@ moeApp options = do
   maybeConfig <- parseConfig - options ^. configFile 
   
   forM_ maybeConfig - \config -> do
-    puts - show config
+    puts - "Config: " <> show config
 
     let localApp :: SockAddr -> IO (Socket, Socket -> IO ())
         localApp _localAddr = do

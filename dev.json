@@ -1,5 +1,5 @@
 {
-	"remote":"jinjing.cc",
+	"remote":"localhost",
 	"remotePort":2190,
 	"local":"127.0.0.1",
 	"localPort":2090,
