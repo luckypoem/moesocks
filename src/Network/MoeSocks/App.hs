@@ -82,15 +82,21 @@ decodeToken x
   | x == mempty = mempty
   | otherwise = S.take (fromIntegral - S.head x) - S.tail x
 
-detokenizeStream :: InputStream ByteString -> 
+chunkStream :: InputStream ByteString -> 
                         IO (InputStream ByteString)
-detokenizeStream input = Stream.fromGenerator - go
+chunkStream input = Stream.fromGenerator - go
   where
     l = fromIntegral _PacketSize
     go = liftIO (Stream.read input) >>= maybe (return $! ()) chunk
     chunk x 
       | S.length x >= l = Stream.yield (S.take l x) >> chunk (S.drop l x)
-      | otherwise = Stream.yield x
+      | otherwise = 
+          liftIO (Stream.read input) >>= 
+            maybe (Stream.yield x) (chunk . (x <>))
+
+detokenizeStream :: InputStream ByteString -> 
+                        IO (InputStream ByteString)
+detokenizeStream input = Stream.map decodeToken =<< chunkStream input
 
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
@@ -178,15 +184,12 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                                                       _encrypt _headerBlock
 
                   inputBlockStream <- tokenizeStream inputStream
-                  {-inputBlockStream <- pure - inputStream-}
                   
                   inputBlockStreamDebug <- debugInputBS "LI:" Stream.stderr 
                                     inputBlockStream
 
-                  {-decryptedRemoteInputStream <- detokenizeStream -}
-                                                  {-remoteInputStream-}
-                  remoteInputBlockStream <- pure -  
-                                                  remoteInputStream
+                  {-remoteInputBlockStream <- detokenizeStream remoteInputStream-}
+                  remoteInputBlockStream <- pure - remoteInputStream
 
                   waitBoth
                     (Stream.connect inputBlockStreamDebug remoteOutputStream)
@@ -287,14 +290,13 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               targetInputBlockStream
             
             remoteInputBlockStream <- detokenizeStream remoteInputStream
-            {-remoteInputBlockStream <- pure - remoteInputStream-}
 
             remoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
               remoteInputBlockStream 
 
             waitBoth
               (Stream.connect remoteInputBlockStreamD targetOutputStream)
-              (Stream.connect targetInputBlockStream remoteOutputStream)
+              (Stream.connect targetInputBlockStreamD remoteOutputStream)
             
       safeSocketHandler "Target Connection Handler" 
         handleTarget _targetSocket
