@@ -248,50 +248,84 @@ parseConfig aConfigFile = do
 moeApp:: MoeOptions -> IO ()
 moeApp options = do
   puts - "Options: " <> show options
-
   maybeConfig <- parseConfig - options ^. configFile 
   
   forM_ maybeConfig - \config -> do
     puts - show config
 
-    tryAddr (config ^. local) (config ^. localPort) - \_localAddr -> do
-      puts - "localAddr: " <> show _localAddr
+    let localApp :: SockAddr -> IO (Socket, Socket -> IO ())
+        localApp _localAddr = do
+          puts - "localAddr: " <> show _localAddr
 
-      localSocket <- socket AF_INET Stream defaultProtocol
-      setSocketOption localSocket ReuseAddr 1
-      bindSocket localSocket _localAddr
+          localSocket <- socket AF_INET Stream defaultProtocol
+          setSocketOption localSocket ReuseAddr 1
+          bindSocket localSocket _localAddr
 
-      listen localSocket 1
+          listen localSocket 1
 
-      let handleLocal _socket = 
-            accept _socket >>= 
-              fork . localRequestHandler config
+          let handleLocal _socket = 
+                accept _socket >>= 
+                  fork . localRequestHandler config
 
-          socksServerLoop = 
-            forever . safeSocketHandler "Local Connection Socket" handleLocal
+              localLoop = 
+                forever . safeSocketHandler "Local Connection" handleLocal
 
-      
-      tryAddr (config ^. remote) (config ^. remotePort) - \_remoteAddr -> do
-        puts - "remoteAddr: " <> show _remoteAddr
+          pure (localSocket, localLoop)
 
-        remoteSocket <- socket AF_INET Stream defaultProtocol
-        setSocketOption remoteSocket ReuseAddr 1
-        bindSocket remoteSocket _remoteAddr
-        listen remoteSocket 1
+    let remoteApp :: SockAddr -> IO (Socket, Socket -> IO ())
+        remoteApp _remoteAddr = do
+          puts - "remoteAddr: " <> show _remoteAddr
 
-        let handleRemote _socket = 
-              accept _socket >>= 
-                fork . remoteRequestHandler config
+          remoteSocket <- socket AF_INET Stream defaultProtocol
+          setSocketOption remoteSocket ReuseAddr 1
+          bindSocket remoteSocket _remoteAddr
+          listen remoteSocket 1
 
-            remoteServerLoop = 
-              forever . 
-              safeSocketHandler "Remote Connection Socket" handleRemote
-        
-        catchAll - do
-          safeSocketHandler "Local Socket" (\_localSocket ->
-            safeSocketHandler "Remote Socket" (\_remoteSocket ->
-              waitBoth 
-                (socksServerLoop _localSocket) 
-                (remoteServerLoop _remoteSocket)
-                ) remoteSocket) localSocket
+          let handleRemote _socket = 
+                accept _socket >>= 
+                  fork . remoteRequestHandler config
 
+              remoteLoop = 
+                forever . 
+                safeSocketHandler "Remote Connection" handleRemote
+
+          pure (remoteSocket, remoteLoop)
+
+    let debugRun :: IO ()
+        debugRun = do
+          let _c = config
+          tryAddr (_c ^. local) (_c ^. localPort) - \_localAddr -> do
+            (localSocket, localLoop) <- localApp _localAddr
+
+            tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
+              (remoteSocket, remoteLoop) <- remoteApp _remoteAddr
+              catchAll - do
+                safeSocketHandler "Local Socket" (\_localSocket ->
+                  safeSocketHandler "Remote Socket" (\_remoteSocket ->
+                    waitBoth 
+                      (localLoop _localSocket) 
+                      (remoteLoop _remoteSocket)
+                      ) remoteSocket) localSocket
+
+        remoteRun :: IO ()
+        remoteRun = do
+          let _c = config
+          tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
+            (remoteSocket, remoteLoop) <- remoteApp _remoteAddr
+            catchAll - 
+              safeSocketHandler "Remote Socket" remoteLoop remoteSocket
+          
+        localRun :: IO ()
+        localRun = do
+          let _c = config
+          tryAddr (_c ^. local) (_c ^. localPort) - \_localAddr -> do
+            (localSocket, localLoop) <- localApp _localAddr
+            catchAll - 
+              safeSocketHandler "Local Socket" localLoop localSocket
+
+    case options ^. runningMode of
+      DebugMode -> debugRun
+      RemoteMode -> remoteRun
+      LocalMode -> localRun
+
+    

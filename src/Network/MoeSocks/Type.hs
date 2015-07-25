@@ -59,7 +59,7 @@ instance ToJSON MoeConfig
 
 makeLenses ''MoeConfig
 
-data RunningMode = ServerMode | ClientMode | DebugMode
+data RunningMode = RemoteMode | LocalMode | DebugMode
       deriving (Show, Eq)
 
 data MoeOptions = MoeOptions

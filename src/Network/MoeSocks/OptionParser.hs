@@ -37,8 +37,8 @@ optionParser =
 
   let parseMode :: String -> RunningMode
       parseMode x 
-        | x `elem` ["server", "remote"] = ServerMode
-        | x `elem` ["client", "local"] = ClientMode
+        | x `elem` ["server", "remote"] = RemoteMode
+        | x `elem` ["client", "local"] = LocalMode
         | x == "debug" = DebugMode
   in
 
