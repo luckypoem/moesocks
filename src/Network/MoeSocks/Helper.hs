@@ -91,6 +91,7 @@ tryAddr aHostName aPort f = do
                     (Just - aHostName ^. _Text) 
                     (Just - show aPort)
   
+  puts - show addrInfo
   let maybeAddr = addrInfo ^? traverse . to addrAddress
   case maybeAddr of 
     Nothing -> pute - "Can not resolve: " <> aHostName ^. _Text
