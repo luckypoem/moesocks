@@ -1,0 +1,11 @@
+{
+	"server":"localhost",
+	"server_port":1190,
+	"local_address":"127.0.0.1",
+	"local_port":1090,
+	"password":"moesocks",
+	"timeout":300,
+	"method":"aes-256-cfb",
+	"fast_open":true,
+	"workers":1
+}

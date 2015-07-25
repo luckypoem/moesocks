@@ -19,5 +19,7 @@ import "cipher-aes" Crypto.Cipher.AES
 import Data.Maybe
 
 main :: IO ()
-main = moeApp - defaultMoeOptions
+main = moeApp - 
+  defaultMoeOptions &
+    configFile .~ "test.json"
 
