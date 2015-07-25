@@ -52,3 +52,16 @@ data MoeConfig = MoeConfig
   deriving (Show, Eq)
 
 makeLenses ''MoeConfig
+
+
+data RunningMode = ServerMode | ClientMode | DebugMode
+      deriving (Show, Eq, Read)
+
+data MoeOptions = MoeOptions
+  {
+    _runningMode :: RunningMode
+  , _configFile :: String
+  }
+  deriving (Show, Eq)
+
+makeLenses ''MoeOptions

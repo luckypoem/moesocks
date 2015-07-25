@@ -48,6 +48,10 @@ import qualified Prelude as P
 import "cipher-aes" Crypto.Cipher.AES
 import Data.Maybe
 
+import Options.Applicative hiding (Parser)
+import qualified Options.Applicative as O
+
+
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
@@ -215,9 +219,42 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
       safeSocketHandler "Target Connection Handler" 
         handleTarget _targetSocket
 
+optionsParser :: O.Parser MoeOptions
+optionsParser = 
+  let _mode = strOption -
+                    long "mode"
+                 <> short 'm'
+                 <> metavar "MODE"
+                 <> help "remote | local"
+  in
+  let _config = strOption -
+                    short 'c'
+                 <> metavar "CONFIG"
+                 <> help "path to the configuration file"
+
+  in
+
+  let parseMode :: String -> RunningMode
+      parseMode x 
+        | x `elem` ["server", "remote"] = ServerMode
+        | x `elem` ["client", "local"] = ClientMode
+        | x == "debug" = DebugMode
+  in
+
+  MoeOptions <$> fmap parseMode _mode <*> _config
+
+opts :: ParserInfo (a -> a)
+opts = info helper - 
+        fullDesc
+    <>  progDesc "A socks5 proxy with client / server architecture"
+    <>  header "moesocks - moe for all"
 
 main :: IO ()
-main = do
+main = execParser opts >>= const moeMain
+                      
+
+moeMain :: IO ()
+moeMain = do
   puts "Started!"
   config <- pure defaultMoeConfig
 

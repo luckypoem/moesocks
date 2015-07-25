@@ -39,3 +39,11 @@ aesKey _config =
       _key = S.take _KeySize - __password <> S.pack (replicate _KeySize 0)
   in
   initAES _key
+
+
+defaultMoeOptions :: MoeOptions
+defaultMoeOptions = MoeOptions
+  {
+    _runningMode = DebugMode
+  , _configFile = ""
+  } 
