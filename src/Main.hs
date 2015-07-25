@@ -40,78 +40,14 @@ import Network.MoeSocks.Config
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.MoeSocks.Constant
+import Network.MoeSocks.BuilderAndParser
 
 import Data.ByteString.Lens
 import System.Random
 import qualified Prelude as P
 import "cipher-aes" Crypto.Cipher.AES
+import Data.Maybe
 
-addressTypeBuilder :: AddressType -> B.Builder
-addressTypeBuilder aAddressType = 
-  case aAddressType of
-    IPv4_address _address -> 
-                          B.word8 1
-                       <> foldMap B.word8 _address 
-    Domain_name x ->   
-                          B.word8 3
-                       <> B.word8  
-                            (fromIntegral (S.length x))
-                       <> B.byteString x
-
-    IPv6_address xs ->  
-                          B.word8 4
-                       <> B.byteString (S.pack xs)
-
-
-
-connectionType_To_Word8 :: ConnectionType -> Word8
-connectionType_To_Word8 TCP_IP_stream_connection = 1
-connectionType_To_Word8 TCP_IP_port_binding = 2
-connectionType_To_Word8 UDP_port = 3
-
-requestBuilder :: ClientRequest -> B.Builder
-requestBuilder aClientRequest = 
-     B.word8 (connectionType_To_Word8 - aClientRequest ^. connectionType)
-  <> B.word8 _ReservedByte
-  <> addressTypeBuilder (aClientRequest ^. addressType)
-  <> foldMapOf each B.word8 (aClientRequest ^. portNumber)
-
-addressTypeParser :: Parser AddressType
-addressTypeParser = choice
-  [
-    IPv4_address <$>  do
-                        word8 1
-                        count 4 anyWord8
-  
-  , Domain_name <$>   do 
-                        word8 3
-                        let maxDomainNameLength = 32
-                        _nameLength <- satisfy 
-                                          (<= maxDomainNameLength)
-                        take - fromIntegral _nameLength
-
-  , IPv6_address <$>  do
-                        word8 4 
-                        count 16 anyWord8
-  ]
-
-requestParser :: Parser ClientRequest
-requestParser = do
-  __connectionType <- choice
-      [
-        TCP_IP_stream_connection <$ word8 1 
-      , TCP_IP_port_binding <$ word8 2
-      , UDP_port <$ word8 3
-      ]
-
-  word8 _ReservedByte
-  __addressType <- addressTypeParser
-  __portNumber <- (,) <$> anyWord8 <*> anyWord8
-  pure - 
-          ClientRequest
-            __connectionType
-            __addressType 
-            __portNumber
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
@@ -235,45 +171,50 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                             decryptedRemoteInputStream
     
     let
-        connectTarget :: ClientRequest -> IO Socket
+        connectTarget :: ClientRequest -> IO (Maybe Socket)
         connectTarget _clientRequest = do
           _targetSocket <- socket AF_INET Stream defaultProtocol
 
           let portNumber16 = fromWord8 - toListOf both 
                               (_clientRequest ^. portNumber) :: Word16
           
-          let addressType_To_SockAddr :: ClientRequest -> SockAddr
+          let addressType_To_SockAddr :: ClientRequest -> Either String SockAddr
               addressType_To_SockAddr aClientRequest =
                 case aClientRequest ^. addressType of
-                  IPv4_address _address -> SockAddrInet 
+                  IPv4_address _address -> Right - SockAddrInet 
                                             (fromIntegral portNumber16)
                                             (fromWord8 - reverse _address)
 
-                  Domain_name x -> SockAddrUnix - "" -- preview TS.utf8 x
+                  Domain_name x -> case x ^? TS.utf8 . _Text of
+                                      Nothing -> Left -  
+                                                    "Invalid Domain Name: "
+                                                    <> show x
+                                      Just _name -> Right - SockAddrUnix _name
                   IPv6_address xs -> 
                                       let rs = reverse xs
                                       in
-                                      SockAddrInet6 
+                                      Right - SockAddrInet6 
                                         (fromIntegral portNumber16)
                                         0
                                         ( fromWord8 - P.take 4 - rs
                                         , fromWord8 - P.drop 4 - P.take 4 - rs
                                         , fromWord8 - P.drop 8 - P.take 4 - rs
-                                        , fromWord8 - P.drop 8 - P.take 4 - rs
+                                        , fromWord8 - P.drop 12 - rs
                                         )
                                         0
           
-          let 
-              _socketAddr = addressType_To_SockAddr _clientRequest
-
-          puts - "Connecting Target: " <> show _socketAddr
-          connect _targetSocket _socketAddr
-
-          pure _targetSocket
+          case addressType_To_SockAddr _clientRequest of
+            Left err -> do
+              pute err
+              pure - Nothing
+            Right _socketAddr -> do
+              puts - "Connecting Target: " <> show _socketAddr
+              connect _targetSocket _socketAddr
+              pure - Just _targetSocket
 
     _targetSocket <- connectTarget _clientRequest
     
-    withSocket _targetSocket - \_targetSocket -> do
+    forM_ _targetSocket - flip withSocket - \_targetSocket -> do
       let 
           handleTarget _targetSocket = do
             (targetInputStream, targetOutputStream) <- 

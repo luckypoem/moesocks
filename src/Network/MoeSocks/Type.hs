@@ -39,7 +39,7 @@ data ClientRequest = ClientRequest
   deriving (Show)
 
 makeLenses ''ClientRequest
-
+ 
 data MoeConfig = MoeConfig
   {
     _server :: Text
