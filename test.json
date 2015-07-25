@@ -1,5 +1,5 @@
 {
-	"remote":"localhost",
+	"remote":"127.0.0.1",
 	"remotePort":1190,
 	"local":"127.0.0.1",
 	"localPort":1090,
