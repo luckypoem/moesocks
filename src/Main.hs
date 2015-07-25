@@ -109,11 +109,6 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   (remoteInputStream, remoteOutputStream) <- 
                     socketToStreams _remoteSocket
 
-                  let
-                      _password = review TS.utf8 - config ^. password
-                      _fill = S.replicate 
-                                (_BlockSize + (-S.length _password)) 0 
-                      
                   _stdGen <- newStdGen
 
                   let _iv = S.pack - P.take _BlockSize - randoms _stdGen
