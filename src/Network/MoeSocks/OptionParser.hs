@@ -24,14 +24,16 @@ import qualified Options.Applicative as O
 optionParser :: O.Parser MoeOptions
 optionParser = 
   let _mode = strOption -
-                    short 'm'
-                 <> metavar "MODE"
-                 <> help "local | remote"
+                      short 'm'
+                  <>  long "mode"
+                  <>  metavar "MODE"
+                  <>  help "local | remote"
   in
   let _config = strOption -
-                    short 'c'
-                 <> metavar "CONFIG"
-                 <> help "path to the configuration file"
+                      short 'c'
+                  <>  long "config"
+                  <>  metavar "CONFIG"
+                  <>  help "path to the configuration file"
 
   in
 
