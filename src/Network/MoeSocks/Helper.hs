@@ -107,3 +107,13 @@ withSocket aSocket f = do
   sClose aSocket
 
 
+initSocketForType :: SockAddr -> SocketType -> IO Socket 
+initSocketForType aSockAddr aSocketType = 
+    socket (fam aSockAddr) aSocketType defaultProtocol
+  where
+    fam (SockAddrInet  {}) = AF_INET
+    fam (SockAddrInet6 {}) = AF_INET6
+    fam (SockAddrUnix  {}) = AF_UNIX
+
+initSocket :: SockAddr -> IO Socket 
+initSocket = flip initSocketForType Stream

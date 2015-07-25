@@ -173,7 +173,6 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
     let
         connectTarget :: ClientRequest -> IO Socket
         connectTarget _clientRequest = do
-          _targetSocket <- socket AF_INET Stream defaultProtocol
 
           let portNumber16 = fromWord8 - toListOf both 
                               (_clientRequest ^. portNumber) :: Word16
@@ -200,6 +199,17 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                                         0
           
           let _socketAddr = addressType_To_SockAddr _clientRequest
+          
+              connectionType_To_SocketType :: ConnectionType -> SocketType
+              connectionType_To_SocketType TCP_IP_stream_connection = Stream
+              connectionType_To_SocketType TCP_IP_port_binding = NoSocketType
+              connectionType_To_SocketType UDP_port = Datagram
+                 
+              
+
+          _targetSocket <- initSocketForType _socketAddr -
+                              connectionType_To_SocketType -
+                              _clientRequest ^. connectionType
           
           puts - "Connecting Target: " <> show _socketAddr
           connect _targetSocket _socketAddr
@@ -257,7 +267,7 @@ moeApp options = do
         localApp _localAddr = do
           puts - "localAddr: " <> show _localAddr
 
-          localSocket <- socket AF_INET Stream defaultProtocol
+          localSocket <- initSocket _localAddr
           setSocketOption localSocket ReuseAddr 1
           bindSocket localSocket _localAddr
 
@@ -276,7 +286,7 @@ moeApp options = do
         remoteApp _remoteAddr = do
           puts - "remoteAddr: " <> show _remoteAddr
 
-          remoteSocket <- socket AF_INET Stream defaultProtocol
+          remoteSocket <- initSocket _remoteAddr
           setSocketOption remoteSocket ReuseAddr 1
           bindSocket remoteSocket _remoteAddr
           listen remoteSocket 1
