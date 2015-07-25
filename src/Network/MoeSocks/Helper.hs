@@ -125,6 +125,14 @@ sockAddr_To_Port = f where
     f (SockAddrInet6 p _ _ _) = show p
     f (SockAddrUnix {}) = ""
 
+is_Inet :: AddrInfo -> Bool
+is_Inet x =
+  let f = addrFamily x
+  in
+  case f of
+    AF_INET -> True
+    _ -> False
+
 initSocketForType :: SockAddr -> SocketType -> IO Socket 
 initSocketForType aSockAddr aSocketType = 
     socket (sockAddr_To_AddrFamily aSockAddr) aSocketType defaultProtocol

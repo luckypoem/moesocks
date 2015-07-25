@@ -282,11 +282,13 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
           {-puts - "HostName: " <> _hostName-}
           {-puts - "Port: " <> _port-}
 
-          _maybeAddrInfo <- fmap (preview traverse) - getAddrInfo 
+          _addrInfoList <-  getAddrInfo 
                         Nothing 
                         (Just - _hostName)
                         (Just - _port)
 
+          let _maybeAddrInfo = preview traverse -
+                                  filter is_Inet _addrInfoList
           
           puts - "Connecting Target: " <> show _maybeAddrInfo
 
