@@ -188,14 +188,14 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   inputBlockStream <- tokenizeStream
                                       _encrypt inputStream
                   
-                  inputBlockStreamDebug <- debugInputBS "LI:" Stream.stderr 
+                  inputBlockStreamD <- debugInputBS "LI:" Stream.stderr 
                                     inputBlockStream
 
                   remoteInputBlockStream <- detokenizeStream 
-                                            id remoteInputStream
+                                            _decrypt remoteInputStream
 
                   waitBoth
-                    (Stream.connect inputBlockStreamDebug remoteOutputStream)
+                    (Stream.connect inputBlockStream remoteOutputStream)
                     (Stream.connect remoteInputBlockStream outputStream)
                   
 
@@ -284,7 +284,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               socketToStreams _targetSocket
 
             targetInputBlockStream <- tokenizeStream  
-                                      id targetInputStream
+                                      _encrypt targetInputStream
             
             targetOutputStreamD <- debugOutputBS "TO:" Stream.stderr 
               targetOutputStream
@@ -299,8 +299,8 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               remoteInputBlockStream 
 
             waitBoth
-              (Stream.connect remoteInputBlockStreamD targetOutputStream)
-              (Stream.connect targetInputBlockStreamD remoteOutputStream)
+              (Stream.connect remoteInputBlockStream targetOutputStream)
+              (Stream.connect targetInputBlockStream remoteOutputStream)
             
       safeSocketHandler "Target Connection Handler" 
         handleTarget _targetSocket
