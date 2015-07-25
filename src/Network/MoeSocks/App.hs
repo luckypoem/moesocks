@@ -170,8 +170,8 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   pushStream remoteOutputStream - B.byteString - 
                                                       _encrypt _headerBlock
 
-                  {-inputBlockStream <- tokenizeStream inputStream-}
-                  inputBlockStream <- pure - inputStream
+                  inputBlockStream <- tokenizeStream inputStream
+                  {-inputBlockStream <- pure - inputStream-}
                   
                   inputBlockStreamDebug <- debugInputBS "LIB:" Stream.stderr 
                                     inputBlockStream
@@ -279,8 +279,8 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             targetInputBlockStreamD <- debugInputBS "TI:" Stream.stderr 
               targetInputBlockStream
             
-            {-remoteInputBlockStream <- detokenizeStream remoteInputStream-}
-            remoteInputBlockStream <- pure - remoteInputStream
+            remoteInputBlockStream <- detokenizeStream remoteInputStream
+            {-remoteInputBlockStream <- pure - remoteInputStream-}
             remoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
               remoteInputBlockStream 
 
