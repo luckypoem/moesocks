@@ -9,7 +9,7 @@ nemesis = do
 
   desc "halive"
   task "halive" - do
-    sh "halive src/Main.hs src"
+    sh "halive src/HaliveMain.hs src"
 
 
   desc "test"

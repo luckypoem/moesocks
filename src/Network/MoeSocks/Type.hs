@@ -55,7 +55,7 @@ makeLenses ''MoeConfig
 
 
 data RunningMode = ServerMode | ClientMode | DebugMode
-      deriving (Show, Eq, Read)
+      deriving (Show, Eq)
 
 data MoeOptions = MoeOptions
   {
