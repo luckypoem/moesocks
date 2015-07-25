@@ -167,22 +167,23 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                       _headerBlock = clamp _PacketSize -
                                       builder_To_ByteString _header
 
-                  {-puts - "headerStr______: " <> showBytes  _headerBlock-}
-
                   pushStream remoteOutputStream - B.byteString - 
                                                       _encrypt _headerBlock
 
-                  inputBlockStream <- tokenizeStream inputStream
+                  {-inputBlockStream <- tokenizeStream inputStream-}
+                  inputBlockStream <- pure - inputStream
                   
                   inputBlockStreamDebug <- debugInputBS "LIB:" Stream.stderr 
                                     inputBlockStream
 
-                  decryptedRemoteInputStream <- detokenizeStream 
+                  {-decryptedRemoteInputStream <- detokenizeStream -}
+                                                  {-remoteInputStream-}
+                  remoteInputBlockStream <- pure -  
                                                   remoteInputStream
 
                   waitBoth
                     (Stream.connect inputBlockStreamDebug remoteOutputStream)
-                    (Stream.connect decryptedRemoteInputStream outputStream)
+                    (Stream.connect remoteInputBlockStream outputStream)
                   
 
             safeSocketHandler "Local Request Handler" 
@@ -207,11 +208,15 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
     _headerBlock <- _decrypt <$> readExactly (fromIntegral _PacketSize)
                           remoteInputStream
     
+    {-puts - "_headerBlock: " <> show _headerBlock-}
+    
     _clientRequest <- 
       case eitherResult - parse requestParser _headerBlock of
         Left err -> throwIO - ParseException err
         Right r -> pure r
     
+    {-puts - "clientRequest: " <> show _clientRequest-}
+
     let
         connectTarget :: ClientRequest -> IO Socket
         connectTarget _clientRequest = do
@@ -265,19 +270,22 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             (targetInputStream, targetOutputStream) <- 
               socketToStreams _targetSocket
 
-            targetInputBlockStream <- tokenizeStream targetInputStream
+            {-targetInputBlockStream <- tokenizeStream targetInputStream-}
+            targetInputBlockStream <- pure - targetInputStream
+            
             targetOutputStreamD <- debugOutputBS "TO:" Stream.stderr 
               targetOutputStream
 
             targetInputBlockStreamD <- debugInputBS "TI:" Stream.stderr 
               targetInputBlockStream
             
-            decryptedRemoteInputBlockStream <- detokenizeStream remoteInputStream
-            decryptedRemoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
-              decryptedRemoteInputBlockStream 
+            {-remoteInputBlockStream <- detokenizeStream remoteInputStream-}
+            remoteInputBlockStream <- pure - remoteInputStream
+            remoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
+              remoteInputBlockStream 
 
             waitBoth
-              (Stream.connect decryptedRemoteInputBlockStreamD targetOutputStream)
+              (Stream.connect remoteInputBlockStreamD targetOutputStream)
               (Stream.connect targetInputBlockStream remoteOutputStream)
             
       safeSocketHandler "Target Connection Handler" 
