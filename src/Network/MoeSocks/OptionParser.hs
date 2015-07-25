@@ -49,7 +49,7 @@ optionParser =
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 
         fullDesc
-    <>  progDesc "A socks5 proxy with client / server architecture"
+    <>  progDesc "A socks5 proxy using the client / server architecture"
     <>  header "moesocks - moe for all"
 
 
