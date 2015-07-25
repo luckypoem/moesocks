@@ -59,49 +59,6 @@ import Control.Monad.IO.Class
 
 import qualified Data.HashMap.Strict as H
 
-blockGeneratorForSize :: Int -> (ByteString -> ByteString) ->
-                          Stream.InputStream ByteString -> 
-                          Stream.Generator ByteString ()
-blockGeneratorForSize s f p = loop mempty
-  where
-    loop :: ByteString -> Stream.Generator ByteString ()
-    loop b = do
-        m <- liftIO - Stream.read p
-
-        let _yield x = do
-              liftIO - puts - "yield: " <> show x
-              Stream.yield - x
-
-        case m of
-          Nothing -> do
-            _yield - b
-            _yield - mempty
-
-          Just x -> do
-            let combined = b <> x
-            if S.length combined <= s
-              then do
-                loop combined
-              else do
-                let yieldBlock block = do
-                      _yield - S.take s block 
-                      let _drop = S.drop s block 
-                      if S.length _drop P.< s
-                        then
-                          return - _drop
-                        else
-                          yieldBlock _drop
-
-                yieldBlock combined >>= loop
-
-
-                            
-blockStream :: (ByteString -> ByteString) -> 
-                    Stream.InputStream ByteString -> 
-                    IO (Stream.InputStream ByteString)
-blockStream f s = Stream.fromGenerator -
-                      blockGeneratorForSize (fromIntegral _PacketSize) f s
-
 
 -- first bit is length
 splitTokens :: Int -> ByteString -> [ByteString]
@@ -114,7 +71,7 @@ splitTokens l x
           (y, z) = S.splitAt byteLength x
           length_y_byte = fromIntegral - S.length y
       in
-      clamp l (S.cons length_y_byte y) : splitBytes l z
+      clamp l (S.cons length_y_byte y) : splitTokens l z
 
 tokenizeStream :: InputStream ByteString -> IO (InputStream ByteString)
 tokenizeStream x = Stream.map (splitTokens - fromIntegral _PacketSize) x 
@@ -122,8 +79,11 @@ tokenizeStream x = Stream.map (splitTokens - fromIntegral _PacketSize) x
 
 decodeToken :: ByteString -> ByteString
 decodeToken x
-  | x == mempty = empty
-  | otherwise = S.take (S.head x) - S.tail x
+  | x == mempty = mempty
+  | otherwise = S.take (fromIntegral - S.head x) - S.tail x
+
+detokenizeStream :: InputStream ByteString -> IO (InputStream ByteString)
+detokenizeStream = Stream.map decodeToken 
 
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
@@ -212,12 +172,12 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   pushStream remoteOutputStream - B.byteString - 
                                                       _encrypt _headerBlock
 
-                  inputBlockStream <- blockStream id inputStream
+                  inputBlockStream <- tokenizeStream inputStream
                   
                   inputBlockStreamDebug <- debugInputBS "LIB:" Stream.stderr 
                                     inputBlockStream
 
-                  decryptedRemoteInputStream <- blockStream id 
+                  decryptedRemoteInputStream <- detokenizeStream 
                                                   remoteInputStream
 
                   waitBoth
@@ -305,14 +265,14 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             (targetInputStream, targetOutputStream) <- 
               socketToStreams _targetSocket
 
-            targetInputBlockStream <- blockStream id targetInputStream
+            targetInputBlockStream <- tokenizeStream targetInputStream
             targetOutputStreamD <- debugOutputBS "TO:" Stream.stderr 
               targetOutputStream
 
             targetInputBlockStreamD <- debugInputBS "TI:" Stream.stderr 
               targetInputBlockStream
             
-            decryptedRemoteInputBlockStream <- blockStream id remoteInputStream
+            decryptedRemoteInputBlockStream <- detokenizeStream remoteInputStream
             decryptedRemoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
               decryptedRemoteInputBlockStream 
 
