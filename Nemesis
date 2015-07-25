@@ -20,3 +20,11 @@ nemesis = do
       sh "curl -x socks5://localhost:1090 localhost:8080; exit 0"
       sleep 1
 
+
+  desc "remote"
+  task "remote" - do
+    sh "cabal run -- -o remote -c dev.json"
+  
+  desc "local"
+  task "local" - do
+    sh "cabal run -- -o local -c dev.json"
