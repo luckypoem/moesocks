@@ -1,0 +1,9 @@
+{
+	"remote":"jinjing.cc",
+	"remotePort":2190,
+	"local":"127.0.0.1",
+	"localPort":2090,
+	"password":"e9c5c56cee24cb6a",
+	"method":"aes-256-cfb"
+}
+
