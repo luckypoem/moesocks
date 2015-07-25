@@ -17,6 +17,7 @@ import Control.Exception
 import System.IO
 import System.IO.Streams.Network
 import qualified System.IO.Streams as Stream
+import System.IO.Streams.Debug
 import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
@@ -59,6 +60,9 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
   puts - "Connected: " + show aSockAddr
 
   (inputStream, outputStream) <- socketToStreams aSocket
+
+  inputStream <- debugInputBS "LI:\n" Stream.stderr inputStream
+  outputStream <- debugOutputBS "LO:\n" Stream.stderr outputStream
 
   let socksVersion = 5
       socksHeader = word8 socksVersion
@@ -223,6 +227,12 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             (targetInputStream, targetOutputStream) <- 
               socketToStreams _targetSocket
 
+            targetOutputStream <- debugOutputBS "RO:\n" Stream.stderr 
+              targetOutputStream
+
+            targetInputStream <- debugInputBS "RI:\n" Stream.stderr 
+              targetInputStream
+            
             waitBoth
               (Stream.connect decryptedRemoteInputStream targetOutputStream)
               (Stream.connect targetInputStream encryptedRemoteOutputStream)
