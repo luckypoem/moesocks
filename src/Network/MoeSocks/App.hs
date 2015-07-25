@@ -17,9 +17,11 @@ import Control.Exception
 import System.IO
 import System.IO.Streams.Network
 import qualified System.IO.Streams as Stream
+import System.IO.Streams (InputStream, OutputStream)
 import System.IO.Streams.Debug
 import System.IO.Streams.Attoparsec
 import System.IO.Streams.ByteString
+import System.IO.Streams.List
 import Data.Word
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as LB
@@ -57,39 +59,23 @@ import Control.Monad.IO.Class
 
 import qualified Data.HashMap.Strict as H
 
-blockConnectForSize :: Int -> Stream.InputStream ByteString -> 
-                  Stream.OutputStream ByteString -> IO ()
-blockConnectForSize s p q = loop mempty
-  where
-    loop b = do
-        m <- Stream.read p
-        case m of
-          Nothing -> do
-            Stream.write (Just b) q
-            Stream.write Nothing q
-          Just x -> do
-            let combined = b <> x
-            if S.length combined <= s
-              then do
-                loop combined
-              else do
-                Stream.write (Just - S.take s combined) q
-                loop - S.drop s combined
-                
-blockConnect :: Stream.InputStream ByteString -> 
-                  Stream.OutputStream ByteString -> IO ()
-blockConnect = blockConnectForSize - fromIntegral _PacketSize
-
-blockGeneratorForSize :: Int -> Stream.InputStream ByteString -> 
-                    Stream.Generator ByteString ()
-blockGeneratorForSize s p = loop mempty
+blockGeneratorForSize :: Int -> (ByteString -> ByteString) ->
+                          Stream.InputStream ByteString -> 
+                          Stream.Generator ByteString ()
+blockGeneratorForSize s f p = loop mempty
   where
     loop :: ByteString -> Stream.Generator ByteString ()
     loop b = do
         m <- liftIO - Stream.read p
+
+        let _yield x = do
+              liftIO - puts - "yield: " <> show x
+              Stream.yield - x
+
         case m of
           Nothing -> do
-            Stream.yield b
+            _yield - b
+            _yield - mempty
 
           Just x -> do
             let combined = b <> x
@@ -97,13 +83,48 @@ blockGeneratorForSize s p = loop mempty
               then do
                 loop combined
               else do
-                Stream.yield - S.take s combined
-                loop - S.drop s combined
+                let yieldBlock block = do
+                      _yield - S.take s block 
+                      let _drop = S.drop s block 
+                      if S.length _drop P.< s
+                        then
+                          return - _drop
+                        else
+                          yieldBlock _drop
+
+                yieldBlock combined >>= loop
+
+
                             
-blockGenerator :: Stream.InputStream ByteString -> 
-                    Stream.Generator ByteString ()
-blockGenerator = blockGeneratorForSize (fromIntegral _PacketSize)
-                  
+blockStream :: (ByteString -> ByteString) -> 
+                    Stream.InputStream ByteString -> 
+                    IO (Stream.InputStream ByteString)
+blockStream f s = Stream.fromGenerator -
+                      blockGeneratorForSize (fromIntegral _PacketSize) f s
+
+
+-- first bit is length
+splitTokens :: Int -> ByteString -> [ByteString]
+splitTokens l x  
+  | l <= 1 = [x]
+  | x == mempty = [S.replicate l 0]
+  | otherwise = 
+      let 
+          byteLength = l + (-1)
+          (y, z) = S.splitAt byteLength x
+          length_y_byte = fromIntegral - S.length y
+      in
+      clamp l (S.cons length_y_byte y) : splitBytes l z
+
+tokenizeStream :: InputStream ByteString -> IO (InputStream ByteString)
+tokenizeStream x = Stream.map (splitTokens - fromIntegral _PacketSize) x 
+                      >>= concatLists 
+
+decodeToken :: ByteString -> ByteString
+decodeToken x
+  | x == mempty = empty
+  | otherwise = S.take (S.head x) - S.tail x
+
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
 
@@ -180,9 +201,6 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                       _encrypt = encryptCTR _aesKey _iv
                       _decrypt = decryptCTR _aesKey _iv
                   
-                  encryptedRemoteOutputStream <- 
-                    Stream.contramap _encrypt remoteOutputStream
-
 
                   let 
                       _header = requestBuilder conn
@@ -191,27 +209,20 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
                   {-puts - "headerStr______: " <> showBytes  _headerBlock-}
 
-                  Stream.write (Just _headerBlock) -
-                    encryptedRemoteOutputStream
+                  pushStream remoteOutputStream - B.byteString - 
+                                                      _encrypt _headerBlock
 
-                  inputBlockStream <- pure inputStream
-                  
-                  inputStreamDebug <- debugInputBS "LI:" Stream.stderr inputStream
-                  outputStreamDebug <- debugOutputBS "LO:" Stream.stderr outputStream
+                  inputBlockStream <- blockStream id inputStream
                   
                   inputBlockStreamDebug <- debugInputBS "LIB:" Stream.stderr 
                                     inputBlockStream
 
-                  decryptedRemoteInputStream <-
-                    Stream.map _decrypt remoteInputStream
-                  
-                  decryptedRemoteInputBlockStream <-
-                    Stream.map _decrypt =<<
-                      takeBytes _PacketSize remoteInputStream
+                  decryptedRemoteInputStream <- blockStream id 
+                                                  remoteInputStream
 
                   waitBoth
-                    (Stream.connect inputBlockStreamDebug encryptedRemoteOutputStream)
-                    (Stream.connect decryptedRemoteInputStream outputStreamDebug)
+                    (Stream.connect inputBlockStreamDebug remoteOutputStream)
+                    (Stream.connect decryptedRemoteInputStream outputStream)
                   
 
             safeSocketHandler "Local Request Handler" 
@@ -233,15 +244,9 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
         _encrypt = encryptCTR _aesKey _iv
         _decrypt = decryptCTR _aesKey _iv
     
-    encryptedRemoteOutputStream <- 
-      Stream.contramap _encrypt remoteOutputStream
-
-    decryptedRemoteInputStream <-
-      Stream.map _decrypt remoteInputStream
+    _headerBlock <- _decrypt <$> readExactly (fromIntegral _PacketSize)
+                          remoteInputStream
     
-    _headerBlock <- readExactly (fromIntegral _PacketSize)
-                          decryptedRemoteInputStream
-
     _clientRequest <- 
       case eitherResult - parse requestParser _headerBlock of
         Left err -> throwIO - ParseException err
@@ -300,27 +305,20 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             (targetInputStream, targetOutputStream) <- 
               socketToStreams _targetSocket
 
-            targetOutputStream <- debugOutputBS "RO:" Stream.stderr 
+            targetInputBlockStream <- blockStream id targetInputStream
+            targetOutputStreamD <- debugOutputBS "TO:" Stream.stderr 
               targetOutputStream
 
-            targetInputStream <- debugInputBS "RI:" Stream.stderr 
-              targetInputStream
+            targetInputBlockStreamD <- debugInputBS "TI:" Stream.stderr 
+              targetInputBlockStream
             
-            {-decryptedRemoteInputStream <- -}
-                {-takeExactly _PacketSize decryptedRemoteInputStream-}
+            decryptedRemoteInputBlockStream <- blockStream id remoteInputStream
+            decryptedRemoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
+              decryptedRemoteInputBlockStream 
 
-            {-targetInputStream <--}
-                {-takeBytes _PacketSize targetInputStream-}
-
-            decryptedRemoteInputBlockStream <-
-              Stream.map _decrypt =<< takeBytes _PacketSize remoteInputStream
-            
-            decryptedRemoteInputBlockStream <-
-              Stream.map _decrypt =<< takeBytes _PacketSize remoteInputStream
-            
             waitBoth
-              (Stream.connect decryptedRemoteInputStream targetOutputStream)
-              (Stream.connect targetInputStream encryptedRemoteOutputStream)
+              (Stream.connect decryptedRemoteInputBlockStreamD targetOutputStream)
+              (Stream.connect targetInputBlockStream remoteOutputStream)
             
       safeSocketHandler "Target Connection Handler" 
         handleTarget _targetSocket
