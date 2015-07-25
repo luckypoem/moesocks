@@ -22,8 +22,8 @@ import Network.MoeSocks.Constant
 defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig
   {
-    _server = "localhost"
-  , _serverPort = 1190
+    _remote= "localhost"
+  , _remotePort = 1190
   , _local = "0.0.0.0"
   , _localPort = 1090
   , _password = "moesocks"

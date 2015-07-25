@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Network.MoeSocks.Type where
 
@@ -8,6 +9,8 @@ import Control.Lens
 import Data.Word
 import Data.ByteString (ByteString)
 import Data.Text (Text)
+import Data.Aeson
+import GHC.Generics
 
 data ClientGreeting = ClientGreeting
   {
@@ -42,17 +45,19 @@ makeLenses ''ClientRequest
  
 data MoeConfig = MoeConfig
   {
-    _server :: Text
-  , _serverPort :: Int
+    _remote :: Text
+  , _remotePort :: Int
   , _local :: Text
   , _localPort :: Int
   , _password :: Text
   , _method :: Text
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+
+instance FromJSON MoeConfig
+instance ToJSON MoeConfig
 
 makeLenses ''MoeConfig
-
 
 data RunningMode = ServerMode | ClientMode | DebugMode
       deriving (Show, Eq)
@@ -60,7 +65,7 @@ data RunningMode = ServerMode | ClientMode | DebugMode
 data MoeOptions = MoeOptions
   {
     _runningMode :: RunningMode
-  , _configFile :: String
+  , _configFile :: Text
   }
   deriving (Show, Eq)
 

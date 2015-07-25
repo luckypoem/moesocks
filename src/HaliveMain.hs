@@ -11,6 +11,7 @@ import Air.Env hiding ((.), has, take, puts)
 import Network.MoeSocks.Type
 import Network.MoeSocks.App
 import Network.MoeSocks.Config
+import Network.MoeSocks.OptionParser
 
 import Data.ByteString.Lens
 import System.Random

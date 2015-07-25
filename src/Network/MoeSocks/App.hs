@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Network.MoeSocks.App where
 
@@ -22,9 +23,6 @@ import Data.Word
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as LB
 import Data.ByteString (ByteString)
-import Data.Binary
-import Data.Binary.Put
-import Data.Binary.Get
 import Data.Monoid
 import Control.Concurrent
 import System.IO.Unsafe
@@ -33,6 +31,7 @@ import qualified Data.ByteString.Builder.Extra as BE
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import qualified Data.Text.Strict.Lens as TS
 import Data.Text.Lens
 
@@ -50,8 +49,10 @@ import Data.Maybe
 
 import Options.Applicative hiding (Parser)
 import qualified Options.Applicative as O
+{-import Data.Aeson.Lens-}
+import Data.Aeson
 
-
+import qualified Data.HashMap.Strict as H
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
@@ -93,7 +94,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
         _remoteSocket <- socket AF_INET Stream defaultProtocol
         
         withSocket _remoteSocket - \_remoteSocket -> do
-          tryAddr (config ^. server) (config ^. serverPort) - \_remoteAddr -> do
+          tryAddr (config ^. remote) (config ^. remotePort) - \_remoteAddr -> do
             connect _remoteSocket _remoteAddr
 
             let handleLocal _remoteSocket = do
@@ -219,50 +220,78 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
       safeSocketHandler "Target Connection Handler" 
         handleTarget _targetSocket
 
+parseConfig :: Text -> IO (Maybe MoeConfig)
+parseConfig aConfigFile = do
+  _configFile <- TIO.readFile - aConfigFile ^. _Text
+
+  let _v = decodeStrict - review TS.utf8 _configFile :: Maybe Value
+  let fixConfig :: Value -> Value
+      fixConfig (Object _obj) =
+          Object - 
+            _obj & H.toList & over (mapped . _1) (T.cons '_')  & H.fromList
+      fixConfig _ = Null
+
+  
+  let 
+      _maybeConfig = (_v >>= decode . encode . fixConfig)
+
+  case _maybeConfig of
+    Nothing -> do
+      pute "Failed to parse configuration file"
+      pute "Example: "
+      pute - show - encode defaultMoeConfig
+      
+      pure Nothing
+    _config -> do
+      pure - _config 
+
 moeApp:: MoeOptions -> IO ()
 moeApp options = do
   puts - "Options: " <> show options
+
+  maybeConfig <- parseConfig - options ^. configFile 
   
-  config <- pure defaultMoeConfig
+  forM_ maybeConfig - \config -> do
+    puts - show config
 
-  tryAddr (config ^. local) (config ^. localPort) - \_localAddr -> do
-    puts - "localAddr: " <> show _localAddr
+    tryAddr (config ^. local) (config ^. localPort) - \_localAddr -> do
+      puts - "localAddr: " <> show _localAddr
 
-    localSocket <- socket AF_INET Stream defaultProtocol
-    setSocketOption localSocket ReuseAddr 1
-    bindSocket localSocket _localAddr
+      localSocket <- socket AF_INET Stream defaultProtocol
+      setSocketOption localSocket ReuseAddr 1
+      bindSocket localSocket _localAddr
 
-    listen localSocket 1
+      listen localSocket 1
 
-    let handleLocal _socket = 
-          accept _socket >>= 
-            fork . localRequestHandler config
-
-        socksServerLoop = 
-          forever . safeSocketHandler "Local Connection Socket" handleLocal
-
-    
-    tryAddr (config ^. server) (config ^. serverPort) - \_remoteAddr -> do
-      puts - "remoteAddr: " <> show _remoteAddr
-
-      remoteSocket <- socket AF_INET Stream defaultProtocol
-      setSocketOption remoteSocket ReuseAddr 1
-      bindSocket remoteSocket _remoteAddr
-      listen remoteSocket 1
-
-      let handleRemote _socket = 
+      let handleLocal _socket = 
             accept _socket >>= 
-              fork . remoteRequestHandler config
+              fork . localRequestHandler config
 
-          remoteServerLoop = 
-            forever . 
-            safeSocketHandler "Remote Connection Socket" handleRemote
+          socksServerLoop = 
+            forever . safeSocketHandler "Local Connection Socket" handleLocal
+
       
-      catchAll - do
-        safeSocketHandler "Local Socket" (\_localSocket ->
-          safeSocketHandler "Remote Socket" (\_remoteSocket ->
-            waitBoth 
-              (socksServerLoop _localSocket) 
-              (remoteServerLoop _remoteSocket)
-              ) remoteSocket) localSocket
+      tryAddr (config ^. remote) (config ^. remotePort) - \_remoteAddr -> do
+        puts - "remoteAddr: " <> show _remoteAddr
+
+        remoteSocket <- socket AF_INET Stream defaultProtocol
+        setSocketOption remoteSocket ReuseAddr 1
+        bindSocket remoteSocket _remoteAddr
+        listen remoteSocket 1
+
+        let handleRemote _socket = 
+              accept _socket >>= 
+                fork . remoteRequestHandler config
+
+            remoteServerLoop = 
+              forever . 
+              safeSocketHandler "Remote Connection Socket" handleRemote
+        
+        catchAll - do
+          safeSocketHandler "Local Socket" (\_localSocket ->
+            safeSocketHandler "Remote Socket" (\_remoteSocket ->
+              waitBoth 
+                (socksServerLoop _localSocket) 
+                (remoteServerLoop _remoteSocket)
+                ) remoteSocket) localSocket
 
