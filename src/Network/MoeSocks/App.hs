@@ -53,10 +53,57 @@ import Options.Applicative hiding (Parser)
 import qualified Options.Applicative as O
 {-import Data.Aeson.Lens-}
 import Data.Aeson
+import Control.Monad.IO.Class
 
 import qualified Data.HashMap.Strict as H
 
+blockConnectForSize :: Int -> Stream.InputStream ByteString -> 
+                  Stream.OutputStream ByteString -> IO ()
+blockConnectForSize s p q = loop mempty
+  where
+    loop b = do
+        m <- Stream.read p
+        case m of
+          Nothing -> do
+            Stream.write (Just b) q
+            Stream.write Nothing q
+          Just x -> do
+            let combined = b <> x
+            if S.length combined <= s
+              then do
+                loop combined
+              else do
+                Stream.write (Just - S.take s combined) q
+                loop - S.drop s combined
+                
+blockConnect :: Stream.InputStream ByteString -> 
+                  Stream.OutputStream ByteString -> IO ()
+blockConnect = blockConnectForSize - fromIntegral _PacketSize
 
+blockGeneratorForSize :: Int -> Stream.InputStream ByteString -> 
+                    Stream.Generator ByteString ()
+blockGeneratorForSize s p = loop mempty
+  where
+    loop :: ByteString -> Stream.Generator ByteString ()
+    loop b = do
+        m <- liftIO - Stream.read p
+        case m of
+          Nothing -> do
+            Stream.yield b
+
+          Just x -> do
+            let combined = b <> x
+            if S.length combined <= s
+              then do
+                loop combined
+              else do
+                Stream.yield - S.take s combined
+                loop - S.drop s combined
+                            
+blockGenerator :: Stream.InputStream ByteString -> 
+                    Stream.Generator ByteString ()
+blockGenerator = blockGeneratorForSize (fromIntegral _PacketSize)
+                  
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
 
@@ -66,8 +113,6 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
   (inputStream, outputStream) <- socketToStreams aSocket
 
-  inputStream <- debugInputBS "LI:" Stream.stderr inputStream
-  outputStream <- debugOutputBS "LO:" Stream.stderr outputStream
 
   let socksVersion = 5
       socksHeader = word8 socksVersion
@@ -138,22 +183,35 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   encryptedRemoteOutputStream <- 
                     Stream.contramap _encrypt remoteOutputStream
 
-                  decryptedRemoteInputStream <-
-                    Stream.map _decrypt remoteInputStream
 
                   let 
                       _header = requestBuilder conn
                       _headerBlock = clamp _PacketSize -
                                       builder_To_ByteString _header
 
-                  puts - "headerStr______: " <> showBytes  _headerBlock
+                  {-puts - "headerStr______: " <> showBytes  _headerBlock-}
 
                   Stream.write (Just _headerBlock) -
                     encryptedRemoteOutputStream
 
+                  inputBlockStream <- pure inputStream
+                  
+                  inputStreamDebug <- debugInputBS "LI:" Stream.stderr inputStream
+                  outputStreamDebug <- debugOutputBS "LO:" Stream.stderr outputStream
+                  
+                  inputBlockStreamDebug <- debugInputBS "LIB:" Stream.stderr 
+                                    inputBlockStream
+
+                  decryptedRemoteInputStream <-
+                    Stream.map _decrypt remoteInputStream
+                  
+                  decryptedRemoteInputBlockStream <-
+                    Stream.map _decrypt =<<
+                      takeBytes _PacketSize remoteInputStream
+
                   waitBoth
-                    (Stream.connect inputStream encryptedRemoteOutputStream)
-                    (Stream.connect decryptedRemoteInputStream outputStream)
+                    (Stream.connect inputBlockStreamDebug encryptedRemoteOutputStream)
+                    (Stream.connect decryptedRemoteInputStream outputStreamDebug)
                   
 
             safeSocketHandler "Local Request Handler" 
@@ -248,12 +306,18 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             targetInputStream <- debugInputBS "RI:" Stream.stderr 
               targetInputStream
             
-            decryptedRemoteInputStream <- 
-                takeExactly _PacketSize decryptedRemoteInputStream
+            {-decryptedRemoteInputStream <- -}
+                {-takeExactly _PacketSize decryptedRemoteInputStream-}
 
-            targetInputStream <-
-                takeExactly _PacketSize targetInputStream
+            {-targetInputStream <--}
+                {-takeBytes _PacketSize targetInputStream-}
 
+            decryptedRemoteInputBlockStream <-
+              Stream.map _decrypt =<< takeBytes _PacketSize remoteInputStream
+            
+            decryptedRemoteInputBlockStream <-
+              Stream.map _decrypt =<< takeBytes _PacketSize remoteInputStream
+            
             waitBoth
               (Stream.connect decryptedRemoteInputStream targetOutputStream)
               (Stream.connect targetInputStream encryptedRemoteOutputStream)
