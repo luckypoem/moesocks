@@ -19,6 +19,8 @@ import Network.MoeSocks.Type
 import Network.MoeSocks.Constant
 
 
+import Network.MoeSocks.Helper
+
 defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig
   {
@@ -36,7 +38,7 @@ aesKey _config =
   let __password = 
         _config ^. password & review TS.utf8 :: ByteString
 
-      _key = S.take _KeySize - __password <> S.pack (replicate _KeySize 0)
+      _key = clamp _KeySize __password 
   in
   initAES _key
 

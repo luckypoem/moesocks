@@ -13,7 +13,7 @@ import System.Posix.Signals
 import Control.Exception
 import System.IO
 import System.IO.Streams.Network
-import qualified System.IO.Streams as S
+import qualified System.IO.Streams as Stream
 import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
@@ -31,7 +31,6 @@ import qualified Data.ByteString.Builder.Extra as BE
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Lens
-
 
 syncLock :: MVar ()
 syncLock = unsafePerformIO - newEmptyMVar
@@ -80,11 +79,11 @@ waitBoth x y = do
   takeMVar xLock 
   killThread yThreadID
 
-pushStream :: (S.OutputStream ByteString) -> B.Builder -> IO ()
+pushStream :: (Stream.OutputStream ByteString) -> B.Builder -> IO ()
 pushStream s b = do
-  _builderStream <- S.builderStream s 
-  S.write (Just b) _builderStream
-  S.write (Just BE.flush) _builderStream
+  _builderStream <- Stream.builderStream s 
+  Stream.write (Just b) _builderStream
+  Stream.write (Just BE.flush) _builderStream
 
 tryAddr :: Text -> Int -> (SockAddr -> IO a) -> IO ()
 tryAddr aHostName aPort f = do
@@ -117,3 +116,6 @@ initSocketForType aSockAddr aSocketType =
 
 initSocket :: SockAddr -> IO Socket 
 initSocket = flip initSocketForType Stream
+
+clamp :: (Integral i) => i -> ByteString -> ByteString
+clamp i x = S.take (fromIntegral i) - x <> S.replicate (fromIntegral i) 0

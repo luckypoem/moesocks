@@ -18,8 +18,8 @@ import System.IO
 import System.IO.Streams.Network
 import qualified System.IO.Streams as Stream
 import System.IO.Streams.Debug
-import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
+import System.IO.Streams.ByteString
 import Data.Word
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as LB
@@ -30,6 +30,7 @@ import System.IO.Unsafe
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 
+import Data.Attoparsec.ByteString
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -54,6 +55,10 @@ import qualified Options.Applicative as O
 import Data.Aeson
 
 import qualified Data.HashMap.Strict as H
+
+
+builder_To_ByteString :: B.Builder -> ByteString
+builder_To_ByteString = LB.toStrict . B.toLazyByteString
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
@@ -110,7 +115,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   push _Request_Granted 
                   push _ReservedByte
 
-                  write - LB.toStrict - B.toLazyByteString -
+                  write - builder_To_ByteString -
                       addressTypeBuilder (conn ^. addressType)
 
                   traverseOf both push - conn ^. portNumber
@@ -138,8 +143,13 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
                   let 
                       _header = requestBuilder conn
+                      _headerBlock = clamp _PacketSize -
+                                      builder_To_ByteString _header
 
-                  pushStream encryptedRemoteOutputStream _header
+                  puts - "headerStr______: " <> showBytes  _headerBlock
+
+                  Stream.write (Just _headerBlock) -
+                    encryptedRemoteOutputStream
 
                   waitBoth
                     (Stream.connect inputStream encryptedRemoteOutputStream)
@@ -171,8 +181,13 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
     decryptedRemoteInputStream <-
       Stream.map _decrypt remoteInputStream
     
-    _clientRequest <- parseFromStream requestParser
-                            decryptedRemoteInputStream
+    _headerBlock <- readExactly (fromIntegral _PacketSize)
+                          decryptedRemoteInputStream
+
+    _clientRequest <- 
+      case eitherResult - parse requestParser _headerBlock of
+        Left err -> throwIO - ParseException err
+        Right r -> pure r
     
     let
         connectTarget :: ClientRequest -> IO Socket
@@ -233,6 +248,12 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             targetInputStream <- debugInputBS "RI:" Stream.stderr 
               targetInputStream
             
+            decryptedRemoteInputStream <- 
+                takeExactly _PacketSize decryptedRemoteInputStream
+
+            targetInputStream <-
+                takeExactly _PacketSize targetInputStream
+
             waitBoth
               (Stream.connect decryptedRemoteInputStream targetOutputStream)
               (Stream.connect targetInputStream encryptedRemoteOutputStream)

@@ -24,7 +24,7 @@ import qualified Options.Applicative as O
 optionParser :: O.Parser MoeOptions
 optionParser = 
   let _mode = strOption -
-                      short 'm'
+                      short 'r'
                   <>  long "mode"
                   <>  metavar "MODE"
                   <>  help "local | remote"
