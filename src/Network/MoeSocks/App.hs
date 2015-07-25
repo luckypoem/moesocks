@@ -61,8 +61,8 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
   (inputStream, outputStream) <- socketToStreams aSocket
 
-  inputStream <- debugInputBS "LI:\n" Stream.stderr inputStream
-  outputStream <- debugOutputBS "LO:\n" Stream.stderr outputStream
+  inputStream <- debugInputBS "LI:" Stream.stderr inputStream
+  outputStream <- debugOutputBS "LO:" Stream.stderr outputStream
 
   let socksVersion = 5
       socksHeader = word8 socksVersion
@@ -227,10 +227,10 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             (targetInputStream, targetOutputStream) <- 
               socketToStreams _targetSocket
 
-            targetOutputStream <- debugOutputBS "RO:\n" Stream.stderr 
+            targetOutputStream <- debugOutputBS "RO:" Stream.stderr 
               targetOutputStream
 
-            targetInputStream <- debugInputBS "RI:\n" Stream.stderr 
+            targetInputStream <- debugInputBS "RI:" Stream.stderr 
               targetInputStream
             
             waitBoth
