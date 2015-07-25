@@ -35,7 +35,6 @@ executable moesocks
                       , cipher-aes
                       , optparse-applicative
                       , aeson
-                      , lens-aeson
                       , unordered-containers
 
   hs-source-dirs:      src
