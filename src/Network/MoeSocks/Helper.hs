@@ -86,15 +86,21 @@ pushStream s b = do
   Stream.write (Just BE.flush) _builderStream
 
 tryAddr :: Text -> Int -> (SockAddr -> IO a) -> IO ()
-tryAddr aHostName aPort f = do
-  addrInfo <- getAddrInfo Nothing 
-                    (Just - aHostName ^. _Text) 
-                    (Just - show aPort)
+tryAddr aHostName aPort = tryAddr' (Just aHostName) (Just aPort) 
+                    (Just - defaultHints { addrSocketType = Stream })
+
+tryAddr' :: Maybe Text -> Maybe Int -> Maybe AddrInfo -> 
+              (SockAddr -> IO a) -> IO ()
+tryAddr' aHostName aPort aHint f = do
+  addrInfo <- getAddrInfo 
+                    aHint
+                    (fmap (view _Text) aHostName) 
+                    (fmap show aPort)
   
   puts - show addrInfo
   let maybeAddr = addrInfo ^? traverse . to addrAddress
   case maybeAddr of 
-    Nothing -> pute - "Can not resolve: " <> aHostName ^. _Text
+    Nothing -> pute - "Can not resolve: " <> show aHostName
     Just _addr -> () <$ f _addr
 
 
@@ -107,13 +113,22 @@ withSocket aSocket f = do
   sClose aSocket
 
 
+sockAddr_To_AddrFamily :: SockAddr -> Family
+sockAddr_To_AddrFamily = f where
+    f (SockAddrInet  {}) = AF_INET
+    f (SockAddrInet6 {}) = AF_INET6
+    f (SockAddrUnix  {}) = AF_UNIX
+
+sockAddr_To_Port :: SockAddr -> String
+sockAddr_To_Port = f where
+    f (SockAddrInet  p _) = show p
+    f (SockAddrInet6 p _ _ _) = show p
+    f (SockAddrUnix {}) = ""
+
 initSocketForType :: SockAddr -> SocketType -> IO Socket 
 initSocketForType aSockAddr aSocketType = 
-    socket (fam aSockAddr) aSocketType defaultProtocol
-  where
-    fam (SockAddrInet  {}) = AF_INET
-    fam (SockAddrInet6 {}) = AF_INET6
-    fam (SockAddrUnix  {}) = AF_UNIX
+    socket (sockAddr_To_AddrFamily aSockAddr) aSocketType defaultProtocol
+
 
 initSocket :: SockAddr -> IO Socket 
 initSocket = flip initSocketForType Stream

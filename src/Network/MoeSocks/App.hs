@@ -231,7 +231,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
     {-puts - "clientRequest: " <> show _clientRequest-}
 
     let
-        connectTarget :: ClientRequest -> IO Socket
+        connectTarget :: ClientRequest -> IO (Maybe Socket)
         connectTarget _clientRequest = do
 
           let portNumber16 = fromWord8 - toListOf both 
@@ -265,19 +265,40 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               connectionType_To_SocketType TCP_IP_port_binding = NoSocketType
               connectionType_To_SocketType UDP_port = Datagram
                  
-              
-
-          _targetSocket <- initSocketForType _socketAddr -
-                              connectionType_To_SocketType -
+              _socketType = connectionType_To_SocketType -
                               _clientRequest ^. connectionType
+
           
-          puts - "Connecting Target: " <> show _socketAddr
-          connect _targetSocket _socketAddr
-          pure - _targetSocket
+          _targetSocket <- initSocketForType _socketAddr - _socketType
+
+          let hints = defaultHints
+                        {
+                          addrSocketType = _socketType
+                        }
+          
+              _hostName = P.takeWhile (/= ':') - show - _socketAddr
+              _port = sockAddr_To_Port _socketAddr
+
+          {-puts - "HostName: " <> _hostName-}
+          {-puts - "Port: " <> _port-}
+
+          _maybeAddrInfo <- fmap (preview traverse) - getAddrInfo 
+                        Nothing 
+                        (Just - _hostName)
+                        (Just - _port)
+
+          
+          puts - "Connecting Target: " <> show _maybeAddrInfo
+
+          case _maybeAddrInfo of
+            Nothing -> return Nothing
+            Just _addrInfo -> do
+                                connect _targetSocket - addrAddress _addrInfo
+                                pure - Just _targetSocket
 
     _targetSocket <- connectTarget _clientRequest
     
-    withSocket _targetSocket - \_targetSocket -> do
+    forM_ _targetSocket - flip withSocket - \_targetSocket -> do
       let 
           handleTarget _targetSocket = do
             (targetInputStream, targetOutputStream) <- 
