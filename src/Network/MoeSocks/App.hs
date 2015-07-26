@@ -88,7 +88,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
     if not - _No_authentication `elem` (r ^. authenticationMethods)
       then do
         pute - "Client does not support 0x00: No authentication method"
-        sClose aSocket
+        close aSocket
 
       else do
         pushStream outputStream - B.word8 socksVersion
@@ -232,11 +232,12 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                           addrSocketType = _socketType
                         }
           
-              _hostName = P.takeWhile (/= ':') - show - _socketAddr
+              {-_hostName = sockAddr_To_Host _socketAddr-}
+              _hostName = show - _socketAddr
               _port = sockAddr_To_Port _socketAddr
 
-          {-puts - "HostName: " <> _hostName-}
-          {-puts - "Port: " <> _port-}
+          puts - "HostName: " <> _hostName
+          puts - "Port: " <> _port
 
           _addrInfoList <-  getAddrInfo 
                         Nothing 
@@ -244,7 +245,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                         (Just - _port)
 
           let _maybeAddrInfo = preview traverse -
-                                  filter is_Inet _addrInfoList
+                                filter (is AF_INET . addrFamily) _addrInfoList
           
           puts - "Connecting Target: " <> show _maybeAddrInfo
 
@@ -331,12 +332,15 @@ moeApp options = do
 
           listen localSocket 1
 
-          let handleLocal _socket = 
-                accept _socket >>= 
-                  fork . localRequestHandler config
-
+          let handleLocal _socket = do
+                r@(_newSocket, _newSocketAddr) <- accept _socket
+                fork - catchAll - onException 
+                          (localRequestHandler config r) - do
+                              pute "local onException" 
+                              close _newSocket
               localLoop = 
-                forever . safeSocketHandler "Local Connection" handleLocal
+                forever . 
+                safeSocketHandler "Local Connection" handleLocal
 
           pure (localSocket, localLoop)
 
@@ -349,9 +353,12 @@ moeApp options = do
           bindSocket remoteSocket _remoteAddr
           listen remoteSocket 1
 
-          let handleRemote _socket = 
-                accept _socket >>= 
-                  fork . remoteRequestHandler config
+          let handleRemote _socket = do
+                r@(_newSocket, _newSocketAddr) <- accept _socket
+                fork - catchAll - onException 
+                          (remoteRequestHandler config r) - do
+                              pute "remote onException" 
+                              close _newSocket
 
               remoteLoop = 
                 forever . 

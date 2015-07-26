@@ -4,6 +4,7 @@ module Network.MoeSocks.Helper where
 
 import Control.Lens
 import Prelude ((.))
+import qualified Prelude as P
 import Air.Env hiding ((.), has, take, puts) 
 
 import Network.Socket
@@ -68,6 +69,11 @@ catchAll :: IO a -> IO ()
 catchAll io = catch (() <$ io) - \e -> 
                 pute - "CatcheAll: " <> show (e :: SomeException)
 
+catchIO:: IO a -> IO ()
+catchIO io = catch (() <$ io) - \e ->
+                pute - "Catch IO: " <> show (e :: IOException)
+                
+
 waitBoth :: IO a -> IO b -> IO ()
 waitBoth x y = do
   (xThreadID, xLock) <- do
@@ -129,13 +135,11 @@ sockAddr_To_Port = f where
     f (SockAddrInet6 p _ _ _) = show p
     f (SockAddrUnix {}) = ""
 
-is_Inet :: AddrInfo -> Bool
-is_Inet x =
-  let f = addrFamily x
-  in
-  case f of
-    AF_INET -> True
-    _ -> False
+sockAddr_To_Host :: SockAddr -> String
+sockAddr_To_Host = f where
+    f s@(SockAddrInet  _ _) = P.takeWhile (/= ':') - show s
+    f s@(SockAddrInet6 _ _ _ _) = show s
+    f (SockAddrUnix s) = s
 
 initSocketForType :: SockAddr -> SocketType -> IO Socket 
 initSocketForType aSockAddr aSocketType = 
