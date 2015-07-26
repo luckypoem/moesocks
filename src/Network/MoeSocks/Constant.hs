@@ -18,6 +18,8 @@ _KeySize = 32
 _BlockSize :: Int
 _BlockSize = 16
 
+-- packetSize should be less then 256
+-- since only one byte, the first, is holding the packetSize 
 _PacketSize :: Int64
 _PacketSize = 256
 
