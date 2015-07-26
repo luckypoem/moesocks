@@ -19,7 +19,7 @@ _BlockSize :: Int
 _BlockSize = 16
 
 _PacketSize :: Int64
-_PacketSize = 4096
+_PacketSize = 1024
 
 _SpaceCode :: Word8
 _SpaceCode = 32
