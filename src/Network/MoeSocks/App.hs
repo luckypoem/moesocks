@@ -232,8 +232,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                           addrSocketType = _socketType
                         }
           
-              {-_hostName = sockAddr_To_Host _socketAddr-}
-              _hostName = show - _socketAddr
+              _hostName = sockAddr_To_Host _socketAddr
               _port = sockAddr_To_Port _socketAddr
 
           puts - "HostName: " <> _hostName
