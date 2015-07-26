@@ -28,7 +28,7 @@ nemesis = do
 
   desc "remote"
   task "remote" - do
-    sh "cabal run -- -m remote -c dev.json +RTS -N2"
+    sh "cabal run -- -m remote -c dev.json +RTS -N1"
   
   desc "local"
   task "local" - do
