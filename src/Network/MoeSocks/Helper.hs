@@ -28,11 +28,11 @@ import qualified Data.ByteString.Lazy as LB
 import Data.Text (Text)
 import Data.Text.Lens
 import Control.Monad.IO.Class
-import Control.Concurrent
 
 -- backports
 --
 infixr 0 -
+(-) :: (a -> b) -> a -> b
 (-) = ($)
 
 _Debug :: Bool
