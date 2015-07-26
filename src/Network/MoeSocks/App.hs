@@ -133,8 +133,8 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
             connect _remoteSocket _remoteAddr
 
             _localPeerAddr <- getPeerName aSocket
-            _localSocketAddr <- getSocketName aSocket
-            _remotePeerAddr <- getPeerName _remoteSocket
+            {-_localSocketAddr <- getSocketName aSocket-}
+            {-_remotePeerAddr <- getPeerName _remoteSocket-}
             {-_remoteSocketAddr <- getSocketName _remoteSocket-}
             let _clientAddr = addressType_To_SockAddr _clientRequest
 
@@ -143,8 +143,8 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                       concat - L.intersperse " -> " - map show
                       [ 
                         _localPeerAddr
-                      , _localSocketAddr
-                      , _remotePeerAddr
+                      {-, _localSocketAddr-}
+                      {-, _remotePeerAddr-}
                       {-, _remoteSocketAddr-}
                       , _clientAddr
                       ]
@@ -292,7 +292,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
     
     forM_ _targetSocket - flip withSocket - \_targetSocket -> do
       _remotePeerAddr <- getPeerName aSocket
-      _remoteSocketAddr <- getSocketName aSocket
+      {-_remoteSocketAddr <- getSocketName aSocket-}
       _targetPeerAddr <- getPeerName _targetSocket
       {-_targetSocketAddr <- getSocketName _targetSocket-}
 
@@ -301,7 +301,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                 concat - L.intersperse " -> " - map show
                 [ 
                   _remotePeerAddr
-                , _remoteSocketAddr
+                {-, _remoteSocketAddr-}
                 , _targetPeerAddr
                 {-, _targetSocketAddr-}
                 ]
