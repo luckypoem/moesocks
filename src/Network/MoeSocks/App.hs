@@ -124,7 +124,8 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
         _remoteSocket <- socket AF_INET Stream defaultProtocol
         
         withSocket _remoteSocket - \_remoteSocket -> do
-          tryAddr (config ^. remote) (config ^. remotePort) - \_remoteAddr -> do
+          let _c = config
+          tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
             connect _remoteSocket _remoteAddr
 
             _localPeerAddr <- getPeerName aSocket
@@ -253,7 +254,6 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                         (Just - _port)
 
           let _maybeAddrInfo = preview traverse -
-                                {-filter (is AF_INET . addrFamily) _addrInfoList-}
                                 _addrInfoList
           
           case _maybeAddrInfo of
