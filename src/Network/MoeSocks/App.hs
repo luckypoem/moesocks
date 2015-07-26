@@ -186,9 +186,6 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   inputBlockStream <- tokenizeStream _PacketSize
                                       _encrypt inputStream
                   
-                  inputBlockStreamD <- debugInputBS "LI:" Stream.stderr 
-                                    inputBlockStream
-
                   remoteInputBlockStream <- detokenizeStream _PacketSize
                                             _decrypt remoteInputStream
 
@@ -293,17 +290,8 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             targetInputBlockStream <- tokenizeStream _PacketSize
                                       _encrypt targetInputStream
             
-            targetOutputStreamD <- debugOutputBS "TO:" Stream.stderr 
-              targetOutputStream
-
-            targetInputBlockStreamD <- debugInputBS "TI:" Stream.stderr 
-              targetInputBlockStream
-            
             remoteInputBlockStream <- detokenizeStream _PacketSize
                                       _decrypt remoteInputStream
-
-            remoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
-              remoteInputBlockStream 
 
             waitBoth
               (Stream.connect remoteInputBlockStream targetOutputStream)
