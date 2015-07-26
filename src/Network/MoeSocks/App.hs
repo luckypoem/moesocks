@@ -38,6 +38,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Strict.Lens as TS
 import Data.Text.Lens
+import qualified Data.List as L
 
 import Network.MoeSocks.Config
 import Network.MoeSocks.Helper
@@ -58,6 +59,31 @@ import Data.Aeson
 import Control.Monad.IO.Class
 
 import qualified Data.HashMap.Strict as H
+
+
+addressType_To_SockAddr :: ClientRequest -> SockAddr
+addressType_To_SockAddr aClientRequest =
+  let portNumber16 = fromWord8 - toListOf both 
+                      (aClientRequest ^. portNumber) :: Word16
+  in
+  case aClientRequest ^. addressType of
+    IPv4_address _address -> SockAddrInet 
+                              (fromIntegral portNumber16)
+                              (fromWord8 - reverse _address)
+
+    Domain_name x -> SockAddrUnix -  x ^. TS.utf8 . _Text
+    IPv6_address xs -> 
+                        let rs = reverse - xs
+                        in
+                        SockAddrInet6 
+                          (fromIntegral portNumber16)
+                          0
+                          ( fromWord8 - P.take 4 - rs
+                          , fromWord8 - P.drop 4 - P.take 4 - rs
+                          , fromWord8 - P.drop 8 - P.take 4 - rs
+                          , fromWord8 - P.drop 12 - rs
+                          )
+                          0
 
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
@@ -95,7 +121,9 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                                 <> B.word8 _No_authentication
 
 
-        conn <- parseFromStream connectionParser inputStream
+        _clientRequest <- parseFromStream connectionParser inputStream
+
+        let conn = _clientRequest
         {-puts - "Connection: " <> show conn-}
 
         _remoteSocket <- socket AF_INET Stream defaultProtocol
@@ -104,7 +132,23 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
           tryAddr (config ^. remote) (config ^. remotePort) - \_remoteAddr -> do
             connect _remoteSocket _remoteAddr
 
-            puts - "L: " <> show aSockAddr <> " -> " <> show _remoteAddr
+            _localPeerAddr <- getPeerName aSocket
+            _localSocketAddr <- getSocketName aSocket
+            _remotePeerAddr <- getPeerName _remoteSocket
+            {-_remoteSocketAddr <- getSocketName _remoteSocket-}
+            let _clientAddr = addressType_To_SockAddr _clientRequest
+
+            puts - "L: " <> 
+                    (
+                      concat - L.intersperse " -> " - map show
+                      [ 
+                        _localPeerAddr
+                      , _localSocketAddr
+                      , _remotePeerAddr
+                      {-, _remoteSocketAddr-}
+                      , _clientAddr
+                      ]
+                    )
 
             let handleLocal _remoteSocket = do
                   let
@@ -198,27 +242,6 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
           
           {-puts - "clientReauest portNumber: " <> show portNumber16-}
 
-          let addressType_To_SockAddr :: ClientRequest -> SockAddr
-              addressType_To_SockAddr aClientRequest =
-                case aClientRequest ^. addressType of
-                  IPv4_address _address -> SockAddrInet 
-                                            (fromIntegral portNumber16)
-                                            (fromWord8 - reverse _address)
-
-                  Domain_name x -> SockAddrUnix -  x ^. TS.utf8 . _Text
-                  IPv6_address xs -> 
-                                      let rs = reverse - xs
-                                      in
-                                      SockAddrInet6 
-                                        (fromIntegral portNumber16)
-                                        0
-                                        ( fromWord8 - P.take 4 - rs
-                                        , fromWord8 - P.drop 4 - P.take 4 - rs
-                                        , fromWord8 - P.drop 8 - P.take 4 - rs
-                                        , fromWord8 - P.drop 12 - rs
-                                        )
-                                        0
-          
           let _socketAddr = addressType_To_SockAddr _clientRequest
           
               connectionType_To_SocketType :: ConnectionType -> SocketType
@@ -263,14 +286,26 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
                 connect _targetSocket - addrAddress _addrInfo
 
-                puts - "R: " <> show aSockAddr <> " -> " <> 
-                          show (addrAddress _addrInfo)
-
                 pure - Just _targetSocket
 
     _targetSocket <- connectTarget _clientRequest
     
     forM_ _targetSocket - flip withSocket - \_targetSocket -> do
+      _remotePeerAddr <- getPeerName aSocket
+      _remoteSocketAddr <- getSocketName aSocket
+      _targetPeerAddr <- getPeerName _targetSocket
+      {-_targetSocketAddr <- getSocketName _targetSocket-}
+
+      puts - "R: " <> 
+              (
+                concat - L.intersperse " -> " - map show
+                [ 
+                  _remotePeerAddr
+                , _remoteSocketAddr
+                , _targetPeerAddr
+                {-, _targetSocketAddr-}
+                ]
+              )
       let 
           handleTarget _targetSocket = do
             (targetInputStream, targetOutputStream) <- 

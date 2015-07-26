@@ -203,4 +203,3 @@ detokenizeStream n f input = Stream.map (decodeToken . f) =<<
 
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
-
