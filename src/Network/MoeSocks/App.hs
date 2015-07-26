@@ -205,7 +205,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
                   Domain_name x -> SockAddrUnix -  x ^. TS.utf8 . _Text
                   IPv6_address xs -> 
-                                      let rs = xs
+                                      let rs = reverse - xs
                                       in
                                       SockAddrInet6 
                                         (fromIntegral portNumber16)
