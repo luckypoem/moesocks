@@ -157,18 +157,20 @@ initSocket = flip initSocketForType Stream
 clamp :: (Integral i) => i -> ByteString -> ByteString
 clamp i x = S.take (fromIntegral i) - x <> S.replicate (fromIntegral i) 0
 
--- first bit is length
+-- first 2 bit is length
 splitTokens :: Int -> ByteString -> [ByteString]
 splitTokens l x  
   | l <= 1 = [x]
   | x == mempty = []
   | otherwise = 
       let 
-          byteLength = l + (-1)
+          byteLength = l + (-2)
           (y, z) = S.splitAt byteLength x
-          length_y_byte = fromIntegral - S.length y
+          (bit_1, bit_2) = S.length y `divMod` 256
+          _bytes = S.cons (fromIntegral bit_1) - 
+                    S.cons (fromIntegral bit_2) y
       in
-      clamp l (S.cons length_y_byte y) : splitTokens l z
+      clamp l _bytes : splitTokens l z
 
 tokenizeStream :: (Integral n) => n -> (ByteString -> ByteString) ->
                     InputStream ByteString -> IO (InputStream ByteString)
@@ -179,7 +181,12 @@ tokenizeStream n f input =
 decodeToken :: ByteString -> ByteString
 decodeToken x
   | x == mempty = mempty
-  | otherwise = S.take (fromIntegral - S.head x) - S.tail x
+  | otherwise = 
+      let bit_1 = fromIntegral - S.head x :: Int
+          bit_2 = fromIntegral - S.head - S.tail x
+          _left = S.drop 2 x
+      in
+      S.take (bit_1 * 256 + bit_2) _left
 
 chunkStream :: (Integral n) => n -> InputStream ByteString -> 
                         IO (InputStream ByteString)

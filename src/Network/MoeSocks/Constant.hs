@@ -18,10 +18,8 @@ _KeySize = 32
 _BlockSize :: Int
 _BlockSize = 16
 
--- packetSize should be less then 256
--- since there is only one byte, the first, that is holding the packetSize 
 _PacketSize :: Int64
-_PacketSize = 256
+_PacketSize = 4096
 
 _SpaceCode :: Word8
 _SpaceCode = 32
