@@ -59,11 +59,13 @@ showBytes = show . S.unpack
 fromWord8 :: forall t. Binary t => [Word8] -> t
 fromWord8 = decode . runPut . mapM_ put
       
-safeSocketHandler :: String -> (Socket -> IO a) -> Socket -> IO a
-safeSocketHandler aID f aSocket =
-  catch (f aSocket) - \e -> do
+withSocket :: Socket -> (Socket -> IO a) -> IO a
+withSocket x f = bracket (pure x) sClose f
+
+logSocket :: String -> (Socket -> IO a) -> Socket -> IO a
+logSocket aID f aSocket =
+  catch (withSocket aSocket f) - \e -> do
       pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
-      sClose aSocket
       throw e
 
 catchAll :: IO a -> IO ()
@@ -117,11 +119,6 @@ tryAddr' aHostName aPort aHint f = do
 
 tryParse :: IO a -> IO ()
 tryParse io = flip catch (\e -> puts - show (e :: ParseException)) - () <$ io
-
-withSocket :: Socket -> (Socket -> IO ()) -> IO ()
-withSocket aSocket f = do
-  f aSocket 
-  sClose aSocket
 
 
 sockAddr_To_AddrFamily :: SockAddr -> Family

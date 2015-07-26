@@ -172,7 +172,7 @@ localRequestHandler config (_s, _) = withSocket _s - \aSocket -> do
                     (Stream.connect remoteInputBlockStream outputStream)
                   
 
-            safeSocketHandler "Local Request Handler" 
+            logSocket "Local Request Handler" 
               handleLocal _remoteSocket
 
 
@@ -271,7 +271,7 @@ remoteRequestHandler aConfig (_s, _) = withSocket _s - \aSocket -> do
               (Stream.connect remoteInputBlockStream targetOutputStream)
               (Stream.connect targetInputBlockStream remoteOutputStream)
             
-      safeSocketHandler "Target Connection Handler" 
+      logSocket "Target Connection Handler" 
         handleTarget _targetSocket
 
 parseConfig :: Text -> IO (Maybe MoeConfig)
@@ -320,7 +320,7 @@ moeApp options = do
                               close _newSocket
               localLoop = 
                 forever . 
-                safeSocketHandler "Local Connection" handleLocal
+                logSocket "Local Connection" handleLocal
 
           pure (localSocket, localLoop)
 
@@ -342,7 +342,7 @@ moeApp options = do
 
               remoteLoop = 
                 forever . 
-                safeSocketHandler "Remote Connection" handleRemote
+                logSocket "Remote Connection" handleRemote
 
           pure (remoteSocket, remoteLoop)
 
@@ -355,8 +355,8 @@ moeApp options = do
             tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
               (remoteSocket, remoteLoop) <- remoteApp _remoteAddr
               catchAll - do
-                safeSocketHandler "Local Socket" (\_localSocket ->
-                  safeSocketHandler "Remote Socket" (\_remoteSocket ->
+                logSocket "Local Socket" (\_localSocket ->
+                  logSocket "Remote Socket" (\_remoteSocket ->
                     waitBoth 
                       (localLoop _localSocket) 
                       (remoteLoop _remoteSocket)
@@ -368,7 +368,7 @@ moeApp options = do
           tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
             (remoteSocket, remoteLoop) <- remoteApp _remoteAddr
             catchAll - 
-              safeSocketHandler "Remote Socket" remoteLoop remoteSocket
+              logSocket "Remote Socket" remoteLoop remoteSocket
           
         localRun :: IO ()
         localRun = do
@@ -376,7 +376,7 @@ moeApp options = do
           tryAddr (_c ^. local) (_c ^. localPort) - \_localAddr -> do
             (localSocket, localLoop) <- localApp _localAddr
             catchAll - 
-              safeSocketHandler "Local Socket" localLoop localSocket
+              logSocket "Local Socket" localLoop localSocket
 
     case options ^. runningMode of
       DebugMode -> debugRun
