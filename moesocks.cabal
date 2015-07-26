@@ -21,6 +21,7 @@ executable moesocks
   main-is:             Main.hs
   -- other-modules:       
   -- other-extensions:    
+  ghc-options:        -Wall -fno-warn-unused-do-bind
   build-depends:       base -any
                       , lens -any
                       , air -any 

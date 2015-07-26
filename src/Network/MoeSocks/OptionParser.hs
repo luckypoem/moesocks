@@ -9,13 +9,7 @@ import Prelude ((.))
 import Air.Env hiding ((.), has, take, puts) 
 
 import Network.MoeSocks.Type
-import Network.MoeSocks.App
 
-import Data.ByteString.Lens
-import System.Random
-import qualified Prelude as P
-import "cipher-aes" Crypto.Cipher.AES
-import Data.Maybe
 import Data.Text.Lens
 
 import Options.Applicative hiding (Parser)
@@ -42,6 +36,7 @@ optionParser =
         | x `elem` ["server", "remote"] = RemoteMode
         | x `elem` ["client", "local"] = LocalMode
         | x == "debug" = DebugMode
+        | otherwise = DebugMode
   in
 
   MoeOptions <$> fmap parseMode _mode <*> fmap (view packed) _config

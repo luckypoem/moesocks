@@ -11,26 +11,15 @@ import Air.Env hiding ((.), has, take, puts)
 
 import Network.Socket
 import Control.Monad
-import Control.Applicative
-import System.Posix.Signals
 import Control.Exception
-import System.IO
 import System.IO.Streams.Network
 import qualified System.IO.Streams as Stream
-import System.IO.Streams (InputStream, OutputStream)
-import System.IO.Streams.Debug
 import System.IO.Streams.Attoparsec
 import System.IO.Streams.ByteString
-import System.IO.Streams.List
 import Data.Word
 import qualified Data.ByteString as S
-import qualified Data.ByteString.Lazy as LB
-import Data.ByteString (ByteString)
 import Data.Monoid
-import Control.Concurrent
-import System.IO.Unsafe
 import qualified Data.ByteString.Builder as B
-import qualified Data.ByteString.Builder.Extra as BE
 
 import Data.Attoparsec.ByteString
 import Data.Text (Text)
@@ -46,17 +35,12 @@ import Network.MoeSocks.Type
 import Network.MoeSocks.Constant
 import Network.MoeSocks.BuilderAndParser
 
-import Data.ByteString.Lens
 import System.Random
 import qualified Prelude as P
 import "cipher-aes" Crypto.Cipher.AES
-import Data.Maybe
 
-import Options.Applicative hiding (Parser)
-import qualified Options.Applicative as O
 {-import Data.Aeson.Lens-}
 import Data.Aeson
-import Control.Monad.IO.Class
 
 import qualified Data.HashMap.Strict as H
 
@@ -87,9 +71,8 @@ addressType_To_SockAddr aClientRequest =
 
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
-localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
+localRequestHandler config (_s, _) = withSocket _s - \aSocket -> do
   (inputStream, outputStream) <- socketToStreams aSocket
-
 
   let socksVersion = 5
       socksHeader = word8 socksVersion
@@ -199,7 +182,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
 
 remoteRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
-remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
+remoteRequestHandler aConfig (_s, _) = withSocket _s - \aSocket -> do
   (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
 
   tryParse - do
@@ -222,9 +205,6 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
     let
         connectTarget :: ClientRequest -> IO (Maybe Socket)
         connectTarget _clientRequest = do
-          let portNumber16 = fromWord8 - toListOf both 
-                              (_clientRequest ^. portNumber) :: Word16
-          
           let _socketAddr = addressType_To_SockAddr _clientRequest
           
               connectionType_To_SocketType :: ConnectionType -> SocketType
@@ -235,7 +215,6 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               _socketType = connectionType_To_SocketType -
                               _clientRequest ^. connectionType
 
-          
 
           let hints = defaultHints
                         {
@@ -246,7 +225,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               _port = sockAddr_To_Port _socketAddr
 
           _addrInfoList <-  getAddrInfo 
-                        Nothing 
+                        (Just hints)
                         (Just - _hostName)
                         (Just - _port)
 
@@ -310,8 +289,6 @@ parseConfig aConfigFile = do
           Object - 
             _obj & H.toList & over (mapped . _1) (T.cons '_')  & H.fromList
       fixConfig _ = Null
-
-  
   let 
       _maybeConfig = (_v >>= decode . encode . fixConfig)
 
