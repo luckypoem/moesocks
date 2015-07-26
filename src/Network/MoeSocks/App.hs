@@ -185,15 +185,17 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
         Left err -> throwIO - ParseException err
         Right r -> pure r
     
-    {-puts - "clientRequest: " <> show _clientRequest-}
 
     let
         connectTarget :: ClientRequest -> IO (Maybe Socket)
         connectTarget _clientRequest = do
+          puts - "clientRequest: " <> show _clientRequest
 
           let portNumber16 = fromWord8 - toListOf both 
                               (_clientRequest ^. portNumber) :: Word16
           
+          puts - "clientReauest portNumber: " <> show portNumber16
+
           let addressType_To_SockAddr :: ClientRequest -> SockAddr
               addressType_To_SockAddr aClientRequest =
                 case aClientRequest ^. addressType of
@@ -235,6 +237,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               _hostName = sockAddr_To_Host _socketAddr
               _port = sockAddr_To_Port _socketAddr
 
+          puts - "SockAddr: " <> show _socketAddr
           puts - "HostName: " <> _hostName
           puts - "Port: " <> _port
 
