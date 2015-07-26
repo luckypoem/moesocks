@@ -63,12 +63,9 @@ showBytes = show . S.unpack
 fromWord8 :: forall t. Binary t => [Word8] -> t
 fromWord8 = decode . runPut . mapM_ put
       
-withSocket :: Socket -> (Socket -> IO a) -> IO a
-withSocket x f = bracket (pure x) sClose f
-
-logSocket :: String -> Socket -> (Socket -> IO a) -> IO a
-logSocket aID aSocket f =
-  catch (withSocket aSocket f) - \e -> do
+logSocket :: String -> IO Socket -> (Socket -> IO a) -> IO a
+logSocket aID init f =
+  catch (bracket init close f) - \e -> do
       pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       throw e
 
