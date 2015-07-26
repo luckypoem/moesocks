@@ -1,15 +1,15 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 module Network.MoeSocks.Type where
 
 import Control.Lens
-import Data.Word
+import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.Text (Text)
-import Data.Aeson
+import Data.Word
 import GHC.Generics
 
 data ClientGreeting = ClientGreeting

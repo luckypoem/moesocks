@@ -1,18 +1,16 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Network.MoeSocks.Config where
 
-import Control.Lens
 import "cipher-aes" Crypto.Cipher.AES
+import Control.Lens
 import Data.ByteString (ByteString)
-import qualified Data.Text.Strict.Lens as TS
-
-import Network.MoeSocks.Type
 import Network.MoeSocks.Constant
-
 import Network.MoeSocks.Helper
+import Network.MoeSocks.Type
+import qualified Data.Text.Strict.Lens as TS
 
 defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig

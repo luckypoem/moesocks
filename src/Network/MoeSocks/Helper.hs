@@ -2,35 +2,32 @@
 
 module Network.MoeSocks.Helper where
 
-import Control.Lens
-import qualified Prelude as P
-import Prelude hiding (take, (-)) 
-
-import Network.Socket
+import Control.Concurrent
 import Control.Exception
-import System.IO
-import qualified System.IO.Streams as Stream
-import System.IO.Streams (InputStream)
-import System.IO.Streams.List
-import System.IO.Streams.Attoparsec
-import Data.Word
-import qualified Data.ByteString as S
-import Data.ByteString (ByteString)
+import Control.Lens
+import Control.Monad.IO.Class
 import Data.Binary
 import Data.Binary.Put
+import Data.ByteString (ByteString)
 import Data.Monoid
-import Control.Concurrent
+import Data.Text (Text)
+import Data.Text.Lens
+import Network.Socket
+import Prelude hiding (take, (-)) 
+import System.IO
+import System.IO.Streams (InputStream)
+import System.IO.Streams.Attoparsec
+import System.IO.Streams.List
 import System.IO.Unsafe
+import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
-
-import Data.Text (Text)
-import Data.Text.Lens
-import Control.Monad.IO.Class
+import qualified Prelude as P
+import qualified System.IO.Streams as Stream
 
 -- backports
---
+
 infixr 0 -
 (-) :: (a -> b) -> a -> b
 (-) = ($)

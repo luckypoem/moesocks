@@ -1,18 +1,15 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PackageImports #-}
 
 module Network.MoeSocks.OptionParser where
 
 import Control.Lens
-import Prelude hiding ((-))
-
-import Network.MoeSocks.Type
-import Network.MoeSocks.Helper
-
 import Data.Text.Lens
-
+import Network.MoeSocks.Helper
+import Network.MoeSocks.Type
 import Options.Applicative hiding (Parser)
+import Prelude hiding ((-))
 import qualified Options.Applicative as O
 
 optionParser :: O.Parser MoeOptions

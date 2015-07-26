@@ -5,45 +5,37 @@
 
 module Network.MoeSocks.App where
 
-import Control.Lens
-import Prelude hiding ((-), take)
-
-import Network.Socket
-import Control.Monad
+import "cipher-aes" Crypto.Cipher.AES
+import Control.Concurrent
 import Control.Exception
-import System.IO.Streams.Network
-import qualified System.IO.Streams as Stream
+import Control.Lens
+import Control.Monad
+import Data.Aeson
+import Data.Attoparsec.ByteString
+import Data.Monoid
+import Data.Text (Text)
+import Data.Text.Lens
+import Data.Word
+import Network.MoeSocks.BuilderAndParser
+import Network.MoeSocks.Config
+import Network.MoeSocks.Constant
+import Network.MoeSocks.Helper
+import Network.MoeSocks.Type
+import Network.Socket
+import Prelude hiding ((-), take)
 import System.IO.Streams.Attoparsec
 import System.IO.Streams.ByteString
-import Data.Word
+import System.IO.Streams.Network
+import System.Random
 import qualified Data.ByteString as S
-import Data.Monoid
 import qualified Data.ByteString.Builder as B
-
-import Data.Attoparsec.ByteString
-import Data.Text (Text)
+import qualified Data.HashMap.Strict as H
+import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Strict.Lens as TS
-import Data.Text.Lens
-import qualified Data.List as L
-
-import Network.MoeSocks.Config
-import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
-import Network.MoeSocks.Constant
-import Network.MoeSocks.BuilderAndParser
-import Control.Concurrent
-
-import System.Random
 import qualified Prelude as P
-import "cipher-aes" Crypto.Cipher.AES
-
-{-import Data.Aeson.Lens-}
-import Data.Aeson
-
-import qualified Data.HashMap.Strict as H
-
+import qualified System.IO.Streams as Stream
 
 addressType_To_SockAddr :: ClientRequest -> SockAddr
 addressType_To_SockAddr aClientRequest =
