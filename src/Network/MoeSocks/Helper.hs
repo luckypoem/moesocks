@@ -64,8 +64,8 @@ fromWord8 :: forall t. Binary t => [Word8] -> t
 fromWord8 = decode . runPut . mapM_ put
       
 logSocket :: String -> IO Socket -> (Socket -> IO a) -> IO a
-logSocket aID init f =
-  catch (bracket init close f) - \e -> do
+logSocket aID _init f =
+  catch (bracket _init close f) - \e -> do
       pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       throw e
 
