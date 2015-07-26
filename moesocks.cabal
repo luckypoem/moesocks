@@ -42,3 +42,11 @@ executable moesocks
 
   hs-source-dirs:      src
   default-language:    Haskell2010
+  other-modules:        
+                      Network.MoeSocks.App
+                      Network.MoeSocks.Config
+                      Network.MoeSocks.Helper
+                      Network.MoeSocks.Type
+                      Network.MoeSocks.BuilderAndParser
+                      Network.MoeSocks.Constant
+                      Network.MoeSocks.OptionParser

@@ -11,6 +11,11 @@ nemesis = do
   task "halive" - do
     sh "halive src/HaliveMain.hs src"
 
+  desc "dist"
+  task "dist" - do
+    sh "cabal clean"
+    sh "cabal configure"
+    sh "cabal sdist"
 
   desc "test"
   task "test" - do
