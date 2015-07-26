@@ -62,8 +62,8 @@ addressType_To_SockAddr aClientRequest =
                           0
 
 
-localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
-localRequestHandler config (_s, _) = withSocket _s - \aSocket -> do
+localRequestHandler:: MoeConfig -> Socket -> IO ()
+localRequestHandler config _s = withSocket _s - \aSocket -> do
   (inputStream, outputStream) <- socketToStreams aSocket
 
   let socksVersion = 5
@@ -84,100 +84,97 @@ localRequestHandler config (_s, _) = withSocket _s - \aSocket -> do
   tryParse - do
     r <- parseFromStream greetingParser inputStream
     {-puts - "greetings: " <> show r-}
-    
-    if not - _No_authentication `elem` (r ^. authenticationMethods)
-      then do
-        close aSocket
 
-      else do
-        pushStream outputStream - B.word8 socksVersion
-                                <> B.word8 _No_authentication
+    forM_ (boolToMaybe - 
+            _No_authentication `elem` (r ^. authenticationMethods)) - const -
+      do
+      pushStream outputStream - B.word8 socksVersion
+                              <> B.word8 _No_authentication
 
 
-        _clientRequest <- parseFromStream connectionParser inputStream
-        {-puts - "request: " <> show _clientRequest-}
+      _clientRequest <- parseFromStream connectionParser inputStream
+      {-puts - "request: " <> show _clientRequest-}
 
-        let conn = _clientRequest
+      let conn = _clientRequest
 
-        _remoteSocket <- socket AF_INET Stream defaultProtocol
-        
-        withSocket _remoteSocket - \_remoteSocket -> do
-          let _c = config
-          tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
-            connect _remoteSocket _remoteAddr
+      _remoteSocket <- socket AF_INET Stream defaultProtocol
+      
+      withSocket _remoteSocket - \_remoteSocket -> do
+        let _c = config
+        tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
+          connect _remoteSocket _remoteAddr
 
-            _localPeerAddr <- getPeerName aSocket
-            {-_localSocketAddr <- getSocketName aSocket-}
-            {-_remotePeerAddr <- getPeerName _remoteSocket-}
-            {-_remoteSocketAddr <- getSocketName _remoteSocket-}
-            let _clientAddr = addressType_To_SockAddr _clientRequest
+          _localPeerAddr <- getPeerName aSocket
+          {-_localSocketAddr <- getSocketName aSocket-}
+          {-_remotePeerAddr <- getPeerName _remoteSocket-}
+          {-_remoteSocketAddr <- getSocketName _remoteSocket-}
+          let _clientAddr = addressType_To_SockAddr _clientRequest
 
-            puts - "L: " <> 
-                    (
-                      concat - L.intersperse " -> " - map show
-                      [ 
-                        _localPeerAddr
-                      {-, _localSocketAddr-}
-                      {-, _remotePeerAddr-}
-                      {-, _remoteSocketAddr-}
-                      , _clientAddr
-                      ]
-                    )
+          puts - "L: " <> 
+                  (
+                    concat - L.intersperse " -> " - map show
+                    [ 
+                      _localPeerAddr
+                    {-, _localSocketAddr-}
+                    {-, _remotePeerAddr-}
+                    {-, _remoteSocketAddr-}
+                    , _clientAddr
+                    ]
+                  )
 
-            let handleLocal _remoteSocket = do
-                  let
-                    write x = Stream.write (Just - x) outputStream
-                    push = write . S.singleton
+          let handleLocal _remoteSocket = do
+                let
+                  write x = Stream.write (Just - x) outputStream
+                  push = write . S.singleton
 
-                  push socksVersion
-                  push _Request_Granted 
-                  push _ReservedByte
+                push socksVersion
+                push _Request_Granted 
+                push _ReservedByte
 
-                  write - builder_To_ByteString -
-                      addressTypeBuilder (conn ^. addressType)
+                write - builder_To_ByteString -
+                    addressTypeBuilder (conn ^. addressType)
 
-                  traverseOf both push - conn ^. portNumber
+                traverseOf both push - conn ^. portNumber
 
-                  (remoteInputStream, remoteOutputStream) <- 
-                    socketToStreams _remoteSocket
+                (remoteInputStream, remoteOutputStream) <- 
+                  socketToStreams _remoteSocket
 
-                  _stdGen <- newStdGen
+                _stdGen <- newStdGen
 
-                  let _iv = S.pack - P.take _BlockSize - randoms _stdGen
-                  
-                  pushStream remoteOutputStream - B.byteString _iv
-                  
-                  let
-                      _aesKey = aesKey config
-                      _encrypt = encryptCTR _aesKey _iv
-                      _decrypt = decryptCTR _aesKey _iv
-                  
+                let _iv = S.pack - P.take _BlockSize - randoms _stdGen
+                
+                pushStream remoteOutputStream - B.byteString _iv
+                
+                let
+                    _aesKey = aesKey config
+                    _encrypt = encryptCTR _aesKey _iv
+                    _decrypt = decryptCTR _aesKey _iv
+                
 
-                  let 
-                      _header = requestBuilder conn
-                      _headerBlock = clamp _PacketSize -
-                                      builder_To_ByteString _header
+                let 
+                    _header = requestBuilder conn
+                    _headerBlock = clamp _PacketSize -
+                                    builder_To_ByteString _header
 
-                  pushStream remoteOutputStream - B.byteString - 
-                                                      _encrypt _headerBlock
+                pushStream remoteOutputStream - B.byteString - 
+                                                    _encrypt _headerBlock
 
-                  inputBlockStream <- tokenizeStream _PacketSize
-                                      _encrypt inputStream
-                  
-                  remoteInputBlockStream <- detokenizeStream _PacketSize
-                                            _decrypt remoteInputStream
+                inputBlockStream <- tokenizeStream _PacketSize
+                                    _encrypt inputStream
+                
+                remoteInputBlockStream <- detokenizeStream _PacketSize
+                                          _decrypt remoteInputStream
 
-                  waitBoth
-                    (Stream.connect inputBlockStream remoteOutputStream)
-                    (Stream.connect remoteInputBlockStream outputStream)
-                  
+                waitBoth
+                  (Stream.connect inputBlockStream remoteOutputStream)
+                  (Stream.connect remoteInputBlockStream outputStream)
+                
 
-            logSocket "Local Request Handler" 
-              handleLocal _remoteSocket
+          logSocket "Local Request Handler" _remoteSocket handleLocal 
 
 
-remoteRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
-remoteRequestHandler aConfig (_s, _) = withSocket _s - \aSocket -> do
+remoteRequestHandler:: MoeConfig -> Socket -> IO ()
+remoteRequestHandler aConfig _s = withSocket _s - \aSocket -> do
   (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
 
   tryParse - do
@@ -271,8 +268,7 @@ remoteRequestHandler aConfig (_s, _) = withSocket _s - \aSocket -> do
               (Stream.connect remoteInputBlockStream targetOutputStream)
               (Stream.connect targetInputBlockStream remoteOutputStream)
             
-      logSocket "Target Connection Handler" 
-        handleTarget _targetSocket
+      logSocket "Target Connection Handler" _targetSocket handleTarget 
 
 parseConfig :: Text -> IO (Maybe MoeConfig)
 parseConfig aConfigFile = do
@@ -313,14 +309,13 @@ moeApp options = do
           listen localSocket 1
 
           let handleLocal _socket = do
-                r@(_newSocket, _newSocketAddr) <- accept _socket
-                forkIO - catchAll - onException 
-                          (localRequestHandler config r) - do
-                              pute "local onException" 
-                              close _newSocket
+                (_newSocket, _) <- accept _socket
+                forkIO - catchAll - 
+                          logSocket "Local handler" _newSocket -
+                          localRequestHandler config
               localLoop = 
                 forever . 
-                logSocket "Local Connection" handleLocal
+                flip (logSocket "Local Loop") handleLocal
 
           pure (localSocket, localLoop)
 
@@ -334,15 +329,14 @@ moeApp options = do
           listen remoteSocket 1
 
           let handleRemote _socket = do
-                r@(_newSocket, _newSocketAddr) <- accept _socket
-                forkIO - catchAll - onException 
-                          (remoteRequestHandler config r) - do
-                              pute "remote onException" 
-                              close _newSocket
+                (_newSocket, _) <- accept _socket
+                forkIO - catchAll - 
+                            logSocket "Remote handler" _newSocket -
+                              remoteRequestHandler config 
 
               remoteLoop = 
                 forever . 
-                logSocket "Remote Connection" handleRemote
+                flip (logSocket "Remote loop") handleRemote
 
           pure (remoteSocket, remoteLoop)
 
@@ -355,12 +349,12 @@ moeApp options = do
             tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
               (remoteSocket, remoteLoop) <- remoteApp _remoteAddr
               catchAll - do
-                logSocket "Local Socket" (\_localSocket ->
-                  logSocket "Remote Socket" (\_remoteSocket ->
+                logSocket "Local Socket" localSocket (\_localSocket ->
+                  logSocket "Remote Socket" remoteSocket (\_remoteSocket ->
                     waitBoth 
                       (localLoop _localSocket) 
                       (remoteLoop _remoteSocket)
-                      ) remoteSocket) localSocket
+                      )) 
 
         remoteRun :: IO ()
         remoteRun = do
@@ -368,7 +362,7 @@ moeApp options = do
           tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
             (remoteSocket, remoteLoop) <- remoteApp _remoteAddr
             catchAll - 
-              logSocket "Remote Socket" remoteLoop remoteSocket
+              logSocket "Remote Socket" remoteSocket remoteLoop
           
         localRun :: IO ()
         localRun = do
@@ -376,7 +370,7 @@ moeApp options = do
           tryAddr (_c ^. local) (_c ^. localPort) - \_localAddr -> do
             (localSocket, localLoop) <- localApp _localAddr
             catchAll - 
-              logSocket "Local Socket" localLoop localSocket
+              logSocket "Local Socket" localSocket localLoop 
 
     case options ^. runningMode of
       DebugMode -> debugRun
