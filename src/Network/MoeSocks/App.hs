@@ -247,7 +247,8 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                         (Just - _port)
 
           let _maybeAddrInfo = preview traverse -
-                                filter (is AF_INET . addrFamily) _addrInfoList
+                                {-filter (is AF_INET . addrFamily) _addrInfoList-}
+                                _addrInfoList
           
           puts - "Connecting Target: " <> show _maybeAddrInfo
 
