@@ -3,7 +3,6 @@
 	"remotePort":2190,
 	"local":"localhost",
 	"localPort":2090,
-	"password":"e9c5c56cee24cb6a",
-	"method":"aes-256-cfb"
+	"password":"e9c5c56cee24cb6a"
 }
 

@@ -50,7 +50,7 @@ data MoeConfig = MoeConfig
   , _local :: Text
   , _localPort :: Int
   , _password :: Text
-  , _method :: Text
+  {-, _method :: Text-}
   }
   deriving (Show, Eq, Generic)
 

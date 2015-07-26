@@ -1,24 +1,17 @@
 module Network.MoeSocks.BuilderAndParser where
 
 import Control.Lens
-import Prelude ((.))
-import Air.Env hiding ((.), has, take, puts) 
+import Prelude hiding ((-), take)
 
-import Network.Socket
-import Control.Monad
 import Data.Attoparsec.ByteString
-import System.IO.Streams.Attoparsec
 import Data.Word
 import qualified Data.ByteString as S
-import Data.ByteString (ByteString)
 import Data.Monoid
 import qualified Data.ByteString.Builder as B
-import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Text.Lens
 
 import Network.MoeSocks.Type
 import Network.MoeSocks.Constant
+import Network.MoeSocks.Helper
 
 
 addressTypeBuilder :: AddressType -> B.Builder

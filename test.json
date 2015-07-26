@@ -3,7 +3,6 @@
 	"remotePort":1190,
 	"local":"127.0.0.1",
 	"localPort":1090,
-	"password":"moesocks",
-	"method":"aes-256-cfb"
+	"password":"moesocks"
 }
 

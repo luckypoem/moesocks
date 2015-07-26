@@ -3,28 +3,21 @@
 module Network.MoeSocks.Helper where
 
 import Control.Lens
-import Prelude ((.))
 import qualified Prelude as P
-import Air.Env hiding ((.), has, take, puts) 
+import Prelude hiding (take, (-)) 
 
 import Network.Socket
-import Control.Monad
-import Control.Applicative
-import System.Posix.Signals
 import Control.Exception
 import System.IO
-import System.IO.Streams.Network
 import qualified System.IO.Streams as Stream
-import System.IO.Streams (InputStream, OutputStream)
+import System.IO.Streams (InputStream)
 import System.IO.Streams.List
-import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
 import qualified Data.ByteString as S
 import Data.ByteString (ByteString)
 import Data.Binary
 import Data.Binary.Put
-import Data.Binary.Get
 import Data.Monoid
 import Control.Concurrent
 import System.IO.Unsafe
@@ -33,9 +26,14 @@ import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
 
 import Data.Text (Text)
-import qualified Data.Text as T
 import Data.Text.Lens
 import Control.Monad.IO.Class
+import Control.Concurrent
+
+-- backports
+--
+infixr 0 -
+(-) = ($)
 
 _Debug :: Bool
 _Debug = True
@@ -65,7 +63,7 @@ fromWord8 = decode . runPut . mapM_ put
 safeSocketHandler :: String -> (Socket -> IO a) -> Socket -> IO a
 safeSocketHandler aID f aSocket =
   catch (f aSocket) - \e -> do
-      pute - "Exception in " + aID + ": " + show (e :: SomeException)
+      pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       sClose aSocket
       throw e
 
@@ -132,12 +130,14 @@ sockAddr_To_AddrFamily = f where
     f (SockAddrInet  {}) = AF_INET
     f (SockAddrInet6 {}) = AF_INET6
     f (SockAddrUnix  {}) = AF_UNIX
+    f _ = AF_INET
 
 sockAddr_To_Port :: SockAddr -> String
 sockAddr_To_Port = f where
     f (SockAddrInet  p _) = show p
     f (SockAddrInet6 p _ _ _) = show p
     f (SockAddrUnix {}) = ""
+    f _ = ""
 
 sockAddr_To_Host :: SockAddr -> String
 sockAddr_To_Host = f where
@@ -147,6 +147,7 @@ sockAddr_To_Host = f where
                                   P.dropWhile (/= ':') - 
                                   reverse - show s
     f (SockAddrUnix s) = s
+    f _ = ""
 
 initSocketForType :: SockAddr -> SocketType -> IO Socket 
 initSocketForType aSockAddr aSocketType = 

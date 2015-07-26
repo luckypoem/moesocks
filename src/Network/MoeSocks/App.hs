@@ -6,8 +6,7 @@
 module Network.MoeSocks.App where
 
 import Control.Lens
-import Prelude ((.))
-import Air.Env hiding ((.), has, take, puts) 
+import Prelude hiding ((-), take)
 
 import Network.Socket
 import Control.Monad
@@ -34,6 +33,7 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.MoeSocks.Constant
 import Network.MoeSocks.BuilderAndParser
+import Control.Concurrent
 
 import System.Random
 import qualified Prelude as P
@@ -319,7 +319,7 @@ moeApp options = do
 
           let handleLocal _socket = do
                 r@(_newSocket, _newSocketAddr) <- accept _socket
-                fork - catchAll - onException 
+                forkIO - catchAll - onException 
                           (localRequestHandler config r) - do
                               pute "local onException" 
                               close _newSocket
@@ -340,7 +340,7 @@ moeApp options = do
 
           let handleRemote _socket = do
                 r@(_newSocket, _newSocketAddr) <- accept _socket
-                fork - catchAll - onException 
+                forkIO - catchAll - onException 
                           (remoteRequestHandler config r) - do
                               pute "remote onException" 
                               close _newSocket

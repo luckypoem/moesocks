@@ -5,10 +5,10 @@
 module Network.MoeSocks.OptionParser where
 
 import Control.Lens
-import Prelude ((.))
-import Air.Env hiding ((.), has, take, puts) 
+import Prelude hiding ((-))
 
 import Network.MoeSocks.Type
+import Network.MoeSocks.Helper
 
 import Data.Text.Lens
 
