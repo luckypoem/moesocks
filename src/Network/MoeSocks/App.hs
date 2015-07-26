@@ -83,6 +83,8 @@ localRequestHandler config (_s, _) = withSocket _s - \aSocket -> do
 
   tryParse - do
     r <- parseFromStream greetingParser inputStream
+    {-puts - "gettings: " <> show r-}
+    
     if not - _No_authentication `elem` (r ^. authenticationMethods)
       then do
         close aSocket
@@ -93,6 +95,7 @@ localRequestHandler config (_s, _) = withSocket _s - \aSocket -> do
 
 
         _clientRequest <- parseFromStream connectionParser inputStream
+        {-puts - "request: " <> show _clientRequest-}
 
         let conn = _clientRequest
 

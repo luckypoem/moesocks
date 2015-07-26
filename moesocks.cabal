@@ -24,7 +24,7 @@ source-repository head
 
 executable moesocks
   main-is:             Main.hs
-  ghc-options:        -Wall -fno-warn-unused-do-bind
+  ghc-options:        -Wall -fno-warn-unused-do-bind -threaded
   build-depends:       base > 4 && <= 5
                       , lens 
                       , network
