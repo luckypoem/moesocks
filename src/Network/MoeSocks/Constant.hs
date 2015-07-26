@@ -23,3 +23,7 @@ _PacketSize = 256
 
 _SpaceCode :: Word8
 _SpaceCode = 32
+
+
+_Debug :: Bool
+_Debug = True

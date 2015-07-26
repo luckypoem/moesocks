@@ -37,6 +37,9 @@ import qualified Data.Text as T
 import Data.Text.Lens
 import Control.Monad.IO.Class
 
+_Debug :: Bool
+_Debug = True
+
 syncLock :: MVar ()
 syncLock = unsafePerformIO - newEmptyMVar
 
@@ -46,8 +49,9 @@ sync io = do
   io <* takeMVar syncLock
 
 puts :: String -> IO ()
-puts = sync . putStrLn
-
+puts 
+  | _Debug = sync . putStrLn
+  | otherwise = const - pure ()
 
 pute :: String -> IO ()
 pute = sync . hPutStrLn stderr
@@ -107,7 +111,7 @@ tryAddr' aHostName aPort aHint f = do
                     (fmap (view _Text) aHostName) 
                     (fmap show aPort)
   
-  puts - "tryAddr':" <> show addrInfo
+  {-puts - "tryAddr':" <> show addrInfo-}
   let maybeAddr = addrInfo ^? traverse . to addrAddress
   case maybeAddr of 
     Nothing -> pute - "Can not resolve: " <> show aHostName
@@ -138,7 +142,10 @@ sockAddr_To_Port = f where
 sockAddr_To_Host :: SockAddr -> String
 sockAddr_To_Host = f where
     f s@(SockAddrInet  _ _) = P.takeWhile (/= ':') - show s
-    f s@(SockAddrInet6 _ _ _ _) = show s
+    f s@(SockAddrInet6 _ _ _ _) = reverse -
+                                  P.dropWhile (== ':') -
+                                  P.dropWhile (/= ':') - 
+                                  reverse - show s
     f (SockAddrUnix s) = s
 
 initSocketForType :: SockAddr -> SocketType -> IO Socket 

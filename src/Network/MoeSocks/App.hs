@@ -62,7 +62,7 @@ import qualified Data.HashMap.Strict as H
 
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
-  puts - "Connected: " + show aSockAddr
+  {-puts - "Connected: " + show aSockAddr-}
 
   (inputStream, outputStream) <- socketToStreams aSocket
 
@@ -84,10 +84,10 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
   tryParse - do
     r <- parseFromStream greetingParser inputStream
-    puts - "Gretting: " <> show r 
+    {-puts - "Gretting: " <> show r -}
     if not - _No_authentication `elem` (r ^. authenticationMethods)
       then do
-        pute - "Client does not support 0x00: No authentication method"
+        {-pute - "Client does not support 0x00: No authentication method"-}
         close aSocket
 
       else do
@@ -96,13 +96,15 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
 
         conn <- parseFromStream connectionParser inputStream
-        puts - "Connection: " <> show conn
+        {-puts - "Connection: " <> show conn-}
 
         _remoteSocket <- socket AF_INET Stream defaultProtocol
         
         withSocket _remoteSocket - \_remoteSocket -> do
           tryAddr (config ^. remote) (config ^. remotePort) - \_remoteAddr -> do
             connect _remoteSocket _remoteAddr
+
+            puts - "L: " <> show aSockAddr <> " -> " <> show _remoteAddr
 
             let handleLocal _remoteSocket = do
                   let
@@ -124,7 +126,7 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   _stdGen <- newStdGen
 
                   let _iv = S.pack - P.take _BlockSize - randoms _stdGen
-                  puts - "local  IV: " <> show _iv
+                  {-puts - "local  IV: " <> show _iv-}
                   
                   pushStream remoteOutputStream - B.byteString _iv
                   
@@ -162,13 +164,13 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
 
 remoteRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
-  puts - "Remote Connected: " + show aSockAddr
+  {-puts - "Remote Connected: " + show aSockAddr-}
   (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
 
   tryParse - do
     _iv <- parseFromStream (take _BlockSize) remoteInputStream
 
-    puts - "remote IV: " <> show _iv
+    {-puts - "remote IV: " <> show _iv-}
 
     let 
         _aesKey = aesKey aConfig
@@ -189,12 +191,12 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
     let
         connectTarget :: ClientRequest -> IO (Maybe Socket)
         connectTarget _clientRequest = do
-          puts - "clientRequest: " <> show _clientRequest
+          {-puts - "clientRequest: " <> show _clientRequest-}
 
           let portNumber16 = fromWord8 - toListOf both 
                               (_clientRequest ^. portNumber) :: Word16
           
-          puts - "clientReauest portNumber: " <> show portNumber16
+          {-puts - "clientReauest portNumber: " <> show portNumber16-}
 
           let addressType_To_SockAddr :: ClientRequest -> SockAddr
               addressType_To_SockAddr aClientRequest =
@@ -237,9 +239,9 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
               _hostName = sockAddr_To_Host _socketAddr
               _port = sockAddr_To_Port _socketAddr
 
-          puts - "SockAddr: " <> show _socketAddr
-          puts - "HostName: " <> _hostName
-          puts - "Port: " <> _port
+          {-puts - "SockAddr: " <> show _socketAddr-}
+          {-puts - "HostName: " <> _hostName-}
+          {-puts - "Port: " <> _port-}
 
           _addrInfoList <-  getAddrInfo 
                         Nothing 
@@ -250,7 +252,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                                 {-filter (is AF_INET . addrFamily) _addrInfoList-}
                                 _addrInfoList
           
-          puts - "Connecting Target: " <> show _maybeAddrInfo
+          {-puts - "Connecting Target: " <> show _maybeAddrInfo-}
 
           case _maybeAddrInfo of
             Nothing -> return Nothing
@@ -260,6 +262,10 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
                                     (addrSocketType _addrInfo)
 
                 connect _targetSocket - addrAddress _addrInfo
+
+                puts - "R: " <> show aSockAddr <> " -> " <> 
+                          show (addrAddress _addrInfo)
+
                 pure - Just _targetSocket
 
     _targetSocket <- connectTarget _clientRequest
@@ -319,15 +325,16 @@ parseConfig aConfigFile = do
 
 moeApp:: MoeOptions -> IO ()
 moeApp options = do
-  puts - "Options: " <> show options
+  {-puts - "Options: " <> show options-}
   maybeConfig <- parseConfig - options ^. configFile 
   
   forM_ maybeConfig - \config -> do
-    puts - "Config: " <> show config
+    {-puts - "Config: " <> show config-}
 
     let localApp :: SockAddr -> IO (Socket, Socket -> IO ())
         localApp _localAddr = do
-          puts - "localAddr: " <> show _localAddr
+          putStrLn "Moe local!"
+          {-puts - "localAddr: " <> show _localAddr-}
 
           localSocket <- initSocket _localAddr
           setSocketOption localSocket ReuseAddr 1
@@ -349,7 +356,8 @@ moeApp options = do
 
     let remoteApp :: SockAddr -> IO (Socket, Socket -> IO ())
         remoteApp _remoteAddr = do
-          puts - "remoteAddr: " <> show _remoteAddr
+          {-puts - "remoteAddr: " <> show _remoteAddr-}
+          putStrLn "Moe remote!"
 
           remoteSocket <- initSocket _remoteAddr
           setSocketOption remoteSocket ReuseAddr 1
