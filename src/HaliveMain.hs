@@ -22,5 +22,5 @@ import Data.Maybe
 main :: IO ()
 main = moeApp - 
   defaultMoeOptions &
-    configFile .~ "test.json"
+    configFile .~ "config.json"
 
