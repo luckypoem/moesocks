@@ -26,11 +26,13 @@ import qualified Data.ByteString.Lazy as LB
 import qualified Prelude as P
 import qualified System.IO.Streams as Stream
 
--- backports
+-- BEGIN backports
 
 infixr 0 -
 (-) :: (a -> b) -> a -> b
 (-) = ($)
+
+-- END backports
 
 _Debug :: Bool
 _Debug = True
