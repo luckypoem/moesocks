@@ -14,6 +14,8 @@ import Control.Exception
 import System.IO
 import System.IO.Streams.Network
 import qualified System.IO.Streams as Stream
+import System.IO.Streams (InputStream, OutputStream)
+import System.IO.Streams.List
 import Data.Attoparsec.ByteString
 import System.IO.Streams.Attoparsec
 import Data.Word
@@ -27,10 +29,12 @@ import Control.Concurrent
 import System.IO.Unsafe
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
+import qualified Data.ByteString.Lazy as LB
 
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Lens
+import Control.Monad.IO.Class
 
 syncLock :: MVar ()
 syncLock = unsafePerformIO - newEmptyMVar
@@ -143,3 +147,49 @@ initSocket = flip initSocketForType Stream
 
 clamp :: (Integral i) => i -> ByteString -> ByteString
 clamp i x = S.take (fromIntegral i) - x <> S.replicate (fromIntegral i) 0
+
+-- first bit is length
+splitTokens :: Int -> ByteString -> [ByteString]
+splitTokens l x  
+  | l <= 1 = [x]
+  | x == mempty = []
+  | otherwise = 
+      let 
+          byteLength = l + (-1)
+          (y, z) = S.splitAt byteLength x
+          length_y_byte = fromIntegral - S.length y
+      in
+      clamp l (S.cons length_y_byte y) : splitTokens l z
+
+tokenizeStream :: (Integral n) => n -> (ByteString -> ByteString) ->
+                    InputStream ByteString -> IO (InputStream ByteString)
+tokenizeStream n f input = 
+  Stream.map (splitTokens - fromIntegral n) input 
+      >>= concatLists >>= Stream.map f
+
+decodeToken :: ByteString -> ByteString
+decodeToken x
+  | x == mempty = mempty
+  | otherwise = S.take (fromIntegral - S.head x) - S.tail x
+
+chunkStream :: (Integral n) => n -> InputStream ByteString -> 
+                        IO (InputStream ByteString)
+chunkStream n input = Stream.fromGenerator - go
+  where
+    l = fromIntegral n 
+    go = liftIO (Stream.read input) >>= maybe (return $! ()) chunk
+    chunk x 
+      | S.length x >= l = Stream.yield (S.take l x) >> chunk (S.drop l x)
+      | otherwise = 
+          liftIO (Stream.read input) >>= 
+            maybe (Stream.yield x) (chunk . (x <>))
+
+detokenizeStream :: (Integral n) => n -> (ByteString -> ByteString) -> 
+                                      InputStream ByteString -> 
+                                      IO (InputStream ByteString)
+detokenizeStream n f input = Stream.map (decodeToken . f) =<< 
+                                    chunkStream n input
+
+builder_To_ByteString :: B.Builder -> ByteString
+builder_To_ByteString = LB.toStrict . B.toLazyByteString
+

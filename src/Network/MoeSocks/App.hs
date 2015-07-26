@@ -60,49 +60,6 @@ import Control.Monad.IO.Class
 import qualified Data.HashMap.Strict as H
 
 
--- first bit is length
-splitTokens :: Int -> ByteString -> [ByteString]
-splitTokens l x  
-  | l <= 1 = [x]
-  | x == mempty = []
-  | otherwise = 
-      let 
-          byteLength = l + (-1)
-          (y, z) = S.splitAt byteLength x
-          length_y_byte = fromIntegral - S.length y
-      in
-      clamp l (S.cons length_y_byte y) : splitTokens l z
-
-tokenizeStream :: (ByteString -> ByteString) ->
-                    InputStream ByteString -> IO (InputStream ByteString)
-tokenizeStream f input = 
-  Stream.map (splitTokens - fromIntegral _PacketSize) input 
-      >>= concatLists >>= Stream.map f
-
-decodeToken :: ByteString -> ByteString
-decodeToken x
-  | x == mempty = mempty
-  | otherwise = S.take (fromIntegral - S.head x) - S.tail x
-
-chunkStream :: InputStream ByteString -> 
-                        IO (InputStream ByteString)
-chunkStream input = Stream.fromGenerator - go
-  where
-    l = fromIntegral _PacketSize
-    go = liftIO (Stream.read input) >>= maybe (return $! ()) chunk
-    chunk x 
-      | S.length x >= l = Stream.yield (S.take l x) >> chunk (S.drop l x)
-      | otherwise = 
-          liftIO (Stream.read input) >>= 
-            maybe (Stream.yield x) (chunk . (x <>))
-
-detokenizeStream :: (ByteString -> ByteString) -> InputStream ByteString -> 
-                        IO (InputStream ByteString)
-detokenizeStream f input = Stream.map (decodeToken . f) =<< chunkStream input
-
-builder_To_ByteString :: B.Builder -> ByteString
-builder_To_ByteString = LB.toStrict . B.toLazyByteString
-
 localRequestHandler:: MoeConfig -> (Socket, SockAddr) -> IO ()
 localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
   puts - "Connected: " + show aSockAddr
@@ -185,13 +142,13 @@ localRequestHandler config (_s, aSockAddr) = withSocket _s - \aSocket -> do
                   pushStream remoteOutputStream - B.byteString - 
                                                       _encrypt _headerBlock
 
-                  inputBlockStream <- tokenizeStream
+                  inputBlockStream <- tokenizeStream _PacketSize
                                       _encrypt inputStream
                   
                   inputBlockStreamD <- debugInputBS "LI:" Stream.stderr 
                                     inputBlockStream
 
-                  remoteInputBlockStream <- detokenizeStream 
+                  remoteInputBlockStream <- detokenizeStream _PacketSize
                                             _decrypt remoteInputStream
 
                   waitBoth
@@ -309,7 +266,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             (targetInputStream, targetOutputStream) <- 
               socketToStreams _targetSocket
 
-            targetInputBlockStream <- tokenizeStream  
+            targetInputBlockStream <- tokenizeStream _PacketSize
                                       _encrypt targetInputStream
             
             targetOutputStreamD <- debugOutputBS "TO:" Stream.stderr 
@@ -318,7 +275,7 @@ remoteRequestHandler aConfig (_s, aSockAddr) = withSocket _s - \aSocket -> do
             targetInputBlockStreamD <- debugInputBS "TI:" Stream.stderr 
               targetInputBlockStream
             
-            remoteInputBlockStream <- detokenizeStream
+            remoteInputBlockStream <- detokenizeStream _PacketSize
                                       _decrypt remoteInputStream
 
             remoteInputBlockStreamD <- debugInputBS "RI:" Stream.stderr
