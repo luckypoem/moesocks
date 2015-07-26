@@ -2,7 +2,7 @@ MoeSocks
 ========
 
 
-A socks server using the client / server architecture.
+A socks5 proxy using the client / server architecture.
 
 MoeSocks is greatly inspired by [shadowsocks].
 
