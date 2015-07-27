@@ -215,14 +215,34 @@ parseConfig aConfigFile = do
     "local_port":2090,
   -}
 
-  {-replaceKey :: Text -> Text -> H.Hashmap-}
-  {-replaceKey = undefined -}
+  let 
+      duplicateKey :: (Text, Text) -> [(Text, Value)] -> [(Text, Value)]
+      duplicateKey (from, to) l = 
+        case L.lookup from l of
+          Nothing -> l
+          Just v -> (to,v) : l
+
+      fromShadowSocksConfig :: [(Text, Value)] -> [(Text, Value)]
+      fromShadowSocksConfig _configList = 
+        let fixes =
+              [
+                ("server", "remote")
+              , ("server_port", "remotePort")
+              , ("local_address", "local")
+              , ("local_port", "localPort")
+              ]
+
+        in
+        foldl (flip duplicateKey) _configList fixes
+
+      fromSS :: [(Text, Value)] -> [(Text, Value)]
+      fromSS = fromShadowSocksConfig
 
   let _v = decodeStrict - review TS.utf8 _configFile :: Maybe Value
   let fixConfig :: Value -> Value
       fixConfig (Object _obj) =
           Object - 
-            _obj & H.toList & over (mapped . _1) (T.cons '_')  & H.fromList
+            _obj & H.toList & fromSS & over (mapped . _1) (T.cons '_')  & H.fromList
       fixConfig _ = Null
   let 
       _maybeConfig = (_v >>= decode . encode . fixConfig)
