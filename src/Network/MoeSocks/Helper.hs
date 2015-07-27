@@ -61,6 +61,17 @@ showBytes = show . S.unpack
 fromWord8 :: forall t. Binary t => [Word8] -> t
 fromWord8 = decode . runPut . mapM_ put
       
+logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
+                        ((Socket, SockAddr) -> IO a) -> IO a
+logSocketWithAddress aID _init f =
+  catch (bracket _init (close .fst) f) - \e -> do
+      pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
+      throw e
+
+logSA:: String -> IO (Socket, SockAddr) -> 
+                        ((Socket, SockAddr) -> IO a) -> IO a
+logSA = logSocketWithAddress
+
 logSocket :: String -> IO Socket -> (Socket -> IO a) -> IO a
 logSocket aID _init f =
   catch (bracket _init close f) - \e -> do
@@ -136,7 +147,6 @@ tryAddr' aHostName aPort aHint f = do
     Just _addr -> () <$ f _addr
 
 
-
 sockAddr_To_AddrFamily :: SockAddr -> Family
 sockAddr_To_AddrFamily = f where
     f (SockAddrInet  {}) = AF_INET
@@ -161,14 +171,30 @@ sockAddr_To_Host = f where
     f (SockAddrUnix s) = s
     f _ = ""
 
-initSocketForType :: SockAddr -> SocketType -> IO Socket 
-initSocketForType aSockAddr aSocketType = 
-    socket (sockAddr_To_AddrFamily aSockAddr) aSocketType defaultProtocol
+getSocket :: (Integral i, Show i) => HostName -> i -> SocketType ->
+                                      IO (Socket, SockAddr)
+getSocket aHost aPort aSocketType = do
+    maybeAddrInfo <- firstOf folded <$>
+                  getAddrInfo (Just hints) (Just aHost) (Just $ show aPort)
 
+    case maybeAddrInfo of
+      Nothing -> error - "Error in getSocket for: " <> aHost <> ":" <> 
+                              show aPort
+      Just addrInfo -> do
+          let family     = addrFamily addrInfo
+          let socketType = addrSocketType addrInfo
+          let protocol   = addrProtocol addrInfo
+          let address    = addrAddress addrInfo
 
-initSocket :: SockAddr -> IO Socket 
-initSocket = flip initSocketForType Stream
+          _socket <- socket family socketType protocol
 
+          pure (_socket, address)
+          
+  where
+    hints = defaultHints {
+              addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]
+            , addrSocketType = aSocketType
+            }
 
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
@@ -201,3 +227,5 @@ getIVLength = iv_len . view _Text
   
   {-(_ivLength, _initEncode)-}
 
+portNumber16 :: (Word8, Word8) -> Word16
+portNumber16 pair = fromWord8 - toListOf both pair
