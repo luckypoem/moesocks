@@ -178,9 +178,11 @@ remoteRequestHandler aConfig aSocket = do
                               Stream.stderr
                               remoteInputDecryptedStream
                                           
-  _clientRequest <- parseFromStream requestParser debugRemoteInputDecryptedStream
+  _clientRequest <- parseFromStream requestParser remoteInputDecryptedStream
 
-  puts - "Remote get: " <> show _clientRequest
+  {-
+   -puts - "Remote get: " <> show _clientRequest
+   -}
   
   let
       connectTarget :: ClientRequest -> IO (Maybe Socket)
