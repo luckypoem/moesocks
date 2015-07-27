@@ -112,8 +112,11 @@ getSSLEncDec method password = do
                 then do
                     putMVar cipherCtx $! ()
                     ciphered <- withOpenSSL $ cipherUpdateBS ctx buf
-                    return $ cipher_iv <> ciphered
-                else withOpenSSL $ cipherUpdateBS ctx buf
+                    return $! cipher_iv <> ciphered
+                else do
+                    r <- withOpenSSL $ cipherUpdateBS ctx buf
+                    return $! r
+
         decrypt "" = return ""
         decrypt buf = do
             empty <- isEmptyMVar decipherCtx
@@ -124,10 +127,14 @@ getSSLEncDec method password = do
                     putMVar decipherCtx $! dctx
                     if S.null (S.drop m1 buf)
                         then return ""
-                        else withOpenSSL $ cipherUpdateBS dctx (S.drop m1 buf)
+                        else do
+                            r <- withOpenSSL $
+                                    cipherUpdateBS dctx (S.drop m1 buf)
+                            return $! r
                 else do
                     dctx <- readMVar decipherCtx
-                    withOpenSSL $ cipherUpdateBS dctx buf
+                    r <- withOpenSSL $ cipherUpdateBS dctx buf
+                    return $! r
 
     return (encrypt, decrypt)
 
