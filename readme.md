@@ -21,7 +21,7 @@ There is an earlier implementation of [shadowsocks in Haskell] by rnons.
 The goal of moesocks is to provide extra configurability to standard
 shadowsocks, for example:
 
-* load balancing (for example, region based multi-server configuration)
+* load balancing (region based multi-server configuration)
 * IP level request filters (like iptables)
 
 [shadowsocks]:https://github.com/shadowsocks/shadowsocks
