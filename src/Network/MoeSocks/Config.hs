@@ -2,8 +2,8 @@
 
 module Network.MoeSocks.Config where
 
-import Network.MoeSocks.Type
 import Network.MoeSocks.Constant
+import Network.MoeSocks.Type
 
 defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig
