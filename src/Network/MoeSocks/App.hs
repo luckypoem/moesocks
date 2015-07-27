@@ -299,7 +299,10 @@ moeApp options = do
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
-          listen _remoteSocket 1
+
+          let _Maximum_number_of_queued_connection = 5
+
+          listen _remoteSocket _Maximum_number_of_queued_connection 
 
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
