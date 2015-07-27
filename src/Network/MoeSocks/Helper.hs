@@ -128,24 +128,6 @@ pushStream s b = do
   Stream.write (Just b) _builderStream
   Stream.write (Just BE.flush) _builderStream
 
-tryAddr :: Text -> Int -> (SockAddr -> IO a) -> IO ()
-tryAddr aHostName aPort = tryAddr' (Just aHostName) (Just aPort) 
-                    (Just - defaultHints { addrSocketType = Stream })
-
-tryAddr' :: Maybe Text -> Maybe Int -> Maybe AddrInfo -> 
-              (SockAddr -> IO a) -> IO ()
-tryAddr' aHostName aPort aHint f = do
-  addrInfo <- getAddrInfo 
-                    aHint
-                    (fmap (view _Text) aHostName) 
-                    (fmap show aPort)
-  
-  {-puts - "tryAddr':" <> show addrInfo-}
-  let maybeAddr = addrInfo ^? traverse . to addrAddress
-  case maybeAddr of 
-    Nothing -> pute - "Can not resolve: " <> show aHostName
-    Just _addr -> () <$ f _addr
-
 
 sockAddr_To_AddrFamily :: SockAddr -> Family
 sockAddr_To_AddrFamily = f where

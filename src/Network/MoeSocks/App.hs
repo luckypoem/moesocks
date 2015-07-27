@@ -58,7 +58,7 @@ addressType_To_SockAddr aClientRequest =
 
 
 localRequestHandler:: MoeConfig -> Socket -> IO ()
-localRequestHandler config aSocket = do
+localRequestHandler aConfig aSocket = do
   (inputStream, outputStream) <- socketToStreams aSocket
 
   let socksVersion = 5
@@ -91,71 +91,72 @@ localRequestHandler config aSocket = do
 
     let conn = _clientRequest
 
-    let _initSocket = socket AF_INET Stream defaultProtocol
+    let 
+        _c = aConfig 
+        _initSocket = 
+            getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream 
     
-    logSocket "Connect remote" _initSocket - \_remoteSocket -> do
-      let _c = config
-      tryAddr (_c ^. remote) (_c ^. remotePort) - \_remoteAddr -> do
-        connect _remoteSocket _remoteAddr
+    logSA "Connect remote" _initSocket - \(_remoteSocket, _remoteAddress) -> do
+      connect _remoteSocket _remoteAddress
 
-        _localPeerAddr <- getPeerName aSocket
-        {-_localSocketAddr <- getSocketName aSocket-}
-        {-_remotePeerAddr <- getPeerName _remoteSocket-}
-        {-_remoteSocketAddr <- getSocketName _remoteSocket-}
-        let _clientAddr = addressType_To_SockAddr _clientRequest
+      _localPeerAddr <- getPeerName aSocket
+      {-_localSocketAddr <- getSocketName aSocket-}
+      {-_remotePeerAddr <- getPeerName _remoteSocket-}
+      {-_remoteSocketAddr <- getSocketName _remoteSocket-}
+      let _clientAddr = addressType_To_SockAddr _clientRequest
 
-        puts - "L: " <> 
-                (
-                  concat - L.intersperse " -> " - map show
-                  [ 
-                    _localPeerAddr
-                  {-, _localSocketAddr-}
-                  {-, _remotePeerAddr-}
-                  {-, _remoteSocketAddr-}
-                  , _clientAddr
-                  ]
-                )
+      puts - "L: " <> 
+              (
+                concat - L.intersperse " -> " - map show
+                [ 
+                  _localPeerAddr
+                {-, _localSocketAddr-}
+                {-, _remotePeerAddr-}
+                {-, _remoteSocketAddr-}
+                , _clientAddr
+                ]
+              )
 
-        let handleLocal __remoteSocket = do
-              let
-                write x = Stream.write (Just - x) outputStream
-                push = write . S.singleton
+      let handleLocal __remoteSocket = do
+            let
+              write x = Stream.write (Just - x) outputStream
+              push = write . S.singleton
 
-              push socksVersion
-              push _Request_Granted 
-              push _ReservedByte
+            push socksVersion
+            push _Request_Granted 
+            push _ReservedByte
 
-              write - builder_To_ByteString -
-                  addressTypeBuilder (conn ^. addressType)
+            write - builder_To_ByteString -
+                addressTypeBuilder (conn ^. addressType)
 
-              traverseOf both push - conn ^. portNumber
+            traverseOf both push - conn ^. portNumber
 
-              (remoteInputStream, remoteOutputStream) <- 
-                socketToStreams _remoteSocket
+            (remoteInputStream, remoteOutputStream) <- 
+              socketToStreams _remoteSocket
 
-              (_encrypt, _decrypt) <- getCipher
-                                        _DefaultMethod
-                                        (config ^. password)
+            (_encrypt, _decrypt) <- getCipher
+                                      _DefaultMethod
+                                      (aConfig ^. password)
 
 
-              let 
-                  _header = requestBuilder conn
-              
-              remoteOutputEncryptedStream <-
-                Stream.contramapM _encrypt remoteOutputStream 
-              
-              pushStream remoteOutputEncryptedStream - 
-                  B.byteString - builder_To_ByteString _header
-              
-              remoteInputDecryptedStream <-
-                Stream.mapM _decrypt remoteInputStream
+            let 
+                _header = requestBuilder conn
+            
+            remoteOutputEncryptedStream <-
+              Stream.contramapM _encrypt remoteOutputStream 
+            
+            pushStream remoteOutputEncryptedStream - 
+                B.byteString - builder_To_ByteString _header
+            
+            remoteInputDecryptedStream <-
+              Stream.mapM _decrypt remoteInputStream
 
-              waitBoth
-                (Stream.connect inputStream remoteOutputEncryptedStream)
-                (Stream.connect remoteInputDecryptedStream outputStream)
-              
+            waitBoth
+              (Stream.connect inputStream remoteOutputEncryptedStream)
+              (Stream.connect remoteInputDecryptedStream outputStream)
+            
 
-        handleLocal _remoteSocket
+      handleLocal _remoteSocket
 
 
 remoteRequestHandler:: MoeConfig -> Socket -> IO ()
