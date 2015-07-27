@@ -6,7 +6,6 @@ module Network.MoeSocks.App where
 import Control.Concurrent
 import Control.Lens
 import Control.Monad
-import Data.Aeson
 import Data.Attoparsec.ByteString
 import Data.Monoid
 import Data.Text (Text)
