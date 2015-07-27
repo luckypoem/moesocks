@@ -33,3 +33,7 @@ nemesis = do
   desc "local"
   task "local" - do
     sh "cabal run -- -m local -c dev.json +RTS -N2"
+
+  desc "i"
+  task "i" - do
+    sh "cabal repl"

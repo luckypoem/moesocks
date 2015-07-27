@@ -32,7 +32,7 @@ SOFTWARE.
 
 
 {-# LANGUAGE OverloadedStrings #-}
-module Shadowsocks.Encrypt
+module Network.MoeSocks.Internal.ShadowSocks.Encrypt
   ( getEncDec
   , iv_len
   ) where
@@ -160,7 +160,7 @@ getTableEncDec key = return (encrypt, decrypt)
     decrypt buf = return $
         S.pack $ map (\b -> decryptTable ! fromIntegral b) $ S.unpack buf
 
-getEncDec :: String -> String
+getEncDec :: String -> ByteString  
           -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
-getEncDec "table" key = getTableEncDec $ C.pack key
-getEncDec method key  = getSSLEncDec method $ C.pack key
+getEncDec "table" key = getTableEncDec key
+getEncDec method key  = getSSLEncDec method key

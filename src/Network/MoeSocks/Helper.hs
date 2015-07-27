@@ -12,6 +12,7 @@ import Data.ByteString (ByteString)
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
+import qualified Data.Text.Strict.Lens as TS
 import Network.Socket
 import Prelude hiding (take, (-)) 
 import System.IO
@@ -25,6 +26,8 @@ import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
 import qualified Prelude as P
 import qualified System.IO.Streams as Stream
+import Network.MoeSocks.Internal.ShadowSocks.Encrypt
+import qualified Data.ByteString.Char8 as C
 
 -- BEGIN backports
 
@@ -209,3 +212,8 @@ detokenizeStream n f input = Stream.map (decodeToken . f) =<<
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
 
+type Cipher = ByteString -> IO ByteString 
+
+getCipher :: Text -> Text -> IO (Cipher, Cipher)
+getCipher method __password =
+  getEncDec (method ^. _Text) (review TS.utf8 __password)

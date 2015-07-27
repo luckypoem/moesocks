@@ -145,29 +145,26 @@ localRequestHandler config aSocket = do
                 
                 pushStream remoteOutputStream - B.byteString _iv
                 
-                let
-                    _aesKey = aesKey config
-                    _encrypt = encryptCTR _aesKey _iv
-                    _decrypt = decryptCTR _aesKey _iv
-                
+                (_encrypt, _decrypt) <- getCipher
+                                          _DefaultMethod
+                                          (config ^. password)
+
 
                 let 
                     _header = requestBuilder conn
-                    _headerBlock = clamp _PacketSize -
-                                    builder_To_ByteString _header
-
-                pushStream remoteOutputStream - B.byteString - 
-                                                    _encrypt _headerBlock
-
-                inputBlockStream <- tokenizeStream _PacketSize
-                                    _encrypt inputStream
                 
-                remoteInputBlockStream <- detokenizeStream _PacketSize
-                                          _decrypt remoteInputStream
+                remoteOutputEncryptedStream <-
+                  Stream.contramapM _encrypt remoteOutputStream 
+                
+                pushStream remoteOutputEncryptedStream - 
+                    B.byteString - builder_To_ByteString _header
+
+                remoteInputDecryptedStream <-
+                  Stream.mapM _decrypt remoteInputStream
 
                 waitBoth
-                  (Stream.connect inputBlockStream remoteOutputStream)
-                  (Stream.connect remoteInputBlockStream outputStream)
+                  (Stream.connect inputStream remoteOutputEncryptedStream)
+                  (Stream.connect remoteInputDecryptedStream outputStream)
                 
 
           handleLocal _remoteSocket
@@ -348,7 +345,7 @@ moeApp options = do
 
         debugRun :: IO ()
         debugRun = do
-          waitBoth localRun remoteRun
+          catchAll - waitBoth localRun remoteRun
 
 
     case options ^. runningMode of

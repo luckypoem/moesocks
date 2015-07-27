@@ -70,3 +70,6 @@ data MoeOptions = MoeOptions
   deriving (Show, Eq)
 
 makeLenses ''MoeOptions
+
+
+type Cipher = ByteString -> IO ByteString 
