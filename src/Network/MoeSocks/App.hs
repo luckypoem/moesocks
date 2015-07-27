@@ -336,16 +336,18 @@ moeApp options = do
         remoteRun :: IO ()
         remoteRun = do
           let _c = config
-          tryAddr (_c ^. remote) (_c ^. remotePort) - catchAll . remoteApp 
+          tryAddr (_c ^. remote) (_c ^. remotePort) - 
+            catchAllLog "remote" . remoteApp 
           
         localRun :: IO ()
         localRun = do
           let _c = config
-          tryAddr (_c ^. local) (_c ^. localPort) - catchAll . localApp 
+          tryAddr (_c ^. local) (_c ^. localPort) - 
+            catchAllLog "local" . localApp 
 
         debugRun :: IO ()
         debugRun = do
-          catchAll - waitBoth localRun remoteRun
+          catchAllLog "both" - waitBoth localRun remoteRun
 
 
     case options ^. runningMode of

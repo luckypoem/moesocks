@@ -72,6 +72,11 @@ logSocket aID _init f =
       pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       throw e
 
+catchAllLog :: String -> IO a -> IO ()
+catchAllLog aID io = catch (() <$ io) - \e -> 
+                pute - "CatcheAll in " <> aID <> ": " 
+                    <> show (e :: SomeException)
+
 catchAll :: IO a -> IO ()
 catchAll io = catch (() <$ io) - \e -> 
                 pute - "CatcheAll: " <> show (e :: SomeException)
@@ -83,18 +88,33 @@ catchIO io = catch (() <$ io) - \e ->
 
 waitBoth :: IO a -> IO b -> IO ()
 waitBoth x y = do
-  (xThreadID, xLock) <- do
-    _lock <- newEmptyMVar
-    _threadID <- 
-      forkFinally x - const - putMVar _lock ()
+  let init = do
+        (xThreadID, xLock) <- do
+          _lock <- newEmptyMVar
+          _threadID <- 
+            forkFinally (catchAllLog "threadA" x) -
+               const - putMVar _lock ()
 
-    return (_threadID, _lock)
+          return (_threadID, _lock)
 
-  yThreadID <- 
-    forkFinally y - const - killThread xThreadID 
+        yThreadID <- 
+          forkFinally (catchAllLog "threadB" y) - const - killThread xThreadID 
+
+        return (xThreadID, xLock, yThreadID)
+
+  let handleError (xThreadID, _, yThreadID) = do
+      killThread xThreadID
+      killThread yThreadID
+
+  let action (_, xLock, yThreadID) = do
+        takeMVar xLock 
+        killThread yThreadID
+
+  bracket 
+    init
+    handleError
+    action
                 
-  takeMVar xLock 
-  killThread yThreadID
 
 pushStream :: (Stream.OutputStream ByteString) -> B.Builder -> IO ()
 pushStream s b = do
