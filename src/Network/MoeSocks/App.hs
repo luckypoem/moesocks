@@ -179,7 +179,7 @@ remoteRequestHandler aConfig aSocket = do
         
         getSocket _hostName (portNumber16 _port) _socketType
 
-  logSocketWithAddress "Connect target" (initTarget _clientRequest) - \_r -> do
+  logSA "Connect target" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetSocketAddress) = _r 
 
     connect _targetSocket _targetSocketAddress
