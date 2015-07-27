@@ -92,19 +92,19 @@ waitBoth x y = do
         (xThreadID, xLock) <- do
           _lock <- newEmptyMVar
           _threadID <- 
-            forkFinally (catchAllLog "threadA" x) -
+            forkFinally x -
                const - putMVar _lock ()
 
           return (_threadID, _lock)
 
         yThreadID <- 
-          forkFinally (catchAllLog "threadB" y) - const - killThread xThreadID 
+          forkFinally y - const - killThread xThreadID 
 
         return (xThreadID, xLock, yThreadID)
 
   let handleError (xThreadID, _, yThreadID) = do
-      killThread xThreadID
       killThread yThreadID
+      killThread xThreadID
 
   let action (_, xLock, yThreadID) = do
         takeMVar xLock 
@@ -177,57 +177,6 @@ initSocketForType aSockAddr aSocketType =
 initSocket :: SockAddr -> IO Socket 
 initSocket = flip initSocketForType Stream
 
-clamp :: (Integral i) => i -> ByteString -> ByteString
-clamp i x = S.take (fromIntegral i) - x <> S.replicate (fromIntegral i) 0
-
--- first 2 bit is length
-splitTokens :: Int -> ByteString -> [ByteString]
-splitTokens l x  
-  | l <= 1 = [x]
-  | x == mempty = []
-  | otherwise = 
-      let 
-          byteLength = l + (-2)
-          (y, z) = S.splitAt byteLength x
-          (bit_1, bit_2) = S.length y `divMod` 256
-          _bytes = S.cons (fromIntegral bit_1) - 
-                    S.cons (fromIntegral bit_2) y
-      in
-      clamp l _bytes : splitTokens l z
-
-tokenizeStream :: (Integral n) => n -> (ByteString -> ByteString) ->
-                    InputStream ByteString -> IO (InputStream ByteString)
-tokenizeStream n f input = 
-  Stream.map (splitTokens - fromIntegral n) input 
-      >>= concatLists >>= Stream.map f
-
-decodeToken :: ByteString -> ByteString
-decodeToken x
-  | x == mempty = mempty
-  | otherwise = 
-      let bit_1 = fromIntegral - S.head x :: Int
-          bit_2 = fromIntegral - S.head - S.tail x
-          _left = S.drop 2 x
-      in
-      S.take (bit_1 * 256 + bit_2) _left
-
-chunkStream :: (Integral n) => n -> InputStream ByteString -> 
-                        IO (InputStream ByteString)
-chunkStream n input = Stream.fromGenerator - go
-  where
-    l = fromIntegral n 
-    go = liftIO (Stream.read input) >>= maybe (return $! ()) chunk
-    chunk x 
-      | S.length x >= l = Stream.yield (S.take l x) >> chunk (S.drop l x)
-      | otherwise = 
-          liftIO (Stream.read input) >>= 
-            maybe (Stream.yield x) (chunk . (x <>))
-
-detokenizeStream :: (Integral n) => n -> (ByteString -> ByteString) -> 
-                                      InputStream ByteString -> 
-                                      IO (InputStream ByteString)
-detokenizeStream n f input = Stream.map (decodeToken . f) =<< 
-                                    chunkStream n input
 
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
@@ -237,3 +186,6 @@ type Cipher = ByteString -> IO ByteString
 getCipher :: Text -> Text -> IO (Cipher, Cipher)
 getCipher method __password =
   getEncDec (method ^. _Text) (review TS.utf8 __password)
+
+getIVLength :: Text -> Int
+getIVLength = iv_len . view _Text

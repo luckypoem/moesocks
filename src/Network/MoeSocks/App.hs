@@ -139,12 +139,6 @@ localRequestHandler config aSocket = do
                 (remoteInputStream, remoteOutputStream) <- 
                   socketToStreams _remoteSocket
 
-                _stdGen <- newStdGen
-
-                let _iv = S.pack - P.take _BlockSize - randoms _stdGen
-                
-                pushStream remoteOutputStream - B.byteString _iv
-                
                 (_encrypt, _decrypt) <- getCipher
                                           _DefaultMethod
                                           (config ^. password)
@@ -158,7 +152,12 @@ localRequestHandler config aSocket = do
                 
                 pushStream remoteOutputEncryptedStream - 
                     B.byteString - builder_To_ByteString _header
+    
 
+                --  initialize the decryptor using IV
+                let _iv_len = getIVLength - _DefaultMethod
+                readExactly _iv_len remoteInputStream >>= _decrypt
+                
                 remoteInputDecryptedStream <-
                   Stream.mapM _decrypt remoteInputStream
 
@@ -177,20 +176,18 @@ remoteRequestHandler aConfig aSocket = do
   tryParse - do
     _iv <- parseFromStream (take _BlockSize) remoteInputStream
 
-    let 
-        _aesKey = aesKey aConfig
-        _encrypt = encryptCTR _aesKey _iv
-        _decrypt = decryptCTR _aesKey _iv
+    (_encrypt, _decrypt) <- getCipher
+                              _DefaultMethod
+                              (aConfig ^. password)
     
-    _headerBlock <- _decrypt <$> readExactly (fromIntegral _PacketSize)
-                          remoteInputStream
-    
-    _clientRequest <- 
-      case eitherResult - parse requestParser _headerBlock of
-        Left err -> throwIO - ParseException err
-        Right r -> pure r
-    
+    --  initialize the decryptor using IV
+    let _iv_len = getIVLength - _DefaultMethod
+    readExactly _iv_len remoteInputStream >>= _decrypt
 
+    remoteInputDecryptedStream <- Stream.mapM _decrypt remoteInputStream
+
+    _clientRequest <- parseFromStream requestParser remoteInputDecryptedStream
+    
     let
         connectTarget :: ClientRequest -> IO (Maybe Socket)
         connectTarget _clientRequest = do
@@ -255,15 +252,12 @@ remoteRequestHandler aConfig aSocket = do
               (targetInputStream, targetOutputStream) <- 
                 socketToStreams _targetSocket
 
-              targetInputBlockStream <- tokenizeStream _PacketSize
-                                        _encrypt targetInputStream
-              
-              remoteInputBlockStream <- detokenizeStream _PacketSize
-                                        _decrypt remoteInputStream
+              remoteOutputEncryptedStream <- 
+                Stream.contramapM _encrypt remoteOutputStream
 
               waitBoth
-                (Stream.connect remoteInputBlockStream targetOutputStream)
-                (Stream.connect targetInputBlockStream remoteOutputStream)
+                (Stream.connect remoteInputDecryptedStream targetOutputStream)
+                (Stream.connect targetInputStream remoteOutputEncryptedStream)
               
         handleTarget _targetSocket
 

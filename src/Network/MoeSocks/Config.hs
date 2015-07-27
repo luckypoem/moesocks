@@ -24,16 +24,6 @@ defaultMoeConfig = MoeConfig
   }
 
 
-aesKey :: MoeConfig -> AES
-aesKey _config =
-  let __password = 
-        _config ^. password & review TS.utf8 :: ByteString
-
-      _key = clamp _KeySize __password 
-  in
-  initAES _key
-
-
 defaultMoeOptions :: MoeOptions
 defaultMoeOptions = MoeOptions
   {
