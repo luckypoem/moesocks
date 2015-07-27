@@ -20,7 +20,6 @@ import Network.Socket
 import Prelude hiding ((-), take)
 import System.IO.Streams.Attoparsec
 import System.IO.Streams.Network
-{-import System.IO.Streams.Debug-}
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
@@ -33,12 +32,11 @@ import qualified System.IO.Streams as Stream
 
 
 showAddressType :: AddressType -> String
-showAddressType (IPv4_address xs) = concat - L.intersperse "." -
-                                      map show xs
-showAddressType (Domain_name x) = view _Text - x ^. TS.utf8
-showAddressType x = error -
-                            "IPv6 target not supported:"
-                            <> show x
+showAddressType (IPv4_address xs) = concat - L.intersperse "." - map show xs
+showAddressType (Domain_name x)   = view _Text - x ^. TS.utf8
+showAddressType x                 = error -
+                                            "IPv6 target not supported:"
+                                            <> show x
 
 localRequestHandler:: MoeConfig -> Socket -> IO ()
 localRequestHandler aConfig aSocket = do
@@ -83,9 +81,6 @@ localRequestHandler aConfig aSocket = do
       connect _remoteSocket _remoteAddress
 
       _localPeerAddr <- getPeerName aSocket
-      {-_localSocketAddr <- getSocketName aSocket-}
-      {-_remotePeerAddr <- getPeerName _remoteSocket-}
-      {-_remoteSocketAddr <- getSocketName _remoteSocket-}
 
       let showRequest :: ClientRequest -> String
           showRequest _r =  
@@ -97,9 +92,6 @@ localRequestHandler aConfig aSocket = do
                 concat - L.intersperse " -> " 
                 [ 
                   show _localPeerAddr
-                {-, _localSocketAddr-}
-                {-, _remotePeerAddr-}
-                {-, _remoteSocketAddr-}
                 , showRequest _clientRequest
                 ]
               )
@@ -155,10 +147,6 @@ remoteRequestHandler aConfig aSocket = do
                             (aConfig ^. password)
   
   remoteInputDecryptedStream <- Stream.mapM _decrypt remoteInputStream
-  {-debugRemoteInputDecryptedStream <- debugInputBS-}
-                              {-"R: remoteInput"-}
-                              {-Stream.stderr-}
-                              {-remoteInputDecryptedStream-}
                                           
   _clientRequest <- parseFromStream 
                       shadowsocksRequestParser remoteInputDecryptedStream
@@ -192,34 +180,20 @@ remoteRequestHandler aConfig aSocket = do
     connect _targetSocket _targetSocketAddress
 
     _remotePeerAddr <- getPeerName aSocket
-    {-_remoteSocketAddr <- getSocketName aSocket-}
     _targetPeerAddr <- getPeerName _targetSocket
-    {-_targetSocketAddr <- getSocketName _targetSocket-}
 
     puts - "R: " <> 
             (
               concat - L.intersperse " -> " - map show
               [ 
                 _remotePeerAddr
-              {-, _remoteSocketAddr-}
               , _targetPeerAddr
-              {-, _targetSocketAddr-}
               ]
             )
     let 
         handleTarget __targetSocket = do
           (targetInputStream, targetOutputStream) <- 
             socketToStreams _targetSocket
-
-          {-debugTargetInputStream <- debugInputBS-}
-                                      {-"R: targetInput"-}
-                                      {-Stream.stderr-}
-                                      {-targetInputStream-}
-                                        
-          {-debugTargetOutputStream <- debugOutputBS-}
-                                      {-"R: targetOutput"-}
-                                      {-Stream.stderr-}
-                                      {-targetOutputStream-}
 
           remoteOutputEncryptedStream <- 
             Stream.contramapM _encrypt remoteOutputStream
