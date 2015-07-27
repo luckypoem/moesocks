@@ -7,6 +7,8 @@ import Control.Concurrent
 import Control.Lens
 import Control.Monad
 import Data.Aeson
+import Data.ByteString (ByteString)
+import Data.ByteString.Lazy (toStrict)
 import Data.Attoparsec.ByteString
 import Data.Monoid
 import Data.Text (Text)
@@ -26,13 +28,13 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import qualified Data.Text.Strict.Lens as TS
+import Data.Text.Strict.Lens (utf8)
 import qualified System.IO.Streams as Stream
 
 
 showAddressType :: AddressType -> String
 showAddressType (IPv4_address xs) = concat - L.intersperse "." - map show xs
-showAddressType (Domain_name x)   = view _Text - x ^. TS.utf8
+showAddressType (Domain_name x)   = view _Text - x ^. utf8
 showAddressType x                 = error -
                                             "IPv6 target not supported:"
                                             <> show x
@@ -230,7 +232,8 @@ parseConfig aConfigFile = do
       fromSS :: [(Text, Value)] -> [(Text, Value)]
       fromSS = fromShadowSocksConfig
 
-  let _v = decodeStrict - review TS.utf8 _configFile :: Maybe Value
+
+  let _v = decodeStrict - review utf8 _configFile :: Maybe Value
 
       fixConfig :: Value -> Value
       fixConfig (Object _obj) =
@@ -241,12 +244,27 @@ parseConfig aConfigFile = do
   
       _maybeConfig = _v >>= decode . encode . fixConfig
 
+
+      formatConfig :: Value -> Value
+      formatConfig (Object _obj) =
+          Object -
+            _obj & H.toList &
+                over (mapped . _1) T.tail & H.fromList
+      formatConfig _ = Null
+
+
+
   case _maybeConfig of
     Nothing -> do
       pute "Failed to parse configuration file"
       pute "Example: "
-      pute - show - encode defaultMoeConfig
+
+      let configBS :: ByteString  
+          configBS = toStrict .encode . formatConfig . toJSON - 
+                        defaultMoeConfig
       
+      puteT - configBS ^. utf8
+
       pure Nothing
     _config -> do
       pure - _config 

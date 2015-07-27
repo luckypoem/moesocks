@@ -10,16 +10,17 @@ import Data.Binary.Put
 import Data.ByteString (ByteString)
 import Data.Monoid
 import Data.Text (Text)
+import Data.Text.Lens
+import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket
 import Prelude hiding (take, (-)) 
-import System.IO
-import System.IO.Unsafe
+import System.IO (hPutStrLn, stderr)
+import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
-import qualified Data.Text.Strict.Lens as TS
 import qualified System.IO.Streams as Stream
 
 -- BEGIN backports
@@ -52,6 +53,9 @@ puts
 
 pute :: String -> IO ()
 pute = sync . hPutStrLn stderr
+
+puteT :: Text -> IO ()
+puteT = pute . view _Text
 
 showBytes :: ByteString -> String
 showBytes = show . S.unpack
@@ -160,7 +164,7 @@ type Cipher = ByteString -> IO ByteString
 
 getCipher :: Text -> Text -> IO (Cipher, Cipher)
 getCipher method password =
-  getEncDec method (review TS.utf8 password)
+  getEncDec method (review utf8 password)
 
 
 portNumber16 :: (Word8, Word8) -> Word16
