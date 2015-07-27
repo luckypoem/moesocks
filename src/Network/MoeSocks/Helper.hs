@@ -5,7 +5,6 @@ module Network.MoeSocks.Helper where
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
-import Data.Aeson (Value())
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
