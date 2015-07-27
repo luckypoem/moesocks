@@ -32,10 +32,7 @@ SOFTWARE.
 
 
 {-# LANGUAGE OverloadedStrings #-}
-module Network.MoeSocks.Internal.ShadowSocks.Encrypt
-  ( getEncDec
-  , iv_len
-  ) where
+module Network.MoeSocks.Internal.ShadowSocks.Encrypt where
 
 import           Control.Concurrent.MVar ( newEmptyMVar, isEmptyMVar
                                          , putMVar, readMVar)
@@ -72,6 +69,7 @@ method_supported = HM.fromList
     , ("rc2-cfb", (16, 8))
     , ("rc4", (16, 0))
     , ("seed-cfb", (16, 16))
+    , ("none", (0, 16))
     ]
 
 iv_len :: String -> Int
@@ -107,44 +105,37 @@ evpBytesToKey password keyLen ivLen =
             ms (i+1) (m ++ [hash (last m <> password)])
         | otherwise = m
 
-getSSLEncDec :: String -> ByteString
-             -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
-getSSLEncDec method password = do
+getSSLEnc :: String -> ByteString
+             -> IO (ByteString -> IO ByteString)
+getSSLEnc method password = do
     let (m0, m1) = fromJust $ HM.lookup method method_supported
     random_iv <- withOpenSSL $ randBytes 32
     let cipher_iv = S.take m1 random_iv
     let (key, _) = evpBytesToKey password m0 m1
-    cipherCtx <- newEmptyMVar
-    decipherCtx <- newEmptyMVar
 
     cipherMethod <- fmap fromJust $ withOpenSSL $ getCipherByName method
     ctx <- cipherInitBS cipherMethod key cipher_iv Encrypt
+
     let
         encrypt "" = return ""
-        encrypt buf = do
-            empty <- isEmptyMVar cipherCtx
-            if empty
-                then do
-                    putMVar cipherCtx ()
-                    ciphered <- withOpenSSL $ cipherUpdateBS ctx buf
-                    return $ cipher_iv <> ciphered
-                else withOpenSSL $ cipherUpdateBS ctx buf
-        decrypt "" = return ""
-        decrypt buf = do
-            empty <- isEmptyMVar decipherCtx
-            if empty
-                then do
-                    let decipher_iv = S.take m1 buf
-                    dctx <- cipherInitBS cipherMethod key decipher_iv Decrypt
-                    putMVar decipherCtx dctx
-                    if S.null (S.drop m1 buf)
-                        then return ""
-                        else withOpenSSL $ cipherUpdateBS dctx (S.drop m1 buf)
-                else do
-                    dctx <- readMVar decipherCtx
-                    withOpenSSL $ cipherUpdateBS dctx buf
+        encrypt buf = withOpenSSL $ cipherUpdateBS ctx buf
 
-    return (encrypt, decrypt)
+    return encrypt
+
+getSSLDec:: String -> ByteString -> ByteString
+             -> IO (ByteString -> IO ByteString)
+getSSLDec method password decipher_iv = do
+    let (m0, m1) = fromJust $ HM.lookup method method_supported
+    let (key, _) = evpBytesToKey password m0 m1
+
+    cipherMethod <- fmap fromJust $ withOpenSSL $ getCipherByName method
+    dctx <- cipherInitBS cipherMethod key decipher_iv Decrypt
+
+    let
+        decrypt "" = return ""
+        decrypt buf = withOpenSSL $ cipherUpdateBS dctx buf
+
+    return decrypt
 
 getTableEncDec :: ByteString
           -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
@@ -162,5 +153,5 @@ getTableEncDec key = return (encrypt, decrypt)
 
 getEncDec :: String -> ByteString  
           -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
-getEncDec "table" key = getTableEncDec key
-getEncDec method key  = getSSLEncDec method key
+getEncDec _ key = pure (pure, pure)
+

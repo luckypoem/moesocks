@@ -141,9 +141,6 @@ tryAddr' aHostName aPort aHint f = do
     Just _addr -> () <$ f _addr
 
 
-tryParse :: IO a -> IO ()
-tryParse io = flip catch (\e -> puts - show (e :: ParseException)) - () <$ io
-
 
 sockAddr_To_AddrFamily :: SockAddr -> Family
 sockAddr_To_AddrFamily = f where
@@ -184,8 +181,26 @@ builder_To_ByteString = LB.toStrict . B.toLazyByteString
 type Cipher = ByteString -> IO ByteString 
 
 getCipher :: Text -> Text -> IO (Cipher, Cipher)
-getCipher method __password =
-  getEncDec (method ^. _Text) (review TS.utf8 __password)
+getCipher method password =
+  getEncDec (method ^. _Text) (review TS.utf8 password)
 
 getIVLength :: Text -> Int
 getIVLength = iv_len . view _Text
+
+type Decode = (Int, ByteString -> IO (ByteString -> IO ByteString))
+type Encode = (IO (), ByteString -> IO ByteString)
+
+getDecode :: Text -> Text -> Text -> Decode
+getDecode method password iv = 
+  let _ivLength = getIVLength method
+      _initDecode = getSSLDec (method ^. _Text) (review TS.utf8 password)
+  in
+  (_ivLength, _initDecode)
+
+getEncode :: Text -> Text -> Encode
+getEncode method password = 
+  let _ivLength = getIVLength method
+      _initEecode = getSSLEnc (method ^. _Text) (review TS.utf8 password)
+  in
+  (_ivLength, _initEncode)
+
