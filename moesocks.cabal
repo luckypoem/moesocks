@@ -6,7 +6,7 @@ category:           Network
 version:            0.1.0.1
 license:            Apache-2.0
 synopsis:           moe for all
-description:        A socks5 proxy server
+description:        A socks5 proxy using the client / server architecture.
 homepage:           https://github.com/nfjinjing/moesocks
 license-file:       LICENSE
 author:             Jinjing Wang
