@@ -231,14 +231,15 @@ parseConfig aConfigFile = do
       fromSS = fromShadowSocksConfig
 
   let _v = decodeStrict - review TS.utf8 _configFile :: Maybe Value
-  let fixConfig :: Value -> Value
+
+      fixConfig :: Value -> Value
       fixConfig (Object _obj) =
           Object - 
             _obj & H.toList & fromSS & 
                 over (mapped . _1) (T.cons '_')  & H.fromList
       fixConfig _ = Null
-  let 
-      _maybeConfig = (_v >>= decode . encode . fixConfig)
+  
+      _maybeConfig = _v >>= decode . encode . fixConfig
 
   case _maybeConfig of
     Nothing -> do
