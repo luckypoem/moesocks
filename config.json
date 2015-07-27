@@ -1,9 +1,9 @@
 {
-	"server":"127.0.0.1",
-	"server_port":1190,
-	"local_address":"localhost",
-	"local_port":1090,
-	"password":"birthday!",
+  "server":"127.0.0.1",
+  "server_port":1190,
+  "local_address":"localhost",
+  "local_port":1090,
+  "password":"birthday!",
   "method":"aes-256-cfb"
 }
 
