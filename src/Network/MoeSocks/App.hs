@@ -87,6 +87,11 @@ localRequestHandler aConfig aSocket = do
       {-_remotePeerAddr <- getPeerName _remoteSocket-}
       {-_remoteSocketAddr <- getSocketName _remoteSocket-}
 
+      let showRequest :: ClientRequest -> String
+          showRequest _r =  
+                            showAddressType (_r ^. addressType)
+                          <> ":"
+                          <> show (_r ^. portNumber . to portNumber16)
       puts - "L: " <> 
               (
                 concat - L.intersperse " -> " 
@@ -95,7 +100,7 @@ localRequestHandler aConfig aSocket = do
                 {-, _localSocketAddr-}
                 {-, _remotePeerAddr-}
                 {-, _remoteSocketAddr-}
-                , show _clientRequest
+                , showRequest _clientRequest
                 ]
               )
 
@@ -228,6 +233,16 @@ remoteRequestHandler aConfig aSocket = do
 parseConfig :: Text -> IO (Maybe MoeConfig)
 parseConfig aConfigFile = do
   _configFile <- TIO.readFile - aConfigFile ^. _Text
+
+  {-
+    "server":"localhost",
+    "server_port":2190,
+    "local_address":"localhost",
+    "local_port":2090,
+  -}
+
+  {-replaceKey :: Text -> Text -> H.Hashmap-}
+  {-replaceKey = undefined -}
 
   let _v = decodeStrict - review TS.utf8 _configFile :: Maybe Value
   let fixConfig :: Value -> Value

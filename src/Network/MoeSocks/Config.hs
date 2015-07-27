@@ -3,6 +3,7 @@
 module Network.MoeSocks.Config where
 
 import Network.MoeSocks.Type
+import Network.MoeSocks.Constant
 
 defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig
@@ -12,7 +13,7 @@ defaultMoeConfig = MoeConfig
   , _local = "127.0.0.1"
   , _localPort = 1090
   , _password = "moesocks"
-  {-, _method = "none"-}
+  , _method = _DefaultMethod
   }
 
 
