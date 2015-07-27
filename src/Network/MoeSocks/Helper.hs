@@ -20,7 +20,6 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
-import qualified Prelude as P
 import qualified System.IO.Streams as Stream
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 
@@ -129,29 +128,6 @@ pushStream s b = do
   Stream.write (Just BE.flush) _builderStream
 
 
-sockAddr_To_AddrFamily :: SockAddr -> Family
-sockAddr_To_AddrFamily = f where
-    f (SockAddrInet  {}) = AF_INET
-    f (SockAddrInet6 {}) = AF_INET6
-    f (SockAddrUnix  {}) = AF_UNIX
-    f _ = AF_INET
-
-sockAddr_To_Port :: SockAddr -> String
-sockAddr_To_Port = f where
-    f (SockAddrInet  p _) = show p
-    f (SockAddrInet6 p _ _ _) = show p
-    f (SockAddrUnix {}) = ""
-    f _ = ""
-
-sockAddr_To_Host :: SockAddr -> String
-sockAddr_To_Host = f where
-    f s@(SockAddrInet  _ _) = P.takeWhile (/= ':') - show s
-    f s@(SockAddrInet6 _ _ _ _) = reverse -
-                                  P.dropWhile (== ':') -
-                                  P.dropWhile (/= ':') - 
-                                  reverse - show s
-    f (SockAddrUnix s) = s
-    f _ = ""
 
 getSocket :: (Integral i, Show i) => HostName -> i -> SocketType ->
                                       IO (Socket, SockAddr)
@@ -187,27 +163,6 @@ getCipher :: Text -> Text -> IO (Cipher, Cipher)
 getCipher method password =
   getEncDec (method ^. _Text) (review TS.utf8 password)
 
-getIVLength :: Text -> Int
-getIVLength = iv_len . view _Text
-
-{-type Decode = (Int, ByteString -> IO (ByteString -> IO ByteString))-}
-{-type Encode = (IO (), ByteString -> IO ByteString)-}
-
-{-getDecode :: Text -> Text -> Text -> Decode-}
-{-getDecode method password iv = -}
-  {-let _ivLength = getIVLength method-}
-      {-_initDecode = getSSLDec (method ^. _Text) (review TS.utf8 password)-}
-  {-in-}
-  {-(_ivLength, _initDecode)-}
-
-{-getEncode :: Text -> Text -> Text -> Encode-}
-{-getEncode method password iv = -}
-  {-let _ivLength = getIVLength method-}
-      {-_encode = getSSLEnc (method ^. _Text) (review TS.utf8 password)-}
-      {-_initEncode = _encode iv-}
-  {-in-}
-  
-  {-(_ivLength, _initEncode)-}
 
 portNumber16 :: (Word8, Word8) -> Word16
 portNumber16 pair = fromWord8 - toListOf both pair

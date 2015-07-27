@@ -11,7 +11,6 @@ import Data.Attoparsec.ByteString
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
-import Data.Word
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
