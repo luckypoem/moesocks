@@ -41,6 +41,11 @@ requestBuilder aClientRequest =
   <> addressTypeBuilder (aClientRequest ^. addressType)
   <> foldMapOf each B.word8 (aClientRequest ^. portNumber)
 
+shadowsocksRequestBuilder :: ClientRequest -> B.Builder
+shadowsocksRequestBuilder aClientRequest =
+     addressTypeBuilder (aClientRequest ^. addressType)
+  <> foldMapOf each B.word8 (aClientRequest ^. portNumber)
+
 addressTypeParser :: Parser AddressType
 addressTypeParser = choice
   [
@@ -59,6 +64,10 @@ addressTypeParser = choice
                         count 16 anyWord8
   ]
 
+portParser :: Parser (Word8, Word8)
+portParser = (,) <$> anyWord8 <*> anyWord8
+
+
 requestParser :: Parser ClientRequest
 requestParser = do
   __connectionType <- choice
@@ -74,5 +83,15 @@ requestParser = do
   pure - 
           ClientRequest
             __connectionType
+            __addressType 
+            __portNumber
+
+shadowsocksRequestParser :: Parser ClientRequest
+shadowsocksRequestParser = do
+  __addressType <- addressTypeParser
+  __portNumber <- (,) <$> anyWord8 <*> anyWord8
+  pure - 
+          ClientRequest
+            TCP_IP_stream_connection
             __addressType 
             __portNumber

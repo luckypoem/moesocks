@@ -139,7 +139,7 @@ localRequestHandler aConfig aSocket = do
 
 
             let 
-                _header = requestBuilder conn
+                _header = shadowsocksRequestBuilder conn
             
             remoteOutputEncryptedStream <-
               Stream.contramapM _encrypt remoteOutputStream 
@@ -172,7 +172,8 @@ remoteRequestHandler aConfig aSocket = do
                               {-Stream.stderr-}
                               {-remoteInputDecryptedStream-}
                                           
-  _clientRequest <- parseFromStream requestParser remoteInputDecryptedStream
+  _clientRequest <- parseFromStream 
+                      shadowsocksRequestParser remoteInputDecryptedStream
 
   {-
    -puts - "Remote get: " <> show _clientRequest
