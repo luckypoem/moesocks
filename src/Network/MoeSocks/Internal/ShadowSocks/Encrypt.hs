@@ -41,23 +41,17 @@ module Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import           Control.Concurrent.MVar ( newEmptyMVar, isEmptyMVar
                                          , putMVar, readMVar)
 import           Crypto.Hash.MD5 (hash)
-import           Data.Binary.Get (runGet, getWord64le)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
-import qualified Data.ByteString.Lazy as L
 import qualified Data.HashMap.Strict as HM
-import           Data.IntMap.Strict (fromList, (!))
-import           Data.List (sortBy)
 import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
-import           Data.Word (Word8, Word64)
 import           OpenSSL (withOpenSSL)
 import           OpenSSL.EVP.Cipher (getCipherByName, CryptoMode(..))
 import           OpenSSL.EVP.Internal (cipherInitBS, cipherUpdateBS)
 import           OpenSSL.Random (randBytes)
 import           Data.Text (Text)
 import           Control.Lens
-import qualified Data.Text.Strict.Lens as TS
 import           Data.Text.Lens
 
 

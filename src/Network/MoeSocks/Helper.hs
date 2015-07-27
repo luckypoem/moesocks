@@ -10,7 +10,6 @@ import Data.Binary.Put
 import Data.ByteString (ByteString)
 import Data.Monoid
 import Data.Text (Text)
-import Data.Text.Lens
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket
 import Prelude hiding (take, (-)) 
