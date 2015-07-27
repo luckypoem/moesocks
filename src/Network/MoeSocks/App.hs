@@ -260,7 +260,7 @@ moeApp options = do
           \(_localSocket, _localAddr) -> do
             putStrLn "Moe local!"
               
-            {-setSocketOption _localSocket ReuseAddr 1-}
+            setSocketOption _localSocket ReuseAddr 1
             bindSocket _localSocket _localAddr
 
             listen _localSocket 1
@@ -278,7 +278,7 @@ moeApp options = do
           \(_remoteSocket, _remoteAddr) -> do
           putStrLn "Moe remote!"
 
-          {-setSocketOption _remoteSocket ReuseAddr 1-}
+          setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
           listen _remoteSocket 1
 
