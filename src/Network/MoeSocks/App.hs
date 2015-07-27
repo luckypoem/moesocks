@@ -69,8 +69,6 @@ localRequestHandler aConfig aSocket = do
     _clientRequest <- parseFromStream connectionParser inputStream
     {-puts - "request: " <> show _clientRequest-}
 
-    let conn = _clientRequest
-
     let 
         _c = aConfig 
         _initSocket = 
@@ -105,9 +103,9 @@ localRequestHandler aConfig aSocket = do
             push _ReservedByte
 
             write - builder_To_ByteString -
-                addressTypeBuilder (conn ^. addressType)
+                addressTypeBuilder (_clientRequest ^. addressType)
 
-            traverseOf both push - conn ^. portNumber
+            traverseOf both push - _clientRequest ^. portNumber
 
             (remoteInputStream, remoteOutputStream) <- 
               socketToStreams _remoteSocket
@@ -118,7 +116,7 @@ localRequestHandler aConfig aSocket = do
 
 
             let 
-                _header = shadowsocksRequestBuilder conn
+                _header = shadowsocksRequestBuilder _clientRequest
             
             remoteOutputEncryptedStream <-
               Stream.contramapM _encrypt remoteOutputStream 
@@ -229,7 +227,8 @@ parseConfig aConfigFile = do
   let fixConfig :: Value -> Value
       fixConfig (Object _obj) =
           Object - 
-            _obj & H.toList & fromSS & over (mapped . _1) (T.cons '_')  & H.fromList
+            _obj & H.toList & fromSS & 
+                over (mapped . _1) (T.cons '_')  & H.fromList
       fixConfig _ = Null
   let 
       _maybeConfig = (_v >>= decode . encode . fixConfig)

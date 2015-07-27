@@ -168,7 +168,7 @@ getCipher method password =
 portNumber16 :: (Word8, Word8) -> Word16
 portNumber16 pair = fromWord8 - toListOf both pair
 
-duplicateKey :: (Text, Text) -> [(Text, Value)] -> [(Text, Value)]
+duplicateKey :: (Eq a) => (a, a) -> [(a, b)] -> [(a, b)]
 duplicateKey (_from, _to) l = 
   case lookup _from l of
     Nothing -> l
