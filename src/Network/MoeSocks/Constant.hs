@@ -3,7 +3,6 @@
 module Network.MoeSocks.Constant where
 
 import Data.Word
-import GHC.Int (Int64)
 import Data.Text (Text)
 
 _No_authentication :: Word8

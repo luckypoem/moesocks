@@ -4,13 +4,7 @@
 
 module Network.MoeSocks.Config where
 
-import "cipher-aes" Crypto.Cipher.AES
-import Control.Lens
-import Data.ByteString (ByteString)
-import Network.MoeSocks.Constant
-import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import qualified Data.Text.Strict.Lens as TS
 
 defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig

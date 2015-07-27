@@ -5,9 +5,7 @@
 
 module Network.MoeSocks.App where
 
-import "cipher-aes" Crypto.Cipher.AES
 import Control.Concurrent
-import Control.Exception
 import Control.Lens
 import Control.Monad
 import Data.Aeson
@@ -24,10 +22,8 @@ import Network.MoeSocks.Type
 import Network.Socket
 import Prelude hiding ((-), take)
 import System.IO.Streams.Attoparsec
-import System.IO.Streams.ByteString
 import System.IO.Streams.Network
-import System.IO.Streams.Debug
-import System.Random
+{-import System.IO.Streams.Debug-}
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
@@ -173,10 +169,10 @@ remoteRequestHandler aConfig aSocket = do
                             (aConfig ^. password)
   
   remoteInputDecryptedStream <- Stream.mapM _decrypt remoteInputStream
-  debugRemoteInputDecryptedStream <- debugInputBS
-                              "R: remoteInput"
-                              Stream.stderr
-                              remoteInputDecryptedStream
+  {-debugRemoteInputDecryptedStream <- debugInputBS-}
+                              {-"R: remoteInput"-}
+                              {-Stream.stderr-}
+                              {-remoteInputDecryptedStream-}
                                           
   _clientRequest <- parseFromStream requestParser remoteInputDecryptedStream
 
@@ -248,15 +244,16 @@ remoteRequestHandler aConfig aSocket = do
             (targetInputStream, targetOutputStream) <- 
               socketToStreams _targetSocket
 
-            debugTargetInputStream <- debugInputBS
-                                        "R: targetInput"
-                                        Stream.stderr
-                                        targetInputStream
+            {-debugTargetInputStream <- debugInputBS-}
+                                        {-"R: targetInput"-}
+                                        {-Stream.stderr-}
+                                        {-targetInputStream-}
                                           
-            debugTargetOutputStream <- debugOutputBS
-                                        "R: targetOutput"
-                                        Stream.stderr
-                                        targetOutputStream
+            {-debugTargetOutputStream <- debugOutputBS-}
+                                        {-"R: targetOutput"-}
+                                        {-Stream.stderr-}
+                                        {-targetOutputStream-}
+
             remoteOutputEncryptedStream <- 
               Stream.contramapM _encrypt remoteOutputStream
 

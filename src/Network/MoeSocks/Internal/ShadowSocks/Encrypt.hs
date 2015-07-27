@@ -43,7 +43,6 @@ import           Crypto.Hash.MD5 (hash)
 import           Data.Binary.Get (runGet, getWord64le)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
-import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString.Lazy as L
 import qualified Data.HashMap.Strict as HM
 import           Data.IntMap.Strict (fromList, (!))

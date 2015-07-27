@@ -35,12 +35,13 @@ executable moesocks
                       , attoparsec
                       , text
                       , random
-                      , cipher-aes
                       , optparse-applicative
                       , aeson
                       , unordered-containers
                       , transformers
-                      , hsopenssl
+                      , HsOpenSSL
+                      , containers
+                      , cryptohash
 
   hs-source-dirs:      src
   default-language:    Haskell2010

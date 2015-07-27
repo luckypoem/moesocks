@@ -5,7 +5,6 @@ module Network.MoeSocks.Helper where
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
-import Control.Monad.IO.Class
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
@@ -16,9 +15,6 @@ import qualified Data.Text.Strict.Lens as TS
 import Network.Socket
 import Prelude hiding (take, (-)) 
 import System.IO
-import System.IO.Streams (InputStream)
-import System.IO.Streams.Attoparsec
-import System.IO.Streams.List
 import System.IO.Unsafe
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
@@ -27,7 +23,6 @@ import qualified Data.ByteString.Lazy as LB
 import qualified Prelude as P
 import qualified System.IO.Streams as Stream
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
-import qualified Data.ByteString.Char8 as C
 
 -- BEGIN backports
 
@@ -88,7 +83,7 @@ catchIO io = catch (() <$ io) - \e ->
 
 waitBoth :: IO a -> IO b -> IO ()
 waitBoth x y = do
-  let init = do
+  let _init = do
         (xThreadID, xLock) <- do
           _lock <- newEmptyMVar
           _threadID <- 
@@ -103,15 +98,15 @@ waitBoth x y = do
         return (xThreadID, xLock, yThreadID)
 
   let handleError (xThreadID, _, yThreadID) = do
-      killThread yThreadID
-      killThread xThreadID
+        killThread yThreadID
+        killThread xThreadID
 
   let action (_, xLock, yThreadID) = do
         takeMVar xLock 
         killThread yThreadID
 
   bracket 
-    init
+    _init
     handleError
     action
                 
