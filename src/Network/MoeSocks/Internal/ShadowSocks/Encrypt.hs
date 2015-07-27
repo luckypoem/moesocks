@@ -2,6 +2,7 @@
  - https://hackage.haskell.org/package/shadowsocks
  - Copyright: rnons
  - Licence: MIT
+ - Slightly modified to work better with moesocks
  -}
 
 
@@ -54,9 +55,13 @@ import           OpenSSL (withOpenSSL)
 import           OpenSSL.EVP.Cipher (getCipherByName, CryptoMode(..))
 import           OpenSSL.EVP.Internal (cipherInitBS, cipherUpdateBS)
 import           OpenSSL.Random (randBytes)
+import           Data.Text (Text)
+import           Control.Lens
+import qualified Data.Text.Strict.Lens as TS
+import           Data.Text.Lens
 
 
-method_supported :: HM.HashMap String (Int, Int)
+method_supported :: HM.HashMap Text (Int, Int)
 method_supported = HM.fromList
     [ ("aes-128-cfb", (16, 16))
     , ("aes-192-cfb", (24, 16))
@@ -73,24 +78,10 @@ method_supported = HM.fromList
     , ("seed-cfb", (16, 16))
     ]
 
-iv_len :: String -> Int
+iv_len :: Text -> Int
 iv_len method = m1
   where
     (_, m1) = method_supported HM.! method
-
-getTable :: ByteString -> [Word8]
-getTable key = do
-    let s = L.fromStrict $ hash key
-        a = runGet getWord64le s
-        table = [0..255]
-
-    map fromIntegral $ sortTable 1 a table
-
-sortTable :: Word64 -> Word64 -> [Word64] -> [Word64]
-sortTable 1024 _ table = table
-sortTable i a table = sortTable (i+1) a $ sortBy cmp table
-  where
-    cmp x y = compare (a `mod` (x + i)) (a `mod` (y + i))
 
 evpBytesToKey :: ByteString -> Int -> Int -> (ByteString, ByteString)
 evpBytesToKey password keyLen ivLen =
@@ -106,7 +97,7 @@ evpBytesToKey password keyLen ivLen =
             ms (i+1) (m ++ [hash (last m <> password)])
         | otherwise = m
 
-getSSLEncDec :: String -> ByteString
+getSSLEncDec :: Text -> ByteString
              -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
 getSSLEncDec method password = do
     let (m0, m1) = fromJust $ HM.lookup method method_supported
@@ -116,7 +107,8 @@ getSSLEncDec method password = do
     cipherCtx <- newEmptyMVar
     decipherCtx <- newEmptyMVar
 
-    cipherMethod <- fmap fromJust $ withOpenSSL $ getCipherByName method
+    cipherMethod <- fmap fromJust $ withOpenSSL $ getCipherByName $ 
+                                        method ^. _Text
     ctx <- cipherInitBS cipherMethod key cipher_iv Encrypt
     let
         encrypt "" = return ""
@@ -124,7 +116,7 @@ getSSLEncDec method password = do
             empty <- isEmptyMVar cipherCtx
             if empty
                 then do
-                    putMVar cipherCtx ()
+                    putMVar cipherCtx $! ()
                     ciphered <- withOpenSSL $ cipherUpdateBS ctx buf
                     return $ cipher_iv <> ciphered
                 else withOpenSSL $ cipherUpdateBS ctx buf
@@ -135,7 +127,7 @@ getSSLEncDec method password = do
                 then do
                     let decipher_iv = S.take m1 buf
                     dctx <- cipherInitBS cipherMethod key decipher_iv Decrypt
-                    putMVar decipherCtx dctx
+                    putMVar decipherCtx $! dctx
                     if S.null (S.drop m1 buf)
                         then return ""
                         else withOpenSSL $ cipherUpdateBS dctx (S.drop m1 buf)
@@ -145,21 +137,6 @@ getSSLEncDec method password = do
 
     return (encrypt, decrypt)
 
-getTableEncDec :: ByteString
+getEncDec :: Text -> ByteString  
           -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
-getTableEncDec key = return (encrypt, decrypt)
-  where
-    table = getTable key
-    encryptTable = fromList $ zip [0..255] table
-    decryptTable = fromList $ zip (map fromIntegral table) [0..255]
-    encrypt :: ByteString -> IO ByteString
-    encrypt buf = return $
-        S.pack $ map (\b -> encryptTable ! fromIntegral b) $ S.unpack buf
-    decrypt :: ByteString -> IO ByteString
-    decrypt buf = return $
-        S.pack $ map (\b -> decryptTable ! fromIntegral b) $ S.unpack buf
-
-getEncDec :: String -> ByteString  
-          -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
-getEncDec "table" key = getTableEncDec key
-getEncDec method key  = getSSLEncDec method key
+getEncDec = getSSLEncDec

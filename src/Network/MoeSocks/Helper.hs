@@ -161,7 +161,7 @@ type Cipher = ByteString -> IO ByteString
 
 getCipher :: Text -> Text -> IO (Cipher, Cipher)
 getCipher method password =
-  getEncDec (method ^. _Text) (review TS.utf8 password)
+  getEncDec method (review TS.utf8 password)
 
 
 portNumber16 :: (Word8, Word8) -> Word16
