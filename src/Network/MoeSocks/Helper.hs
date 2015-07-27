@@ -187,20 +187,22 @@ getCipher method password =
 getIVLength :: Text -> Int
 getIVLength = iv_len . view _Text
 
-type Decode = (Int, ByteString -> IO (ByteString -> IO ByteString))
-type Encode = (IO (), ByteString -> IO ByteString)
+{-type Decode = (Int, ByteString -> IO (ByteString -> IO ByteString))-}
+{-type Encode = (IO (), ByteString -> IO ByteString)-}
 
-getDecode :: Text -> Text -> Text -> Decode
-getDecode method password iv = 
-  let _ivLength = getIVLength method
-      _initDecode = getSSLDec (method ^. _Text) (review TS.utf8 password)
-  in
-  (_ivLength, _initDecode)
+{-getDecode :: Text -> Text -> Text -> Decode-}
+{-getDecode method password iv = -}
+  {-let _ivLength = getIVLength method-}
+      {-_initDecode = getSSLDec (method ^. _Text) (review TS.utf8 password)-}
+  {-in-}
+  {-(_ivLength, _initDecode)-}
 
-getEncode :: Text -> Text -> Encode
-getEncode method password = 
-  let _ivLength = getIVLength method
-      _initEecode = getSSLEnc (method ^. _Text) (review TS.utf8 password)
-  in
-  (_ivLength, _initEncode)
+{-getEncode :: Text -> Text -> Text -> Encode-}
+{-getEncode method password iv = -}
+  {-let _ivLength = getIVLength method-}
+      {-_encode = getSSLEnc (method ^. _Text) (review TS.utf8 password)-}
+      {-_initEncode = _encode iv-}
+  {-in-}
+  
+  {-(_ivLength, _initEncode)-}
 

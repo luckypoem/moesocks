@@ -152,13 +152,6 @@ localRequestHandler config aSocket = do
               
               pushStream remoteOutputEncryptedStream - 
                   B.byteString - builder_To_ByteString _header
-  
-
-              --  initialize the decryptor using IV
-              let _iv_len = getIVLength - _DefaultMethod
-              _iv <- readExactly _iv_len remoteInputStream
-              puts - "L iv: " <> show _iv
-              _decrypt _iv
               
               remoteInputDecryptedStream <-
                 Stream.mapM _decrypt remoteInputStream
@@ -179,14 +172,7 @@ remoteRequestHandler aConfig aSocket = do
                             _DefaultMethod
                             (aConfig ^. password)
   
-  --  initialize the decryptor using IV
-  let _iv_len = getIVLength - _DefaultMethod
-  _iv <- readExactly _iv_len remoteInputStream
-  puts - "R iv: " <> show _iv
-  _decrypt _iv
-
   remoteInputDecryptedStream <- Stream.mapM _decrypt remoteInputStream
-
   debugRemoteInputDecryptedStream <- debugInputBS
                               "R: remoteInput"
                               Stream.stderr
@@ -273,8 +259,8 @@ remoteRequestHandler aConfig aSocket = do
               Stream.contramapM _encrypt remoteOutputStream
 
             waitBoth
-              (Stream.connect debugRemoteInputDecryptedStream debugTargetOutputStream)
-              (Stream.connect debugTargetInputStream remoteOutputEncryptedStream)
+              (Stream.connect remoteInputDecryptedStream targetOutputStream)
+              (Stream.connect targetInputStream remoteOutputEncryptedStream)
             
       handleTarget _targetSocket
 
