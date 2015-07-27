@@ -117,7 +117,7 @@ localRequestHandler aConfig aSocket = do
               socketToStreams _remoteSocket
 
             (_encrypt, _decrypt) <- getCipher
-                                      _DefaultMethod
+                                      (aConfig ^. method)
                                       (aConfig ^. password)
 
 
@@ -146,7 +146,7 @@ remoteRequestHandler aConfig aSocket = do
   (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
 
   (_encrypt, _decrypt) <- getCipher
-                            _DefaultMethod
+                            (aConfig ^. method)
                             (aConfig ^. password)
   
   remoteInputDecryptedStream <- Stream.mapM _decrypt remoteInputStream
