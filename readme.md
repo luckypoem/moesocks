@@ -22,7 +22,7 @@ The goal of moesocks is to provide extra configurability to standard
 shadowsocks, for example:
 
 * load balancing (for example, region based multi-server configuration)
-* application level request filters (like adblock)
+* IP level request filters (like iptables)
 
 [shadowsocks]:https://github.com/shadowsocks/shadowsocks
 [shadowsocks in Haskell]:https://github.com/rnons/shadowsocks-haskell
