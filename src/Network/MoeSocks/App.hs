@@ -28,33 +28,17 @@ import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Strict.Lens as TS
-import qualified Prelude as P
 import qualified System.IO.Streams as Stream
 
 
-addressType_To_SockAddr :: ClientRequest -> SockAddr
-addressType_To_SockAddr aClientRequest =
-  let port16 = portNumber16 - aClientRequest ^. portNumber
-  in
-  case aClientRequest ^. addressType of
-    IPv4_address _address -> SockAddrInet 
-                              (fromIntegral port16)
-                              (fromWord8 - reverse _address)
 
-    Domain_name x -> SockAddrUnix -  x ^. TS.utf8 . _Text
-    IPv6_address xs -> 
-                        let rs = reverse - xs
-                        in
-                        SockAddrInet6 
-                          (fromIntegral port16)
-                          0
-                          ( fromWord8 - P.take 4 - rs
-                          , fromWord8 - P.drop 4 - P.take 4 - rs
-                          , fromWord8 - P.drop 8 - P.take 4 - rs
-                          , fromWord8 - P.drop 12 - rs
-                          )
-                          0
-
+showAddressType :: AddressType -> String
+showAddressType (IPv4_address xs) = concat - L.intersperse "." -
+                                      map show xs
+showAddressType (Domain_name x) = view _Text - x ^. TS.utf8
+showAddressType x = error -
+                            "IPv6 target not supported:"
+                            <> show x
 
 localRequestHandler:: MoeConfig -> Socket -> IO ()
 localRequestHandler aConfig aSocket = do
@@ -102,17 +86,16 @@ localRequestHandler aConfig aSocket = do
       {-_localSocketAddr <- getSocketName aSocket-}
       {-_remotePeerAddr <- getPeerName _remoteSocket-}
       {-_remoteSocketAddr <- getSocketName _remoteSocket-}
-      let _clientAddr = addressType_To_SockAddr _clientRequest
 
       puts - "L: " <> 
               (
-                concat - L.intersperse " -> " - map show
+                concat - L.intersperse " -> " 
                 [ 
-                  _localPeerAddr
+                  show _localPeerAddr
                 {-, _localSocketAddr-}
                 {-, _remotePeerAddr-}
                 {-, _remoteSocketAddr-}
-                , _clientAddr
+                , show _clientRequest
                 ]
               )
 
@@ -182,8 +165,7 @@ remoteRequestHandler aConfig aSocket = do
   let
       initTarget :: ClientRequest -> IO (Socket, SockAddr)
       initTarget _clientRequest = do
-        let _socketAddr = addressType_To_SockAddr _clientRequest
-        
+        let 
             connectionType_To_SocketType :: ConnectionType -> SocketType
             connectionType_To_SocketType TCP_IP_stream_connection = Stream
             connectionType_To_SocketType TCP_IP_port_binding = NoSocketType
@@ -192,13 +174,6 @@ remoteRequestHandler aConfig aSocket = do
             _socketType = connectionType_To_SocketType -
                             _clientRequest ^. connectionType
 
-            showAddressType :: AddressType -> String
-            showAddressType (IPv4_address xs) = concat - L.intersperse "." -
-                                                  map show xs
-            showAddressType (Domain_name x) = view _Text - x ^. TS.utf8
-            showAddressType x = error -
-                                        "IPv6 target not supported:"
-                                        <> show x
 
             _hostName = _clientRequest ^. addressType . to showAddressType
             _port = _clientRequest ^. portNumber
