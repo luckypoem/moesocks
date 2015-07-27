@@ -1,6 +1,4 @@
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports #-}
 
 module Network.MoeSocks.OptionParser where
 

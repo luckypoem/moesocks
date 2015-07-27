@@ -1,6 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Network.MoeSocks.Config where
 

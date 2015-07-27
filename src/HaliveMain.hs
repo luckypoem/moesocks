@@ -1,10 +1,7 @@
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports #-}
 
 module Main where
 
-import "cipher-aes" Crypto.Cipher.AES
 import Air.Env hiding ((.), has, take, puts) 
 import Control.Lens
 import Data.ByteString.Lens

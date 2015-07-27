@@ -1,7 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 module Network.MoeSocks.App where
 
