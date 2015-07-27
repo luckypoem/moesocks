@@ -30,7 +30,6 @@ import qualified Data.Text.Strict.Lens as TS
 import qualified System.IO.Streams as Stream
 
 
-
 showAddressType :: AddressType -> String
 showAddressType (IPv4_address xs) = concat - L.intersperse "." - map show xs
 showAddressType (Domain_name x)   = view _Text - x ^. TS.utf8
@@ -208,19 +207,7 @@ parseConfig :: Text -> IO (Maybe MoeConfig)
 parseConfig aConfigFile = do
   _configFile <- TIO.readFile - aConfigFile ^. _Text
 
-  {-
-    "server":"localhost",
-    "server_port":2190,
-    "local_address":"localhost",
-    "local_port":2090,
-  -}
-
   let 
-      duplicateKey :: (Text, Text) -> [(Text, Value)] -> [(Text, Value)]
-      duplicateKey (from, to) l = 
-        case L.lookup from l of
-          Nothing -> l
-          Just v -> (to,v) : l
 
       fromShadowSocksConfig :: [(Text, Value)] -> [(Text, Value)]
       fromShadowSocksConfig _configList = 

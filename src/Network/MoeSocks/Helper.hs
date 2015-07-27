@@ -5,13 +5,14 @@ module Network.MoeSocks.Helper where
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
+import Data.Aeson (Value())
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
-import qualified Data.Text.Strict.Lens as TS
+import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket
 import Prelude hiding (take, (-)) 
 import System.IO
@@ -20,8 +21,8 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
+import qualified Data.Text.Strict.Lens as TS
 import qualified System.IO.Streams as Stream
-import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 
 -- BEGIN backports
 
@@ -166,3 +167,9 @@ getCipher method password =
 
 portNumber16 :: (Word8, Word8) -> Word16
 portNumber16 pair = fromWord8 - toListOf both pair
+
+duplicateKey :: (Text, Text) -> [(Text, Value)] -> [(Text, Value)]
+duplicateKey (_from, _to) l = 
+  case lookup _from l of
+    Nothing -> l
+    Just v -> (_to,v) : l
