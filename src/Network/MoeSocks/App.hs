@@ -37,6 +37,11 @@ showAddressType x                 = error -
                                             "IPv6 target not supported:"
                                             <> show x
 
+showConnectionType :: ConnectionType -> String
+showConnectionType TCP_IP_stream_connection = "TCP_Stream"
+showConnectionType TCP_IP_port_binding      = "TCP_Bind  "
+showConnectionType UDP_port                 = "UDP       "
+
 localRequestHandler:: MoeConfig -> Socket -> IO ()
 localRequestHandler aConfig aSocket = do
   (inputStream, outputStream) <- socketToStreams aSocket
@@ -84,7 +89,8 @@ localRequestHandler aConfig aSocket = do
                             showAddressType (_r ^. addressType)
                           <> ":"
                           <> show (_r ^. portNumber . to portNumber16)
-      puts - "L: " <> 
+      puts - "L " <> showConnectionType (_clientRequest ^. connectionType)
+                  <> ": " <>
               (
                 concat - L.intersperse " -> " 
                 [ 
@@ -179,7 +185,8 @@ remoteRequestHandler aConfig aSocket = do
     _remotePeerAddr <- getPeerName aSocket
     _targetPeerAddr <- getPeerName _targetSocket
 
-    puts - "R: " <> 
+    puts - "L " <> showConnectionType (_clientRequest ^. connectionType)
+                  <> ": " <>
             (
               concat - L.intersperse " -> " - map show
               [ 
