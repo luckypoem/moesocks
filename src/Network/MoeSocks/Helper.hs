@@ -10,7 +10,6 @@ import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
 import Data.Monoid
-import Control.Monad.IO.Class
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
@@ -18,7 +17,7 @@ import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket
 import Prelude hiding (take, (-)) 
 import System.IO (hPutStrLn, stderr)
-import System.IO.Streams (InputStream, OutputStream, Generator)
+import System.IO.Streams (InputStream, OutputStream)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
@@ -114,7 +113,7 @@ wrapIO (s,  _io) = do
 waitOneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO () -> IO ()
 waitOneDebug x y doneX = do
   waitY <- newEmptyMVar
-  yThreadID <- forkFinally (wrapIO y) -
+  forkFinally (wrapIO y) -
                   const - putMVar waitY ()
 
   wrapIO x
