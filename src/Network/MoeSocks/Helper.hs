@@ -97,26 +97,25 @@ catchIO io = catch (() <$ io) - \e ->
 waitBoth :: IO a -> IO b -> IO ()
 waitBoth x y = do
   let _init = do
-        (xThreadID, xLock) <- do
-          _lock <- newEmptyMVar
-          _threadID <- 
+          _xLock <- newEmptyMVar
+          _xThreadID <- 
             forkFinally x -
-               const - putMVar _lock ()
+               const - putMVar _xLock ()
 
-          return (_threadID, _lock)
+          _yLock <- newEmptyMVar
+          _yThreadID <- 
+            forkFinally y -
+               const - putMVar _yLock ()
 
-        yThreadID <- 
-          forkFinally y - const - killThread xThreadID 
+          return (_xThreadID, _xLock, _yThreadID, _yLock)
 
-        return (xThreadID, xLock, yThreadID)
-
-  let handleError (xThreadID, _, yThreadID) = do
+  let handleError (xThreadID, _, yThreadID, _) = do
         killThread yThreadID
         killThread xThreadID
 
-  let action (_, xLock, yThreadID) = do
+  let action (_, xLock, _, yLock) = do
         takeMVar xLock 
-        killThread yThreadID
+        takeMVar yLock
 
   bracket 
     _init
