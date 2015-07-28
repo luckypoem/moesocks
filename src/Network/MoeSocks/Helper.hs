@@ -10,6 +10,7 @@ import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
 import Data.Monoid
+import Control.Monad.IO.Class
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
@@ -17,7 +18,7 @@ import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket
 import Prelude hiding (take, (-)) 
 import System.IO (hPutStrLn, stderr)
-import System.IO.Streams (InputStream, OutputStream)
+import System.IO.Streams (InputStream, OutputStream, Generator)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
@@ -66,7 +67,7 @@ fromWord8 :: forall t. Binary t => [Word8] -> t
 fromWord8 = decode . runPut . mapM_ put
       
 logClose :: String -> Socket -> IO ()
-logClose aID aSocket = do
+logClose _ aSocket = do
       {-puts - "Closing socket " <> aID-}
       close aSocket 
 
@@ -109,13 +110,19 @@ wrapIO (s,  _io) = do
 
 waitOneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO () -> IO ()
 waitOneDebug x y doneX = do
-  waitY <- newMVar ()
-  yThreadID <- forkIO - wrapIO y
+  waitY <- newEmptyMVar
+  yThreadID <- forkFinally (wrapIO y) -
+                  const - putMVar waitY ()
 
   wrapIO x
 
+  puts - "waitOneDebug: finalize"
   doneX
-  killThread yThreadID
+
+  puts - "waitOneDebug: waiting thread y"
+  takeMVar waitY
+
+  puts - "waitOneDebug: done thread y"
 
 --    killThread yThreadID
 
@@ -212,3 +219,22 @@ duplicateKey (_from, _to) l =
   case lookup _from l of
     Nothing -> l
     Just v -> (_to,v) : l
+
+setDone :: MVar () -> IO ()
+setDone x = do
+  puts - "setting Done!"
+  putMVar x ()
+  puts - "setting done complete"
+
+flagGenerator :: MVar () -> 
+      InputStream ByteString -> Generator ByteString ()
+flagGenerator _doneFlag _s = do
+    _notDone <- liftIO - isEmptyMVar _doneFlag
+    
+    liftIO - puts - "not done? " <> show _notDone
+
+    when _notDone - do
+        _r <- liftIO - Stream.read _s
+        case _r of
+          Nothing -> pure ()
+          Just _v -> Stream.yield _v >> flagGenerator _doneFlag _s

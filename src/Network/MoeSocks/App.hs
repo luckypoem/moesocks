@@ -6,6 +6,7 @@ module Network.MoeSocks.App where
 import Control.Concurrent
 import Control.Lens
 import Control.Monad
+import Control.Monad.IO.Class
 import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.ByteString.Lazy (toStrict)
@@ -22,6 +23,7 @@ import Network.Socket
 import Prelude hiding ((-), take)
 import System.IO.Streams.Attoparsec
 import System.IO.Streams.Network
+import System.IO.Streams (InputStream, Generator)
 import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
@@ -111,13 +113,21 @@ localRequestHandler aConfig aSocket = do
             let
                 sendChannel = 
                     Stream.connect inputStream remoteOutputEncryptedStream
-                receiveChannel =
-                    Stream.supply remoteInputDecryptedStream outputStream
+            
+            doneFlag <- newEmptyMVar
+
+            
+            remoteInputFlaggedStream <- Stream.fromGenerator - 
+                                        flagGenerator doneFlag
+                                          remoteInputDecryptedStream
+            
+            let receiveChannel =
+                  Stream.connect remoteInputFlaggedStream outputStream
             
             waitOneDebug 
               (Just "L -->", sendChannel)
               (Just "L <--", receiveChannel)
-              (pure ())
+              (setDone doneFlag)
 
 
       handleLocal _remoteSocket
