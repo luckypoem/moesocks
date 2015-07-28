@@ -13,9 +13,6 @@ type `moesocks --help` for help.
 Notes
 ------
 
-There is still a bug in remote mode which makes flaky connections. Client mode
-is usable.
-
 There is an earlier implementation of [shadowsocks in Haskell] by rnons. 
 
 The goal of moesocks is to provide extra configurability to standard
