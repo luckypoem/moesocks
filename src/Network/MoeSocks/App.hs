@@ -21,7 +21,6 @@ import Network.Socket
 import Prelude hiding ((-), take)
 import System.IO.Streams.Attoparsec
 import System.IO.Streams.Network
-import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
