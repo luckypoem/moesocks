@@ -59,11 +59,8 @@ connectionReplyBuilder _clientRequest =
       B.word8 socksVersion
   <>  B.word8 _Request_Granted 
   <>  B.word8 _ReservedByte
-
   <>  addressTypeBuilder (_clientRequest ^. addressType)
-
-  <>  (B.word8 - _clientRequest ^. portNumber . _1)
-  <>  (B.word8 - _clientRequest ^. portNumber . _2)
+  <>  foldMapOf each B.word8 (_clientRequest ^. portNumber)
 
 addressTypeBuilder :: AddressType -> B.Builder
 addressTypeBuilder aAddressType = 
@@ -89,15 +86,15 @@ connectionType_To_Word8 UDP_port = 3
 
 requestBuilder :: ClientRequest -> B.Builder
 requestBuilder aClientRequest = 
-     B.word8 (connectionType_To_Word8 - aClientRequest ^. connectionType)
-  <> B.word8 _ReservedByte
-  <> addressTypeBuilder (aClientRequest ^. addressType)
-  <> foldMapOf each B.word8 (aClientRequest ^. portNumber)
+      B.word8 (connectionType_To_Word8 - aClientRequest ^. connectionType)
+  <>  B.word8 _ReservedByte
+  <>  addressTypeBuilder (aClientRequest ^. addressType)
+  <>  foldMapOf each B.word8 (aClientRequest ^. portNumber)
 
 shadowsocksRequestBuilder :: ClientRequest -> B.Builder
 shadowsocksRequestBuilder aClientRequest =
-     addressTypeBuilder (aClientRequest ^. addressType)
-  <> foldMapOf each B.word8 (aClientRequest ^. portNumber)
+      addressTypeBuilder (aClientRequest ^. addressType)
+  <>  foldMapOf each B.word8 (aClientRequest ^. portNumber)
 
 addressTypeParser :: Parser AddressType
 addressTypeParser = choice
