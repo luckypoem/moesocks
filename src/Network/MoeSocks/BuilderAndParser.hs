@@ -67,7 +67,7 @@ addressTypeBuilder aAddressType =
   case aAddressType of
     IPv4_address _address -> 
                           B.word8 1
-                       <> foldMap B.word8 _address 
+                       <> foldMap B.word8 (reverse _address)
     Domain_name x ->   
                           B.word8 3
                        <> B.word8 (fromIntegral (S.length x))
@@ -75,7 +75,7 @@ addressTypeBuilder aAddressType =
 
     IPv6_address xs ->  
                           B.word8 4
-                       <> B.byteString (S.pack xs)
+                       <> B.byteString (S.pack - reverse xs)
 
 
 

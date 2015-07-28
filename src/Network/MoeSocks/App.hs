@@ -57,12 +57,19 @@ localRequestHandler aConfig aSocket = do
     _clientRequest <- parseFromStream connectionParser inputStream
     {-puts - "request: " <> show _clientRequest-}
 
+    Stream.write (Just - builder_To_ByteString -
+                          connectionReplyBuilder _clientRequest)
+                  outputStream
+    
     let 
         _c = aConfig 
         _initSocket = 
             getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream 
     
-    logSA "L connect remote" _initSocket - \(_remoteSocket, _remoteAddress) -> do
+    logSA "L connect remote" _initSocket - 
+      \(_remoteSocket, _remoteAddress) -> do
+
+                          
       connect _remoteSocket _remoteAddress
 
       _localPeerAddr <- getPeerName aSocket
@@ -83,10 +90,6 @@ localRequestHandler aConfig aSocket = do
               )
 
       let handleLocal __remoteSocket = do
-            Stream.write (Just - builder_To_ByteString -
-                                  connectionReplyBuilder _clientRequest)
-                          outputStream
-                          
 
             (remoteInputStream, remoteOutputStream) <- 
               socketToStreams _remoteSocket
