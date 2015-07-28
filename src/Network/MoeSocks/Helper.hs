@@ -34,6 +34,9 @@ infixr 0 -
 
 -- END backports
 
+type IB = InputStream ByteString
+type OB = OutputStream ByteString
+
 _Debug :: Bool
 _Debug = True
 
@@ -115,14 +118,12 @@ waitOneDebug x y doneX = do
                   const - putMVar waitY ()
 
   wrapIO x
-
-  puts - "waitOneDebug: finalize"
+  {-puts - "waitOneDebug: finalize"-}
   doneX
-
-  puts - "waitOneDebug: waiting thread y"
+  {-puts - "waitOneDebug: waiting thread y"-}
   takeMVar waitY
 
-  puts - "waitOneDebug: done thread y"
+  {-puts - "waitOneDebug: done thread y"-}
 
 --    killThread yThreadID
 
@@ -222,19 +223,19 @@ duplicateKey (_from, _to) l =
 
 setDone :: MVar () -> IO ()
 setDone x = do
-  puts - "setting Done!"
+  {-puts - "setting Done!"-}
   putMVar x ()
-  puts - "setting done complete"
+  {-puts - "setting done complete"-}
 
-flagGenerator :: MVar () -> 
-      InputStream ByteString -> Generator ByteString ()
-flagGenerator _doneFlag _s = do
-    _notDone <- liftIO - isEmptyMVar _doneFlag
-    
-    liftIO - puts - "not done? " <> show _notDone
 
-    when _notDone - do
-        _r <- liftIO - Stream.read _s
-        case _r of
-          Nothing -> pure ()
-          Just _v -> Stream.yield _v >> flagGenerator _doneFlag _s
+connectFor :: MVar () -> IB -> OB -> IO ()
+connectFor _doneFlag _i _o = do
+  {-puts - "connecting"-}
+  _loopThreadID <- forkIO - Stream.connect _i _o
+  
+  takeMVar _doneFlag
+
+  {-puts - "killing loop"-}
+  killThread _loopThreadID
+
+  pure ()

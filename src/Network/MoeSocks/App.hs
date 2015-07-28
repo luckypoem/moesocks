@@ -23,7 +23,7 @@ import Network.Socket
 import Prelude hiding ((-), take)
 import System.IO.Streams.Attoparsec
 import System.IO.Streams.Network
-import System.IO.Streams (InputStream, Generator)
+import System.IO.Streams (InputStream, OutputStream, Generator)
 import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
@@ -115,15 +115,12 @@ localRequestHandler aConfig aSocket = do
                     Stream.connect inputStream remoteOutputEncryptedStream
             
             doneFlag <- newEmptyMVar
+            
+            
+            let receiveChannel =  connectFor doneFlag
+                                    remoteInputDecryptedStream
+                                    outputStream
 
-            
-            remoteInputFlaggedStream <- Stream.fromGenerator - 
-                                        flagGenerator doneFlag
-                                          remoteInputDecryptedStream
-            
-            let receiveChannel =
-                  Stream.connect remoteInputFlaggedStream outputStream
-            
             waitOneDebug 
               (Just "L -->", sendChannel)
               (Just "L <--", receiveChannel)
@@ -197,13 +194,16 @@ remoteRequestHandler aConfig aSocket = do
           let sendChannel = 
                 Stream.connect remoteInputDecryptedStream targetOutputStream
 
-              receiveChannel = 
-                Stream.supply targetInputStream remoteOutputEncryptedStream
+
+          doneFlag <- newEmptyMVar
+
+          let receiveChannel = 
+                connectFor doneFlag targetInputStream remoteOutputEncryptedStream
 
           waitOneDebug 
             (Just "R -->", sendChannel)
             (Just "R <--", receiveChannel)
-            (pure ())
+            (setDone doneFlag)
           
     handleTarget _targetSocket
 
