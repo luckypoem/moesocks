@@ -196,7 +196,8 @@ remoteRequestHandler aConfig aSocket = do
           doneFlag <- newEmptyMVar
 
           let receiveChannel = 
-                connectFor doneFlag targetInputStream remoteOutputEncryptedStream
+                connectFor doneFlag 
+                  targetInputStream remoteOutputEncryptedStream
 
           waitOneDebug 
             (Just "R -->", sendChannel)

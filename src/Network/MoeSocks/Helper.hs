@@ -171,11 +171,6 @@ pushStream s b = do
   Stream.write (Just BE.flush) _builderStream
 
 
-endInputStream :: InputStream a -> IO ()
-endInputStream x = do
-  puts "ending stream"
-  Stream.skipToEof x
-
 getSocket :: (Integral i, Show i) => HostName -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket aHost aPort aSocketType = do
@@ -230,7 +225,7 @@ setDone x = do
 connectFor :: MVar () -> IB -> OB -> IO ()
 connectFor _doneFlag _i _o = do
   {-puts - "connecting"-}
-  _loopThreadID <- forkIO - Stream.connect _i _o
+  _loopThreadID <- forkIO - catchIO (Stream.connect _i _o)
   
   takeMVar _doneFlag
 
