@@ -42,8 +42,8 @@ showConnectionType TCP_IP_stream_connection = "TCP_Stream"
 showConnectionType TCP_IP_port_binding      = "TCP_Bind  "
 showConnectionType UDP_port                 = "UDP       "
 
-localRequestHandler:: MoeConfig -> Socket -> IO ()
-localRequestHandler aConfig aSocket = do
+localRequestHandler:: MoeOptions -> MoeConfig -> Socket -> IO ()
+localRequestHandler options aConfig aSocket = do
   (inputStream, outputStream) <- socketToStreams aSocket
 
   r <- parseFromStream greetingParser inputStream
@@ -56,12 +56,15 @@ localRequestHandler aConfig aSocket = do
 
     _clientRequest <- parseFromStream connectionParser inputStream
     {-puts - "request: " <> show _clientRequest-}
-    {-Stream.write (Just - builder_To_ByteString --}
-                          {-connectionReplyBuilder _clientRequest)-}
-                  {-outputStream-}
-    
-    Stream.write (Just - builder_To_ByteString nonStandardReplyBuilder)
-                  outputStream
+
+    case options ^. socks5Header of
+      Strict -> 
+            Stream.write (Just - builder_To_ByteString -
+                                  connectionReplyBuilder _clientRequest)
+                          outputStream
+      _ -> 
+            Stream.write (Just - builder_To_ByteString nonStandardReplyBuilder)
+                          outputStream
     let 
         _c = aConfig 
         _initSocket = 
@@ -288,7 +291,7 @@ moeApp options = do
                   (_newSocket, _) <- accept _socket
                   forkIO - catchAll - 
                             logSocket "L handler" (pure _newSocket) -
-                              localRequestHandler config
+                              localRequestHandler options config
 
             forever - handleLocal _localSocket
 
