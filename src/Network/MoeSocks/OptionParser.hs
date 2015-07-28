@@ -10,6 +10,7 @@ import Options.Applicative hiding (Parser)
 import Prelude hiding ((-))
 import qualified Options.Applicative as O
 
+
 optionParser :: O.Parser MoeOptions
 optionParser = 
   let _mode = strOption -
@@ -23,7 +24,18 @@ optionParser =
                   <>  long "config"
                   <>  metavar "CONFIG"
                   <>  help "path to the configuration file"
+  in
+{-data Verbosity = Normal | Verbose-}
 
+{-flag Normal Verbose-}
+  {-( long "verbose"-}
+ {-<> short 'v'-}
+ {-<> help "Enable verbose mode" )-}
+
+  let _polipo = flag Strict Polipo -
+                      short 'p'
+                  <>  long "polipo"
+                  <>  help "run as a polipo compatible socks5 server"
   in
 
   let parseMode :: String -> RunningMode
@@ -34,7 +46,10 @@ optionParser =
         | otherwise = DebugMode
   in
 
-  MoeOptions <$> fmap parseMode _mode <*> fmap (view packed) _config
+  MoeOptions 
+              <$> fmap parseMode _mode 
+              <*> fmap (view packed) _config
+              <*> _polipo
 
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 

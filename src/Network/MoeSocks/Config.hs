@@ -22,4 +22,5 @@ defaultMoeOptions = MoeOptions
   {
     _runningMode = DebugMode
   , _configFile = ""
+  , _socks5Header = Strict
   } 
