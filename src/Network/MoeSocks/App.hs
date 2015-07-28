@@ -72,7 +72,7 @@ localRequestHandler aConfig aSocket = do
                             showAddressType (_r ^. addressType)
                           <> ":"
                           <> show (_r ^. portNumber . to portNumber16)
-      puts - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
+      _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
                   <> ": " <>
               (
                 concat - L.intersperse " -> " 
@@ -172,7 +172,7 @@ remoteRequestHandler aConfig aSocket = do
     _remotePeerAddr <- getPeerName aSocket
     _targetPeerAddr <- getPeerName _targetSocket
 
-    puts - "R " -- <> showConnectionType (_clientRequest ^. connectionType)
+    _log - "R " -- <> showConnectionType (_clientRequest ^. connectionType)
                   <> ": " <>
             (
               concat - L.intersperse " -> " - map show

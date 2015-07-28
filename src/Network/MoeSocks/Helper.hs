@@ -37,7 +37,7 @@ type IB = InputStream ByteString
 type OB = OutputStream ByteString
 
 _Debug :: Bool
-_Debug = True
+_Debug = False
 
 boolToMaybe :: Bool -> Maybe ()
 boolToMaybe True = Just ()
@@ -58,6 +58,9 @@ puts
 
 pute :: String -> IO ()
 pute = sync . hPutStrLn stderr
+
+_log :: String -> IO ()
+_log = sync . putStrLn
 
 puteT :: Text -> IO ()
 puteT = pute . view _Text
@@ -106,9 +109,9 @@ catchIO io = catch (() <$ io) - \e ->
 
 wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
-  forM_ s - pute . ("+ " <>)
+  forM_ s - puts . ("+ " <>)
   _io
-  forM_ s - pute . ("- " <>)
+  forM_ s - puts . ("- " <>)
 
 waitOneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO () -> IO ()
 waitOneDebug x y doneX = do
