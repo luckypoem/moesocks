@@ -13,6 +13,8 @@ type `moesocks --help` for help.
 Notes
 ------
 
+Remote mode is still buggy :(
+
 There is an earlier implementation of [shadowsocks in Haskell] by rnons. 
 
 The goal of moesocks is to provide extra configurability to standard
