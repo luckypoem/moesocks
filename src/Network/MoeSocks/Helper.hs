@@ -65,10 +65,15 @@ showBytes = show . S.unpack
 fromWord8 :: forall t. Binary t => [Word8] -> t
 fromWord8 = decode . runPut . mapM_ put
       
+logClose :: String -> Socket -> IO ()
+logClose aID aSocket = do
+      puts - "Closing socket " <> aID
+      close aSocket 
+
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
                         ((Socket, SockAddr) -> IO a) -> IO a
-logSocketWithAddress aID _init f =
-  catch (bracket _init (close .fst) f) - \e -> do
+logSocketWithAddress aID _init f = do
+  catch (bracket _init (logClose aID . fst) f) - \e -> do
       pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       throw e
 
@@ -78,7 +83,7 @@ logSA = logSocketWithAddress
 
 logSocket :: String -> IO Socket -> (Socket -> IO a) -> IO a
 logSocket aID _init f =
-  catch (bracket _init close f) - \e -> do
+  catch (bracket _init (logClose aID) f) - \e -> do
       pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       throw e
 
