@@ -123,50 +123,54 @@ waitOneDebug x y doneX = do
   {-puts - "waitOneDebug: finalize"-}
   doneX
   {-puts - "waitOneDebug: waiting thread y"-}
-  takeMVar waitY
+  {-takeMVar waitY-}
 
   {-puts - "waitOneDebug: done thread y"-}
 
 --    killThread yThreadID
 
-waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitBothDebug x y = do
-  let
-    initChildren :: IO (MVar [MVar ()])
-    initChildren = newMVar []
+{-waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
+{-waitBothDebug x y = do-}
+  {-let-}
+    {-initChildren :: IO (MVar [MVar ()])-}
+    {-initChildren = newMVar []-}
 
-    waitForChildren :: (MVar [MVar ()]) -> IO ()
-    waitForChildren _children = do
-     cs <- takeMVar _children
-     case cs of
-       []   -> return ()
-       m:ms -> do
-          putMVar _children ms
-          takeMVar m
-          waitForChildren _children
+    {-waitForChildren :: (MVar [MVar ()]) -> IO ()-}
+    {-waitForChildren _children = do-}
+     {-cs <- takeMVar _children-}
+     {-case cs of-}
+       {-[]   -> return ()-}
+       {-m:ms -> do-}
+          {-putMVar _children ms-}
+          {-takeMVar m-}
+          {-waitForChildren _children-}
 
-    forkChild :: (MVar [MVar ()]) -> (Maybe String, IO ()) -> IO ThreadId
-    forkChild _children io = do
-       mvar <- newEmptyMVar
-       childs <- takeMVar _children
-       putMVar _children (mvar:childs)
-       forkFinally (wrapIO io) (\_ -> putMVar mvar ())
+    {-forkChild :: (MVar [MVar ()]) -> (Maybe String, IO ()) -> IO ThreadId-}
+    {-forkChild _children io = do-}
+       {-mvar <- newEmptyMVar-}
+       {-childs <- takeMVar _children-}
+       {-putMVar _children (mvar:childs)-}
+       {-forkFinally (wrapIO io) (\_ -> putMVar mvar ())-}
 
-    action _children = do
-      forkChild _children x
-      forkChild _children y
-      waitForChildren _children
+    {-action _children = do-}
+      {-forkChild _children x-}
+      {-forkChild _children y-}
+      {-waitForChildren _children-}
 
-  bracket 
-    initChildren
-    (const - pure ())
-    action
+  {-bracket -}
+    {-initChildren-}
+    {-(const - pure ())-}
+    {-action-}
+
+{-waitBoth :: IO () -> IO () -> IO ()-}
+{-waitBoth x y = do-}
+  {-waitBothDebug (Nothing, x) (Nothing, y)-}
+                
 
 waitBoth :: IO () -> IO () -> IO ()
 waitBoth x y = do
-  waitBothDebug (Nothing, x) (Nothing, y)
+  waitOneDebug(Nothing, x) (Nothing, y) (pure ())
                 
-
 pushStream :: (OutputStream ByteString) -> B.Builder -> IO ()
 pushStream s b = do
   _builderStream <- Stream.builderStream s 
@@ -221,19 +225,28 @@ duplicateKey (_from, _to) l =
 setDone :: MVar () -> IO ()
 setDone x = do
   {-puts - "setting Done!"-}
-  putMVar x ()
+  {-putMVar x ()-}
   {-puts - "setting done complete"-}
+  pure ()
 
 
 connectFor :: MVar () -> IB -> OB -> IO ()
 connectFor _doneFlag _i _o = do
   {-puts - "connecting"-}
-  _loopThreadID <- forkFinally (catchIO - Stream.connect _i _o) - 
-                    const -setDone _doneFlag
+
+  _i2 <- Stream.lockingInputStream _i
+  _o2 <- Stream.lockingOutputStream _o
+
+  let _io = catchIO - Stream.connect _i2 _o2
+
+  _io
+
+  {-_loopThreadID <- forkFinally _io - -}
+                    {-const - setDone _doneFlag-}
   
-  takeMVar _doneFlag
+  {-takeMVar _doneFlag-}
 
-  {-puts - "killing loop"-}
-  killThread _loopThreadID
+  {-[>puts - "killing loop"<]-}
+  {-killThread _loopThreadID-}
 
-  pure ()
+  {-pure ()-}
