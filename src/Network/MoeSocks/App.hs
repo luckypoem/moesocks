@@ -108,10 +108,16 @@ localRequestHandler aConfig aSocket = do
             remoteInputDecryptedStream <-
               Stream.mapM _decrypt remoteInputStream
 
-            waitBoth
-              (Stream.connect inputStream remoteOutputEncryptedStream)
-              (Stream.connect remoteInputDecryptedStream outputStream)
             
+            let
+                sendChannel = 
+                    Stream.connect inputStream remoteOutputEncryptedStream
+                receiveChannel =
+                    Stream.connect remoteInputDecryptedStream outputStream
+            
+            waitBothDebug 
+              (Just "L -->", sendChannel)
+              (Just "L <--", receiveChannel)
 
       handleLocal _remoteSocket
 
@@ -184,8 +190,8 @@ remoteRequestHandler aConfig aSocket = do
                 Stream.connect targetInputStream remoteOutputEncryptedStream
 
           waitBothDebug 
-            (Just "Send", sendChannel)
-            (Just "Receive", receiveChannel)
+            (Just "R -->", sendChannel)
+            (Just "R <--", receiveChannel)
           
     handleTarget _targetSocket
 

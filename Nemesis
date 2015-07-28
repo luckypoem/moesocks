@@ -5,6 +5,9 @@ import Control.Monad
 
 main = run nemesis
 
+ping = do
+        sh "curl -x socks5://localhost:1090 localhost:8080; exit 0"
+
 nemesis = do
 
   desc "halive"
@@ -17,14 +20,15 @@ nemesis = do
     sh "cabal configure"
     sh "cabal sdist"
 
+
   desc "test"
   task "test" - do
     forever - do
-      -- sh "telnet localhost 1090;exit 0"*/
-      -- sh "curl -x socks5://localhost:1090 jinjing.cc;exit 0"
-      sh "curl -x socks5://localhost:1090 localhost:8080; exit 0"
+      ping
       sleep 1
 
+  desc "ping"
+  task "ping" - ping
 
   desc "remote"
   task "remote" - do

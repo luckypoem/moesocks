@@ -104,9 +104,9 @@ waitBothDebug x y = do
   let
     wrapIO :: (Maybe String, IO c) -> IO ()
     wrapIO (s,  _io) = do
-      forM_ s - pute . ("Start: " <>)
+      forM_ s - pute . ("+ " <>)
       _io
-      forM_ s - pute . ("End  : " <>)
+      forM_ s - pute . ("- " <>)
 
 
     initChildren :: IO (MVar [MVar ()])
