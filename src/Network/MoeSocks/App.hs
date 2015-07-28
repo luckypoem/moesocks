@@ -12,6 +12,7 @@ import Data.ByteString.Lazy (toStrict)
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
+import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
@@ -26,7 +27,6 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Data.Text.Strict.Lens (utf8)
 import qualified System.IO.Streams as Stream
 
 

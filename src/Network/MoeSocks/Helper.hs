@@ -17,13 +17,13 @@ import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket
 import Prelude hiding (take, (-)) 
 import System.IO (hPutStrLn, stderr)
+import System.IO.Streams (OutputStream)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
 import qualified System.IO.Streams as Stream
-import System.IO.Streams (InputStream, OutputStream)
 
 -- BEGIN backports
 
