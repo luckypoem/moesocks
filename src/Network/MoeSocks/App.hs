@@ -183,8 +183,9 @@ remoteRequestHandler aConfig aSocket = do
               receiveChannel = 
                 Stream.connect targetInputStream remoteOutputEncryptedStream
 
-          forkIO - sendChannel
-          receiveChannel
+          waitBothDebug 
+            (Just "Send", sendChannel)
+            (Just "Receive", receiveChannel)
           
     handleTarget _targetSocket
 

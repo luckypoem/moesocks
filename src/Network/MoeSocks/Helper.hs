@@ -5,6 +5,7 @@ module Network.MoeSocks.Helper where
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
+import Control.Monad
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
@@ -93,14 +94,21 @@ catchIO:: IO a -> IO ()
 catchIO io = catch (() <$ io) - \e ->
                 pute - "Catch IO: " <> show (e :: IOException)
                 
-waitBoth :: IO () -> IO () -> IO ()
-waitBoth x y = do
-  forkIO x
-  y
+{-waitBoth :: IO () -> IO () -> IO ()-}
+{-waitBoth x y = do-}
+  {-forkIO x-}
+  {-y-}
 
-waitBoth_ :: IO a -> IO b -> IO ()
-waitBoth_ x y = do
+waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+waitBothDebug x y = do
   let
+    wrapIO :: (Maybe String, IO c) -> IO ()
+    wrapIO (s,  _io) = do
+      forM_ s - pute . ("Start: " <>)
+      _io
+      forM_ s - pute . ("End  : " <>)
+
+
     initChildren :: IO (MVar [MVar ()])
     initChildren = newMVar []
 
@@ -114,22 +122,26 @@ waitBoth_ x y = do
           takeMVar m
           waitForChildren _children
 
-    forkChild :: (MVar [MVar ()]) -> IO () -> IO ThreadId
+    forkChild :: (MVar [MVar ()]) -> (Maybe String, IO ()) -> IO ThreadId
     forkChild _children io = do
        mvar <- newEmptyMVar
        childs <- takeMVar _children
        putMVar _children (mvar:childs)
-       forkFinally io (\_ -> putMVar mvar ())
+       forkFinally (wrapIO io) (\_ -> putMVar mvar ())
 
     action _children = do
-      forkChild _children (() <$ x)
-      forkChild _children (() <$ y)
+      forkChild _children x
+      forkChild _children y
       waitForChildren _children
 
   bracket 
     initChildren
     (const - pure ())
     action
+
+waitBoth :: IO () -> IO () -> IO ()
+waitBoth x y = do
+  waitBothDebug (Nothing, x) (Nothing, y)
                 
 
 pushStream :: (Stream.OutputStream ByteString) -> B.Builder -> IO ()
