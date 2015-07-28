@@ -93,33 +93,37 @@ catchIO:: IO a -> IO ()
 catchIO io = catch (() <$ io) - \e ->
                 pute - "Catch IO: " <> show (e :: IOException)
                 
-
 waitBoth :: IO a -> IO b -> IO ()
 waitBoth x y = do
-  let _init = do
-          _xLock <- newEmptyMVar
-          _xThreadID <- 
-            forkFinally x -
-               const - putMVar _xLock ()
+  let
+    children :: IO (MVar [MVar ()])
+    children = newMVar []
 
-          _yLock <- newEmptyMVar
-          _yThreadID <- 
-            forkFinally y -
-               const - putMVar _yLock ()
+    waitForChildren :: (MVar [MVar ()]) -> IO ()
+    waitForChildren _children = do
+     cs <- takeMVar _children
+     case cs of
+       []   -> return ()
+       m:ms -> do
+          putMVar _children ms
+          takeMVar m
+          waitForChildren _children
 
-          return (_xThreadID, _xLock, _yThreadID, _yLock)
+    forkChild :: (MVar [MVar ()]) -> IO () -> IO ThreadId
+    forkChild _children io = do
+       mvar <- newEmptyMVar
+       childs <- takeMVar _children
+       putMVar _children (mvar:childs)
+       forkFinally io (\_ -> putMVar mvar ())
 
-  let handleError (xThreadID, _, yThreadID, _) = do
-        killThread yThreadID
-        killThread xThreadID
-
-  let action (_, xLock, _, yLock) = do
-        takeMVar xLock 
-        takeMVar yLock
+    action _children = do
+      forkChild _children (() <$ x)
+      forkChild _children (() <$ y)
+      waitForChildren _children
 
   bracket 
-    _init
-    handleError
+    children
+    (const - pure ())
     action
                 
 
