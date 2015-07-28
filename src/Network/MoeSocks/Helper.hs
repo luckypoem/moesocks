@@ -104,16 +104,17 @@ wrapIO (s,  _io) = do
 
 waitOneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO () -> IO ()
 waitOneDebug x y doneX = do
-  waitY <- newMVar ()
+  catchAllLog "waitOneDebug" - do
+    waitY <- newMVar ()
 
-  yThreadID <- forkFinally (wrapIO y) (const - putMVar waitY ())
+    yThreadID <- forkFinally (wrapIO y) (const - putMVar waitY ())
 
-  wrapIO x
-  doneX
- 
-  {-killThread yThreadID-}
-
-  takeMVar waitY
+    wrapIO x
+    doneX
+   
+    killThread yThreadID
+    
+    takeMVar waitY
 
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitBothDebug x y = do
