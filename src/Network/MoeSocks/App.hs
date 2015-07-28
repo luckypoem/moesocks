@@ -177,9 +177,14 @@ remoteRequestHandler aConfig aSocket = do
           remoteOutputEncryptedStream <- 
             Stream.contramapM _encrypt remoteOutputStream
 
-          waitBoth
-            (Stream.connect remoteInputDecryptedStream targetOutputStream)
-            (Stream.connect targetInputStream remoteOutputEncryptedStream)
+          let sendChannel = 
+                Stream.connect remoteInputDecryptedStream targetOutputStream
+
+              receiveChannel = 
+                Stream.connect targetInputStream remoteOutputEncryptedStream
+
+          forkIO - sendChannel
+          receiveChannel
           
     handleTarget _targetSocket
 

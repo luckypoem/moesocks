@@ -96,8 +96,8 @@ catchIO io = catch (() <$ io) - \e ->
 waitBoth :: IO a -> IO b -> IO ()
 waitBoth x y = do
   let
-    children :: IO (MVar [MVar ()])
-    children = newMVar []
+    initChildren :: IO (MVar [MVar ()])
+    initChildren = newMVar []
 
     waitForChildren :: (MVar [MVar ()]) -> IO ()
     waitForChildren _children = do
@@ -122,7 +122,7 @@ waitBoth x y = do
       waitForChildren _children
 
   bracket 
-    children
+    initChildren
     (const - pure ())
     action
                 
