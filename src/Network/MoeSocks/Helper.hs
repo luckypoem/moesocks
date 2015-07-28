@@ -111,7 +111,7 @@ waitOneDebug x y doneX = do
   wrapIO x
   doneX
  
-  killThread yThreadID
+  {-killThread yThreadID-}
 
   takeMVar waitY
 
