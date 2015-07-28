@@ -56,12 +56,12 @@ localRequestHandler aConfig aSocket = do
 
     _clientRequest <- parseFromStream connectionParser inputStream
     {-puts - "request: " <> show _clientRequest-}
-    {-Stream.write (Just - builder_To_ByteString --}
-                          {-connectionReplyBuilder _clientRequest)-}
-                  {-outputStream-}
-    
-    Stream.write (Just - builder_To_ByteString nonStandardReplyBuilder)
+    Stream.write (Just - builder_To_ByteString -
+                          connectionReplyBuilder _clientRequest)
                   outputStream
+    
+    {-Stream.write (Just - builder_To_ByteString nonStandardReplyBuilder)-}
+                  {-outputStream-}
     let 
         _c = aConfig 
         _initSocket = 
