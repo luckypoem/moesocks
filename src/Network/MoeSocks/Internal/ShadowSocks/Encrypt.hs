@@ -105,36 +105,40 @@ getSSLEncDec method password = do
                                         method ^. _Text
     ctx <- cipherInitBS cipherMethod key cipher_iv Encrypt
     let
-        encrypt "" = return ""
-        encrypt buf = do
-            empty <- isEmptyMVar cipherCtx
-            if empty
-                then do
-                    putMVar cipherCtx $! ()
-                    ciphered <- withOpenSSL $ cipherUpdateBS ctx buf
-                    return $! cipher_iv <> ciphered
-                else do
-                    r <- withOpenSSL $ cipherUpdateBS ctx buf
-                    return $! r
+        encrypt buf = 
+          if S.null buf
+            then return $! S.empty
+            else do
+              empty <- isEmptyMVar cipherCtx
+              if empty
+                  then do
+                      putMVar cipherCtx $! ()
+                      ciphered <- withOpenSSL $ cipherUpdateBS ctx buf
+                      return $! cipher_iv <> ciphered
+                  else do
+                      r <- withOpenSSL $ cipherUpdateBS ctx buf
+                      return $! r
 
-        decrypt "" = return ""
-        decrypt buf = do
-            empty <- isEmptyMVar decipherCtx
-            if empty
-                then do
-                    let decipher_iv = S.take m1 buf
-                    dctx <- cipherInitBS cipherMethod key decipher_iv Decrypt
-                    putMVar decipherCtx $! dctx
-                    if S.null (S.drop m1 buf)
-                        then return ""
-                        else do
-                            r <- withOpenSSL $
-                                    cipherUpdateBS dctx (S.drop m1 buf)
-                            return $! r
-                else do
-                    dctx <- readMVar decipherCtx
-                    r <- withOpenSSL $ cipherUpdateBS dctx buf
-                    return $! r
+        decrypt buf =
+          if S.null buf
+            then return $! S.empty
+            else do
+              empty <- isEmptyMVar decipherCtx
+              if empty
+                  then do
+                      let decipher_iv = S.take m1 buf
+                      dctx <- cipherInitBS cipherMethod key decipher_iv Decrypt
+                      putMVar decipherCtx $! dctx
+                      if S.null (S.drop m1 buf)
+                          then return ""
+                          else do
+                              r <- withOpenSSL $
+                                      cipherUpdateBS dctx (S.drop m1 buf)
+                              return $! r
+                  else do
+                      dctx <- readMVar decipherCtx
+                      r <- withOpenSSL $ cipherUpdateBS dctx buf
+                      return $! r
 
     return (encrypt, decrypt)
 
