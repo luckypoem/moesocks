@@ -93,8 +93,13 @@ catchIO:: IO a -> IO ()
 catchIO io = catch (() <$ io) - \e ->
                 pute - "Catch IO: " <> show (e :: IOException)
                 
-waitBoth :: IO a -> IO b -> IO ()
+waitBoth :: IO () -> IO () -> IO ()
 waitBoth x y = do
+  forkIO x
+  y
+
+waitBoth_ :: IO a -> IO b -> IO ()
+waitBoth_ x y = do
   let
     initChildren :: IO (MVar [MVar ()])
     initChildren = newMVar []
