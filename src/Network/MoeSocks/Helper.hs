@@ -23,6 +23,7 @@ import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
 import qualified System.IO.Streams as Stream
+import System.IO.Streams (InputStream, OutputStream)
 
 -- BEGIN backports
 
@@ -94,21 +95,29 @@ catchIO:: IO a -> IO ()
 catchIO io = catch (() <$ io) - \e ->
                 pute - "Catch IO: " <> show (e :: IOException)
                 
-{-waitBoth :: IO () -> IO () -> IO ()-}
-{-waitBoth x y = do-}
-  {-forkIO x-}
-  {-y-}
+
+wrapIO :: (Maybe String, IO c) -> IO ()
+wrapIO (s,  _io) = do
+  forM_ s - pute . ("+ " <>)
+  _io
+  forM_ s - pute . ("- " <>)
+
+waitOneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO () -> IO ()
+waitOneDebug x y doneX = do
+  waitY <- newMVar ()
+
+  yThreadID <- forkFinally (wrapIO y) (const - putMVar waitY ())
+
+  wrapIO x
+  doneX
+ 
+  killThread yThreadID
+
+  takeMVar waitY
 
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitBothDebug x y = do
   let
-    wrapIO :: (Maybe String, IO c) -> IO ()
-    wrapIO (s,  _io) = do
-      forM_ s - pute . ("+ " <>)
-      _io
-      forM_ s - pute . ("- " <>)
-
-
     initChildren :: IO (MVar [MVar ()])
     initChildren = newMVar []
 
@@ -144,13 +153,17 @@ waitBoth x y = do
   waitBothDebug (Nothing, x) (Nothing, y)
                 
 
-pushStream :: (Stream.OutputStream ByteString) -> B.Builder -> IO ()
+pushStream :: (OutputStream ByteString) -> B.Builder -> IO ()
 pushStream s b = do
   _builderStream <- Stream.builderStream s 
   Stream.write (Just b) _builderStream
   Stream.write (Just BE.flush) _builderStream
 
 
+endOutputStream :: OutputStream ByteString -> IO ()
+endOutputStream _o = do
+  _i <- Stream.makeInputStream (pure Nothing)
+  Stream.connect _i _o
 
 getSocket :: (Integral i, Show i) => HostName -> i -> SocketType ->
                                       IO (Socket, SockAddr)
