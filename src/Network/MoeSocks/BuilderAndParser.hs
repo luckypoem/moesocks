@@ -54,6 +54,23 @@ connectionParser = do
   socksHeader
   requestParser
 
+{- Special hack for polipo
+ -0500 0001 0000 0000 1010
+ -}
+
+nonStandardReplyBuilder :: B.Builder
+nonStandardReplyBuilder =
+      B.word8 socksVersion
+  <>  B.word8 _Request_Granted 
+  <>  B.word8 _ReservedByte
+  <>  B.word8 1
+  <>  B.word8 0
+  <>  B.word8 0
+  <>  B.word8 0
+  <>  B.word8 0
+  <>  B.word8 16
+  <>  B.word8 16
+
 connectionReplyBuilder :: ClientRequest -> B.Builder
 connectionReplyBuilder _clientRequest = 
       B.word8 socksVersion
