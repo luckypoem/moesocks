@@ -114,11 +114,10 @@ localRequestHandler aConfig aSocket = do
                 receiveChannel =
                     Stream.supply remoteInputDecryptedStream outputStream
             
-            
             waitOneDebug 
               (Just "L -->", sendChannel)
               (Just "L <--", receiveChannel)
-              (endOutputStream outputStream)
+              (pure ())
 
 
       handleLocal _remoteSocket
@@ -194,7 +193,7 @@ remoteRequestHandler aConfig aSocket = do
           waitOneDebug 
             (Just "R -->", sendChannel)
             (Just "R <--", receiveChannel)
-            (endOutputStream remoteOutputEncryptedStream)
+            (pure ())
           
     handleTarget _targetSocket
 

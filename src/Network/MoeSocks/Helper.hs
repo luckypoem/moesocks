@@ -17,7 +17,7 @@ import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket
 import Prelude hiding (take, (-)) 
 import System.IO (hPutStrLn, stderr)
-import System.IO.Streams (OutputStream)
+import System.IO.Streams (InputStream, OutputStream)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
@@ -67,7 +67,7 @@ fromWord8 = decode . runPut . mapM_ put
       
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
-      puts - "Closing socket " <> aID
+      {-puts - "Closing socket " <> aID-}
       close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
@@ -109,14 +109,15 @@ wrapIO (s,  _io) = do
 
 waitOneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO () -> IO ()
 waitOneDebug x y doneX = do
-  catchAllLog "waitOneDebug" - do
-    waitY <- newMVar ()
-    yThreadID <- forkFinally (wrapIO y) (const - putMVar waitY ())
+  waitY <- newMVar ()
+  yThreadID <- forkIO - wrapIO y
 
-    wrapIO x
-    doneX
-   
-    killThread yThreadID
+  wrapIO x
+
+  doneX
+  killThread yThreadID
+
+--    killThread yThreadID
 
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitBothDebug x y = do
@@ -163,10 +164,10 @@ pushStream s b = do
   Stream.write (Just BE.flush) _builderStream
 
 
-endOutputStream :: OutputStream ByteString -> IO ()
-endOutputStream _o = do
-  _i <- Stream.makeInputStream (pure Nothing)
-  Stream.connect _i _o
+endInputStream :: InputStream a -> IO ()
+endInputStream x = do
+  puts "ending stream"
+  Stream.skipToEof x
 
 getSocket :: (Integral i, Show i) => HostName -> i -> SocketType ->
                                       IO (Socket, SockAddr)
