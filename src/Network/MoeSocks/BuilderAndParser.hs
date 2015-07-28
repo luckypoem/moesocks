@@ -12,6 +12,59 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 
 
+socksVersion :: Word8
+socksVersion = 5
+
+socksHeader :: Parser Word8
+socksHeader = word8 socksVersion
+
+greetingParser :: Parser ClientGreeting
+greetingParser = do
+  socksHeader
+  let maxNoOfMethods = 5
+  _numberOfAuthenticationMethods <- satisfy (<= maxNoOfMethods)
+
+  ClientGreeting <$>
+    count (fromIntegral _numberOfAuthenticationMethods) anyWord8
+
+greetingReplyBuilder :: B.Builder
+greetingReplyBuilder =  B.word8 socksVersion
+                     <> B.word8 _No_authentication
+
+requestParser :: Parser ClientRequest
+requestParser = do
+  __connectionType <- choice
+      [
+        TCP_IP_stream_connection <$ word8 1 
+      , TCP_IP_port_binding <$ word8 2
+      , UDP_port <$ word8 3
+      ]
+
+  word8 _ReservedByte
+  __addressType <- addressTypeParser
+  __portNumber <- (,) <$> anyWord8 <*> anyWord8
+  pure - 
+          ClientRequest
+            __connectionType
+            __addressType 
+            __portNumber
+
+connectionParser :: Parser ClientRequest 
+connectionParser = do
+  socksHeader
+  requestParser
+
+connectionReplyBuilder :: ClientRequest -> B.Builder
+connectionReplyBuilder _clientRequest = 
+      B.word8 socksVersion
+  <>  B.word8 _Request_Granted 
+  <>  B.word8 _ReservedByte
+
+  <>  addressTypeBuilder (_clientRequest ^. addressType)
+
+  <>  (B.word8 - _clientRequest ^. portNumber . _1)
+  <>  (B.word8 - _clientRequest ^. portNumber . _2)
+
 addressTypeBuilder :: AddressType -> B.Builder
 addressTypeBuilder aAddressType = 
   case aAddressType of
@@ -67,24 +120,6 @@ addressTypeParser = choice
 portParser :: Parser (Word8, Word8)
 portParser = (,) <$> anyWord8 <*> anyWord8
 
-
-requestParser :: Parser ClientRequest
-requestParser = do
-  __connectionType <- choice
-      [
-        TCP_IP_stream_connection <$ word8 1 
-      , TCP_IP_port_binding <$ word8 2
-      , UDP_port <$ word8 3
-      ]
-
-  word8 _ReservedByte
-  __addressType <- addressTypeParser
-  __portNumber <- (,) <$> anyWord8 <*> anyWord8
-  pure - 
-          ClientRequest
-            __connectionType
-            __addressType 
-            __portNumber
 
 shadowsocksRequestParser :: Parser ClientRequest
 shadowsocksRequestParser = do

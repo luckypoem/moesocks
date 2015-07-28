@@ -9,7 +9,6 @@ import Control.Monad
 import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.ByteString.Lazy (toStrict)
-import Data.Attoparsec.ByteString
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
@@ -48,30 +47,13 @@ localRequestHandler:: MoeConfig -> Socket -> IO ()
 localRequestHandler aConfig aSocket = do
   (inputStream, outputStream) <- socketToStreams aSocket
 
-  let socksVersion = 5
-      socksHeader = word8 socksVersion
-  
-  let greetingParser = do
-        socksHeader
-        let maxNoOfMethods = 5
-        _numberOfAuthenticationMethods <- satisfy (<= maxNoOfMethods)
-
-        ClientGreeting <$>
-          count (fromIntegral _numberOfAuthenticationMethods) anyWord8
-
-  let connectionParser = do
-        socksHeader
-        requestParser
-
   r <- parseFromStream greetingParser inputStream
   {-puts - "greetings: " <> show r-}
 
   forM_ (boolToMaybe - 
           _No_authentication `elem` (r ^. authenticationMethods)) - const -
     do
-    pushStream outputStream - B.word8 socksVersion
-                            <> B.word8 _No_authentication
-
+    pushStream outputStream - greetingReplyBuilder 
 
     _clientRequest <- parseFromStream connectionParser inputStream
     {-puts - "request: " <> show _clientRequest-}
@@ -102,18 +84,10 @@ localRequestHandler aConfig aSocket = do
               )
 
       let handleLocal __remoteSocket = do
-            let
-              write x = Stream.write (Just - x) outputStream
-              push = write . S.singleton
-
-            push socksVersion
-            push _Request_Granted 
-            push _ReservedByte
-
-            write - builder_To_ByteString -
-                addressTypeBuilder (_clientRequest ^. addressType)
-
-            traverseOf both push - _clientRequest ^. portNumber
+            Stream.write (Just - builder_To_ByteString -
+                                  connectionReplyBuilder _clientRequest)
+                          outputStream
+                          
 
             (remoteInputStream, remoteOutputStream) <- 
               socketToStreams _remoteSocket
