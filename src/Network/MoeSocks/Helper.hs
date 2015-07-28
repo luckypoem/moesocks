@@ -37,7 +37,7 @@ type IB = InputStream ByteString
 type OB = OutputStream ByteString
 
 _Debug :: Bool
-_Debug = False
+_Debug = True
 
 boolToMaybe :: Bool -> Maybe ()
 boolToMaybe True = Just ()
