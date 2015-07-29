@@ -42,8 +42,8 @@ showConnectionType TCP_IP_stream_connection = "TCP_Stream"
 showConnectionType TCP_IP_port_binding      = "TCP_Bind  "
 showConnectionType UDP_port                 = "UDP       "
 
-localRequestHandler:: MoeConfig -> Socket -> IO ()
-localRequestHandler aConfig aSocket = do
+localRequestHandler:: MoeOptions -> MoeConfig -> Socket -> IO ()
+localRequestHandler options aConfig aSocket = do
   (inputStream, outputStream) <- socketToStreams aSocket
 
   r <- parseFromStream greetingParser inputStream
@@ -57,12 +57,23 @@ localRequestHandler aConfig aSocket = do
     _clientRequest <- parseFromStream connectionParser inputStream
     {-puts - "request: " <> show _clientRequest-}
 
+    case options ^. socks5Header of
+      Strict -> 
+            Stream.write (Just - builder_To_ByteString -
+                                  connectionReplyBuilder _clientRequest)
+                          outputStream
+      _ -> 
+            Stream.write (Just - builder_To_ByteString nonStandardReplyBuilder)
+                          outputStream
     let 
         _c = aConfig 
         _initSocket = 
             getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream 
     
-    logSA "Connect remote" _initSocket - \(_remoteSocket, _remoteAddress) -> do
+    logSA "L connect remote" _initSocket - 
+      \(_remoteSocket, _remoteAddress) -> do
+
+                          
       connect _remoteSocket _remoteAddress
 
       _localPeerAddr <- getPeerName aSocket
@@ -83,10 +94,6 @@ localRequestHandler aConfig aSocket = do
               )
 
       let handleLocal __remoteSocket = do
-            Stream.write (Just - builder_To_ByteString -
-                                  connectionReplyBuilder _clientRequest)
-                          outputStream
-                          
 
             (remoteInputStream, remoteOutputStream) <- 
               socketToStreams _remoteSocket
@@ -164,7 +171,7 @@ remoteRequestHandler aConfig aSocket = do
         
         getSocket _hostName (portNumber16 _port) _socketType
 
-  logSA "Connect target" (initTarget _clientRequest) - \_r -> do
+  logSA "R connect target" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetSocketAddress) = _r 
 
     connect _targetSocket _targetSocketAddress
@@ -271,7 +278,7 @@ moeApp options = do
   
   forM_ maybeConfig - \config -> do
     let localApp :: (Socket, SockAddr) -> IO ()
-        localApp s = logSA "Local loop" (pure s) - 
+        localApp s = logSA "L loop" (pure s) - 
           \(_localSocket, _localAddr) -> do
             putStrLn "Moe local!"
               
@@ -283,13 +290,13 @@ moeApp options = do
             let handleLocal _socket = do
                   (_newSocket, _) <- accept _socket
                   forkIO - catchAll - 
-                            logSocket "Local handler" (pure _newSocket) -
-                              localRequestHandler config
+                            logSocket "L handler" (pure _newSocket) -
+                              localRequestHandler options config
 
             forever - handleLocal _localSocket
 
     let remoteApp :: (Socket, SockAddr) -> IO ()
-        remoteApp s = logSA "Remote loop" (pure s) -
+        remoteApp s = logSA "R loop" (pure s) -
           \(_remoteSocket, _remoteAddr) -> do
           putStrLn "Moe remote!"
 
@@ -303,7 +310,7 @@ moeApp options = do
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
                 forkIO - catchAll - 
-                            logSocket "Remote handler" (pure _newSocket) -
+                            logSocket "R handler" (pure _newSocket) -
                               remoteRequestHandler config 
 
           forever - handleRemote _remoteSocket
@@ -313,17 +320,17 @@ moeApp options = do
         remoteRun = do
           let _c = config
           getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream
-            >>= catchAllLog "remote" . remoteApp 
+            >>= catchAllLog "R app" . remoteApp 
           
         localRun :: IO ()
         localRun = do
           let _c = config
           getSocket (_c ^. local . _Text) (_c ^. localPort) Stream
-            >>= catchAllLog "local" . localApp 
+            >>= catchAllLog "L app" . localApp 
 
         debugRun :: IO ()
         debugRun = do
-          catchAllLog "both" - waitBoth localRun remoteRun
+          catchAllLog "Debug app" - waitBoth localRun remoteRun
 
 
     case options ^. runningMode of

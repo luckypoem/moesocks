@@ -60,10 +60,14 @@ makeLenses ''MoeConfig
 data RunningMode = RemoteMode | LocalMode | DebugMode
       deriving (Show, Eq)
 
+data Socks5Header = Strict | Polipo
+      deriving (Show, Eq)
+
 data MoeOptions = MoeOptions
   {
     _runningMode :: RunningMode
   , _configFile :: Text
+  , _socks5Header :: Socks5Header
   }
   deriving (Show, Eq)
 

@@ -54,6 +54,23 @@ connectionParser = do
   socksHeader
   requestParser
 
+{- Special hack for polipo
+ -0500 0001 0000 0000 1010
+ -}
+
+nonStandardReplyBuilder :: B.Builder
+nonStandardReplyBuilder =
+      B.word8 socksVersion
+  <>  B.word8 _Request_Granted 
+  <>  B.word8 _ReservedByte
+  <>  B.word8 1
+  <>  B.word8 0
+  <>  B.word8 0
+  <>  B.word8 0
+  <>  B.word8 0
+  <>  B.word8 16
+  <>  B.word8 16
+
 connectionReplyBuilder :: ClientRequest -> B.Builder
 connectionReplyBuilder _clientRequest = 
       B.word8 socksVersion
@@ -67,7 +84,7 @@ addressTypeBuilder aAddressType =
   case aAddressType of
     IPv4_address _address -> 
                           B.word8 1
-                       <> foldMap B.word8 _address 
+                       <> foldMap B.word8 (_address)
     Domain_name x ->   
                           B.word8 3
                        <> B.word8 (fromIntegral (S.length x))
@@ -75,7 +92,7 @@ addressTypeBuilder aAddressType =
 
     IPv6_address xs ->  
                           B.word8 4
-                       <> B.byteString (S.pack xs)
+                       <> B.byteString (S.pack - xs)
 
 
 

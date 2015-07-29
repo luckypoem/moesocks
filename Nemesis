@@ -45,3 +45,11 @@ nemesis = do
   desc "i"
   task "i" - do
     sh "cabal repl"
+
+  desc "debug local"
+  task "dl" - do
+    sh "cabal run -- -m local -c config.json"
+  
+  desc "debug remote"
+  task "dr" - do
+    sh "cabal run -- -m remote -c config.json"

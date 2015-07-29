@@ -144,4 +144,6 @@ getSSLEncDec method password = do
 
 getEncDec :: Text -> ByteString  
           -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
-getEncDec = getSSLEncDec
+getEncDec t
+  | t == "none" = const $ pure (pure, pure)
+  | otherwise = getSSLEncDec t

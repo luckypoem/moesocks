@@ -228,8 +228,14 @@ setDone x = do
 connectFor :: MVar () -> IB -> OB -> IO ()
 connectFor _doneFlag _i _o = do
   {-puts - "connecting"-}
-  _loopThreadID <- forkFinally (catchIO - Stream.connect _i _o) - 
-                    const -setDone _doneFlag
+
+  _i2 <- Stream.lockingInputStream _i
+  _o2 <- Stream.lockingOutputStream _o
+
+  let _io = catchIO - Stream.connect _i2 _o2
+
+  _loopThreadID <- forkFinally _io - 
+                    const - setDone _doneFlag
   
   takeMVar _doneFlag
 
