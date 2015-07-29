@@ -174,6 +174,34 @@ waitBoth :: IO () -> IO () -> IO ()
 waitBoth x y = do
   waitBothDebug (Nothing, x) (Nothing, y)
                 
+runBoth :: IO a -> IO b -> IO ()
+runBoth x y = do
+  let _init = do
+        (xThreadID, xLock) <- do
+          _lock <- newEmptyMVar
+          _threadID <- 
+            forkFinally x -
+               const - putMVar _lock ()
+
+          return (_threadID, _lock)
+
+        yThreadID <- 
+          forkFinally y - const - killThread xThreadID 
+
+        return (xThreadID, xLock, yThreadID)
+
+  let handleError (xThreadID, _, yThreadID) = do
+        killThread yThreadID
+        killThread xThreadID
+
+  let action (_, xLock, yThreadID) = do
+        takeMVar xLock 
+        killThread yThreadID
+
+  bracket 
+    _init
+    handleError
+    action
 
 pushStream :: (OutputStream ByteString) -> B.Builder -> IO ()
 pushStream s b = do

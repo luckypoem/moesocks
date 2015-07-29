@@ -335,8 +335,7 @@ moeApp options = do
             {-threadDelay 1000000 -- wait last instance terminate-}
             {-puts "Done"-}
 
-            {-waitBoth localRun remoteRun-}
-            localRun
+            runBoth localRun remoteRun
 
 
     case options ^. runningMode of
