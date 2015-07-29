@@ -1,17 +1,24 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Network.MoeSocks.BuilderAndParser where
 
 import Control.Lens
 import Data.Attoparsec.ByteString
+import Data.Binary
+import Data.Binary.Put
 import Data.Monoid
-import Data.Word
+import Data.Maybe
+import Data.Text.Lens
+import Data.Text.Strict.Lens (utf8)
+import Safe (readMay)
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Prelude hiding ((-), take)
+import qualified Prelude as P
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import Network.Socket
-
 
 socksVersion :: Word8
 socksVersion = 5
@@ -37,10 +44,12 @@ portParser = do
   __portNumberPair <- (,) <$> anyWord8 <*> anyWord8
   pure - portPairToInt __portNumberPair
 
-portBuilder :: Int -> B.Builder
-portBuilder i = 
-  foldMapOf each (B.word8 . fromIntegral)
-    (i `divMod` 256)
+portBuilder :: (Integral i) => i -> B.Builder
+portBuilder i =
+  let _i = fromIntegral i :: Word16 
+  in
+  foldMapOf both B.word8 -
+    (decode - runPut - put _i :: (Word8, Word8))
 
 requestParser :: Parser ClientRequest
 requestParser = do
@@ -65,32 +74,66 @@ connectionParser = do
   socksHeader
   requestParser
 
+sockAddr_To_Pair :: SockAddr -> (AddressType, Port)
+sockAddr_To_Pair (SockAddrInet _port _host) =
+                        let 
+                            _r@(_a, _b, _c, _d) = decode . 
+                                    runPut - put - _host
+                                      :: (Word8, Word8, Word8, Word8)
+                        in
+                        ( IPv4_address - flip4 _r
+                        , fromIntegral _port
+                        )
+sockAddr_To_Pair (SockAddrInet6 _port _ _host _) =
+                        let 
+                            _r@(_a, _b, _c, _d) = decode . 
+                                    runPut - put - _host
+                                      :: (Word32, Word32, Word32, Word32)
+                        in
+                        ( IPv6_address - flip4 _r
+                        , fromIntegral _port
+                        )
+sockAddr_To_Pair (SockAddrUnix x) = 
+                        let
+                            _host = P.takeWhile (/= ':') x :: String 
+                            _port = x & reverse & P.takeWhile (/= ':') 
+                                      & reverse
+                        in
+                        ( Domain_name - (_host & review _Text)
+                        , fromMaybe 0 - readMay _port
+                        )
+sockAddr_To_Pair sa = error - "SockAddrCan not implemented: " <> show sa 
 
-sockAddrBuilder :: SockAddr -> B.Builder
-sockAddrBuilder = undefined
 
-connectionReplyBuilder :: ClientRequest -> B.Builder
-connectionReplyBuilder _clientRequest = 
-      B.word8 socksVersion
-  <>  B.word8 _Request_Granted 
-  <>  B.word8 _ReservedByte
-  <>  addressTypeBuilder (_clientRequest ^. addressType)
-  <>  portBuilder (_clientRequest ^. portNumber)
+connectionReplyBuilder :: SockAddr -> B.Builder
+connectionReplyBuilder aSockAddr = 
+  let _r@(__addressType, _port) = sockAddr_To_Pair aSockAddr
+  in
+
+
+  let _b =
+              B.word8 socksVersion
+          <>  B.word8 _Request_Granted 
+          <>  B.word8 _ReservedByte
+          <>  addressTypeBuilder __addressType
+          <>  portBuilder _port
+  in
+  _b
 
 addressTypeBuilder :: AddressType -> B.Builder
 addressTypeBuilder aAddressType = 
   case aAddressType of
     IPv4_address _address -> 
                           B.word8 1
-                       <> foldMap B.word8 (_address)
+                       <> foldMapOf each B.word8 _address
     Domain_name x ->   
                           B.word8 3
-                       <> B.word8 (fromIntegral (S.length x))
-                       <> B.byteString x
+                       <> B.word8 (fromIntegral (S.length (review utf8 x)))
+                       <> B.byteString (review utf8 x)
 
-    IPv6_address xs ->  
+    IPv6_address _address ->  
                           B.word8 4
-                       <> B.byteString (S.pack - xs)
+                       <> foldMapOf each B.word32BE _address
 
 
 
@@ -113,22 +156,35 @@ shadowsocksRequestBuilder aClientRequest =
       addressTypeBuilder (aClientRequest ^. addressType)
   <>  portBuilder (aClientRequest ^. portNumber)
 
+anyWord32be :: Parser Word32
+anyWord32be = do
+  _b <- count 4 anyWord8
+  pure - decode - runPut - put _b
+
 addressTypeParser :: Parser AddressType
 addressTypeParser = choice
   [
     IPv4_address <$>  do
                         word8 1
-                        count 4 anyWord8
+                        _a <- anyWord8
+                        _b <- anyWord8
+                        _c <- anyWord8
+                        _d <- anyWord8 
+                        pure - (_a, _b, _c, _d)
   
   , Domain_name <$>   do 
                         word8 3
                         let maxDomainNameLength = 32
                         _nameLength <- satisfy (<= maxDomainNameLength)
-                        take - fromIntegral _nameLength
+                        view utf8 <$> (take - fromIntegral _nameLength)
 
   , IPv6_address <$>  do
                         word8 4 
-                        count 16 anyWord8
+                        _a <- anyWord32be
+                        _b <- anyWord32be
+                        _c <- anyWord32be
+                        _d <- anyWord32be 
+                        pure - (_a, _b, _c, _d)
   ]
 
 
