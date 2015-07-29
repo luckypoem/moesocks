@@ -79,7 +79,7 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
   SockAddrInet _port _host -> 
                                     let 
                                         _r@(_a, _b, _c, _d) = 
-                                          decode . runPut - put - _host
+                                          decode . runPut . put - _host
                                           :: (Word8, Word8, Word8, Word8)
                                     in
 
@@ -90,7 +90,7 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
   SockAddrInet6 _port _ _host _ ->
                                     let 
                                         _r@(_a, _b, _c, _d) = 
-                                          decode . runPut - put - _host
+                                          decode . runPut . put - _host
                                           :: (Word32, Word32, Word32, Word32)
                                     in
 
