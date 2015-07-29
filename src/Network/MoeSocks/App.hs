@@ -70,11 +70,14 @@ localRequestHandler aConfig aSocket = do
       connect _remoteSocket _remoteAddress
 
       _localPeerAddr <- getPeerName aSocket
-      _remotePeerName <- getPeerName _remoteSocket
 
-      puts- "socket pair: " <> show (sockAddr_To_Pair _remotePeerName)
+      _remoteSocketName <- getSocketName _remoteSocket
 
-      let _connectionReplyBuilder = connectionReplyBuilder _remotePeerName
+      puts - "remoteSocketName: " <> show _remoteSocketName
+
+      puts- "socket pair: " <> show (sockAddr_To_Pair _remoteSocketName)
+
+      let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
 
       Stream.write (Just - builder_To_ByteString _connectionReplyBuilder)
                     outputStream
