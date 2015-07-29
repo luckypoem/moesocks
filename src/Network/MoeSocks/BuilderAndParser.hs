@@ -77,40 +77,28 @@ connectionParser = do
 sockAddr_To_Pair :: SockAddr -> (AddressType, Port)
 sockAddr_To_Pair aSockAddr = case aSockAddr of
   SockAddrInet _port _host -> 
-                          let 
-                              _r@(_a, _b, _c, _d) = decode . 
-                                      runPut - put - _host
-                                        :: (Word8, Word8, Word8, Word8)
-                          in
-
-                          ( IPv4_address - flip4 _r
-                          , fromIntegral _port
-                          )
+    let _r@(_a, _b, _c, _d) = decode . runPut - put - _host
+                  :: (Word8, Word8, Word8, Word8)
+    in
+    (IPv4_address - flip4 _r, fromIntegral _port)
 
   SockAddrInet6 _port _ _host _ ->
-                          let 
-                              _r@(_a, _b, _c, _d) = decode . 
-                                      runPut - put - _host
-                                        :: (Word32, Word32, Word32, Word32)
-                          in
+    let _r@(_a, _b, _c, _d) = decode . runPut - put - _host
+                  :: (Word32, Word32, Word32, Word32)
+    in
 
-                          ( IPv6_address - flip4 _r
-                          , fromIntegral _port
-                          )
+    (IPv6_address - flip4 _r, fromIntegral _port)
 
   SockAddrUnix x -> 
-                          let
-                              _host = P.takeWhile (/= ':') x :: String 
-                              _port = x & reverse & P.takeWhile (/= ':') 
-                                        & reverse
-                          in
+    let
+        _host = P.takeWhile (/= ':') x :: String 
+        _port = x & reverse & P.takeWhile (/= ':') 
+                  & reverse
+    in
 
-                          ( Domain_name - (_host & review _Text)
-                          , fromMaybe 0 - readMay _port
-                          )
+    (Domain_name - (_host & review _Text), fromMaybe 0 - readMay _port)
 
-  x -> 
-                          error - "SockAddrCan not implemented: " <> show x 
+  x -> error - "SockAddrCan not implemented: " <> show x 
 
 
 connectionReplyBuilder :: SockAddr -> B.Builder
