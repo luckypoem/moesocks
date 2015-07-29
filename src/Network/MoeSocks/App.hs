@@ -289,7 +289,7 @@ moeApp options = do
 
             let handleLocal _socket = do
                   (_newSocket, _) <- accept _socket
-                  forkIO - catchAll - 
+                  forkIO - catchAllLog "L thread" - 
                             logSocket "L handler" (pure _newSocket) -
                               localRequestHandler options config
 
@@ -309,7 +309,7 @@ moeApp options = do
 
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
-                forkIO - catchAll - 
+                forkIO - catchAllLog "R thread" - 
                             logSocket "R handler" (pure _newSocket) -
                               remoteRequestHandler config 
 
@@ -330,7 +330,12 @@ moeApp options = do
 
         debugRun :: IO ()
         debugRun = do
-          catchAllLog "Debug app" - waitBoth localRun remoteRun
+          catchAllLog "Debug app" - do
+            {-puts "Waiting ..."-}
+            {-threadDelay 1000000 -- wait last instance terminate-}
+            {-puts "Done"-}
+
+            runBoth localRun remoteRun
 
 
     case options ^. runningMode of

@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Network.MoeSocks.Helper where
 
@@ -72,15 +73,16 @@ fromWord8 :: forall t. Binary t => [Word8] -> t
 fromWord8 = decode . runPut . mapM_ put
       
 logClose :: String -> Socket -> IO ()
-logClose _ aSocket = do
-      {-puts - "Closing socket " <> aID-}
+logClose aID aSocket = do
+      puts - "Closing socket " <> aID
       close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
                         ((Socket, SockAddr) -> IO a) -> IO a
 logSocketWithAddress aID _init f = do
-  catch (bracket _init (logClose aID . fst) f) - \e -> do
-      pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
+  catch (bracket _init (logClose aID . fst) f) - 
+      \(e :: SomeException) -> do
+      pute - "logSocket: Exception in " <> aID <> ": " <> show e
       throw e
 
 logSA:: String -> IO (Socket, SockAddr) -> 
@@ -94,13 +96,18 @@ logSocket aID _init f =
       throw e
 
 catchAllLog :: String -> IO a -> IO ()
-catchAllLog aID io = catch (() <$ io) - \e -> 
-                pute - "CatcheAll in " <> aID <> ": " 
-                    <> show (e :: SomeException)
-
-catchAll :: IO a -> IO ()
-catchAll io = catch (() <$ io) - \e -> 
-                pute - "CatcheAll: " <> show (e :: SomeException)
+catchAllLog aID io = catches (() <$ io) 
+                [ 
+                  Handler - \(e :: AsyncException) -> do
+                            pute - "ASyncException in " 
+                                    <> aID
+                                    <> " : " <> show e
+                            throw e
+                , Handler - \(e :: SomeException) -> 
+                            pute - "CatcheAll in "
+                                    <> aID
+                                    <> " : " <> show e
+                ]
 
 catchIO:: IO a -> IO ()
 catchIO io = catch (() <$ io) - \e ->
@@ -167,6 +174,34 @@ waitBoth :: IO () -> IO () -> IO ()
 waitBoth x y = do
   waitBothDebug (Nothing, x) (Nothing, y)
                 
+runBoth :: IO a -> IO b -> IO ()
+runBoth x y = do
+  let _init = do
+        (xThreadID, xLock) <- do
+          _lock <- newEmptyMVar
+          _threadID <- 
+            forkFinally x -
+               const - putMVar _lock ()
+
+          return (_threadID, _lock)
+
+        yThreadID <- 
+          forkFinally y - const - killThread xThreadID 
+
+        return (xThreadID, xLock, yThreadID)
+
+  let handleError (xThreadID, _, yThreadID) = do
+        killThread yThreadID
+        killThread xThreadID
+
+  let action (_, xLock, yThreadID) = do
+        takeMVar xLock 
+        killThread yThreadID
+
+  bracket 
+    _init
+    handleError
+    action
 
 pushStream :: (OutputStream ByteString) -> B.Builder -> IO ()
 pushStream s b = do
@@ -191,6 +226,8 @@ getSocket aHost aPort aSocketType = do
           let address    = addrAddress addrInfo
 
           _socket <- socket family socketType protocol
+
+          puts - "Getting socket: " <> show address
 
           pure (_socket, address)
           
