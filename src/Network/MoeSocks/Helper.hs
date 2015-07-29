@@ -38,7 +38,7 @@ type IB = InputStream ByteString
 type OB = OutputStream ByteString
 
 _Debug :: Bool
-_Debug = False 
+_Debug = True
 
 flip4 :: (a, b, c, d) -> (d, c, b, a)
 flip4 (_a, _b, _c, _d) = (_d, _c, _b, _a)
