@@ -59,6 +59,7 @@ nemesis = do
   desc "merge debug to master"
   task "m" - do
     sh "git checkout master"
+    sh "git merge debug"
     sh "git push origin master"
     sh "git checkout debug"
 
