@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Network.MoeSocks.OptionParser where
+module Network.MoeSocks.Options where
 
 import Control.Lens
 import Data.Text.Lens
@@ -33,8 +33,7 @@ optionParser =
  {-<> help "Enable verbose mode" )-}
 
   let _polipo = flag Strict Polipo -
-                      short 'p'
-                  <>  long "polipo"
+                      long "polipo"
                   <>  help "run as a polipo compatible socks5 server"
   in
 

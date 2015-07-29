@@ -8,7 +8,6 @@ import Data.ByteString.Lens
 import Data.Maybe
 import Network.MoeSocks.App
 import Network.MoeSocks.Config
-import Network.MoeSocks.OptionParser
 import Network.MoeSocks.Type
 import Prelude ((.))
 import System.Random
