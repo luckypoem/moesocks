@@ -52,5 +52,5 @@ executable moesocks
                       Network.MoeSocks.Constant
                       Network.MoeSocks.Helper
                       Network.MoeSocks.Internal.ShadowSocks.Encrypt
-                      Network.MoeSocks.OptionParser
+                      Network.MoeSocks.Options
                       Network.MoeSocks.Type

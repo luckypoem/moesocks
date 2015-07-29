@@ -1,7 +1,7 @@
 module Main where
 
 import Network.MoeSocks.App
-import Network.MoeSocks.OptionParser
+import Network.MoeSocks.Options
 import Options.Applicative hiding (Parser)
 
 main :: IO ()
