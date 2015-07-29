@@ -174,8 +174,7 @@ addressTypeParser = choice
   
   , Domain_name <$>   do 
                         word8 3
-                        let maxDomainNameLength = 32
-                        _nameLength <- satisfy (<= maxDomainNameLength)
+                        _nameLength <- anyWord8
                         view utf8 <$> (take - fromIntegral _nameLength)
 
   , IPv6_address <$>  do
