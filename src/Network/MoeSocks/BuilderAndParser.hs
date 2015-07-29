@@ -10,6 +10,7 @@ import Network.MoeSocks.Type
 import Prelude hiding ((-), take)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
+import Network.Socket
 
 
 socksVersion :: Word8
@@ -64,22 +65,9 @@ connectionParser = do
   socksHeader
   requestParser
 
-{- Special hack for polipo
- -0500 0001 0000 0000 1010
- -}
 
-nonStandardReplyBuilder :: B.Builder
-nonStandardReplyBuilder =
-      B.word8 socksVersion
-  <>  B.word8 _Request_Granted 
-  <>  B.word8 _ReservedByte
-  <>  B.word8 1
-  <>  B.word8 0
-  <>  B.word8 0
-  <>  B.word8 0
-  <>  B.word8 0
-  <>  B.word8 16
-  <>  B.word8 16
+sockAddrBuilder :: SockAddr -> B.Builder
+sockAddrBuilder = undefined
 
 connectionReplyBuilder :: ClientRequest -> B.Builder
 connectionReplyBuilder _clientRequest = 

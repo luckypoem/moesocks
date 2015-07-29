@@ -57,14 +57,9 @@ localRequestHandler options aConfig aSocket = do
     _clientRequest <- parseFromStream connectionParser inputStream
     puts - "L : " <> show _clientRequest
 
-    case options ^. socks5Header of
-      Strict -> 
-            Stream.write (Just - builder_To_ByteString -
-                                  connectionReplyBuilder _clientRequest)
-                          outputStream
-      _ -> 
-            Stream.write (Just - builder_To_ByteString nonStandardReplyBuilder)
-                          outputStream
+    Stream.write (Just - builder_To_ByteString -
+                          connectionReplyBuilder _clientRequest)
+                  outputStream
     let 
         _c = aConfig 
         _initSocket = 
@@ -77,6 +72,10 @@ localRequestHandler options aConfig aSocket = do
       connect _remoteSocket _remoteAddress
 
       _localPeerAddr <- getPeerName aSocket
+
+      _remoteSocketName <- getSocketName _remoteSocket
+
+      puts - "remoteSocketName: " <> show _remoteSocketName
 
       let showRequest :: ClientRequest -> String
           showRequest _r =  
@@ -331,6 +330,10 @@ moeApp options = do
         debugRun :: IO ()
         debugRun = do
           catchAllLog "Debug app" - do
+            {-puts "Waiting ..."-}
+            {-threadDelay 1000000 -- wait last instance terminate-}
+            {-puts "Done"-}
+
             runBoth localRun remoteRun
 
 
