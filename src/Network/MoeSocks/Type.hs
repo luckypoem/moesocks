@@ -35,9 +35,9 @@ data ClientRequest = ClientRequest
   {
     _connectionType :: ConnectionType
   , _addressType :: AddressType
-  , _portNumber :: (Word8, Word8)
+  , _portNumber :: Int 
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 makeLenses ''ClientRequest
  

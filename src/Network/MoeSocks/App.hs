@@ -55,7 +55,7 @@ localRequestHandler options aConfig aSocket = do
     pushStream outputStream - greetingReplyBuilder 
 
     _clientRequest <- parseFromStream connectionParser inputStream
-    {-puts - "request: " <> show _clientRequest-}
+    puts - "L : " <> show _clientRequest
 
     case options ^. socks5Header of
       Strict -> 
@@ -82,7 +82,7 @@ localRequestHandler options aConfig aSocket = do
           showRequest _r =  
                             showAddressType (_r ^. addressType)
                           <> ":"
-                          <> show (_r ^. portNumber . to portNumber16)
+                          <> show (_r ^. portNumber)
       _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
                   <> ": " <>
               (
@@ -169,7 +169,7 @@ remoteRequestHandler aConfig aSocket = do
             _port = _clientRequest ^. portNumber
 
         
-        getSocket _hostName (portNumber16 _port) _socketType
+        getSocket _hostName _port _socketType
 
   logSA "R connect target" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetSocketAddress) = _r 

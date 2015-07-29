@@ -107,11 +107,12 @@ catchIO io = catch (() <$ io) - \e ->
                 pute - "Catch IO: " <> show (e :: IOException)
                 
 
-wrapIO :: (Maybe String, IO c) -> IO ()
+wrapIO :: (Maybe String, IO c) -> IO c
 wrapIO (s,  _io) = do
-  forM_ s - puts . ("+ " <>)
-  _io
-  forM_ s - puts . ("- " <>)
+  pure s
+  {-forM_ s - puts . ("+ " <>)-}
+  _io 
+    {-<* (forM_ s - puts . ("- " <>))-}
 
 waitOneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO () -> IO ()
 waitOneDebug x y doneX = do
@@ -209,8 +210,11 @@ getCipher method password =
   getEncDec method (review utf8 password)
 
 
-portNumber16 :: (Word8, Word8) -> Word16
-portNumber16 pair = fromWord8 - toListOf both pair
+portPairToInt :: (Word8, Word8) -> Int
+portPairToInt = fromIntegral . portPairToWord16 
+  where
+    portPairToWord16 :: (Word8, Word8) -> Word16
+    portPairToWord16 = fromWord8 . toListOf both 
 
 duplicateKey :: (Eq a) => (a, a) -> [(a, b)] -> [(a, b)]
 duplicateKey (_from, _to) l = 

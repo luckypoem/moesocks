@@ -31,6 +31,16 @@ greetingReplyBuilder :: B.Builder
 greetingReplyBuilder =  B.word8 socksVersion
                      <> B.word8 _No_authentication
 
+portParser :: Parser Int
+portParser = do
+  __portNumberPair <- (,) <$> anyWord8 <*> anyWord8
+  pure - portPairToInt __portNumberPair
+
+portBuilder :: Int -> B.Builder
+portBuilder i = 
+  foldMapOf each (B.word8 . fromIntegral)
+    (i `divMod` 256)
+
 requestParser :: Parser ClientRequest
 requestParser = do
   __connectionType <- choice
@@ -42,7 +52,7 @@ requestParser = do
 
   word8 _ReservedByte
   __addressType <- addressTypeParser
-  __portNumber <- (,) <$> anyWord8 <*> anyWord8
+  __portNumber <- portParser
   pure - 
           ClientRequest
             __connectionType
@@ -77,7 +87,7 @@ connectionReplyBuilder _clientRequest =
   <>  B.word8 _Request_Granted 
   <>  B.word8 _ReservedByte
   <>  addressTypeBuilder (_clientRequest ^. addressType)
-  <>  foldMapOf each B.word8 (_clientRequest ^. portNumber)
+  <>  portBuilder (_clientRequest ^. portNumber)
 
 addressTypeBuilder :: AddressType -> B.Builder
 addressTypeBuilder aAddressType = 
@@ -101,17 +111,19 @@ connectionType_To_Word8 TCP_IP_stream_connection = 1
 connectionType_To_Word8 TCP_IP_port_binding = 2
 connectionType_To_Word8 UDP_port = 3
 
+
+
 requestBuilder :: ClientRequest -> B.Builder
 requestBuilder aClientRequest = 
       B.word8 (connectionType_To_Word8 - aClientRequest ^. connectionType)
   <>  B.word8 _ReservedByte
   <>  addressTypeBuilder (aClientRequest ^. addressType)
-  <>  foldMapOf each B.word8 (aClientRequest ^. portNumber)
+  <>  portBuilder (aClientRequest ^. portNumber)
 
 shadowsocksRequestBuilder :: ClientRequest -> B.Builder
 shadowsocksRequestBuilder aClientRequest =
       addressTypeBuilder (aClientRequest ^. addressType)
-  <>  foldMapOf each B.word8 (aClientRequest ^. portNumber)
+  <>  portBuilder (aClientRequest ^. portNumber)
 
 addressTypeParser :: Parser AddressType
 addressTypeParser = choice
@@ -131,14 +143,12 @@ addressTypeParser = choice
                         count 16 anyWord8
   ]
 
-portParser :: Parser (Word8, Word8)
-portParser = (,) <$> anyWord8 <*> anyWord8
-
 
 shadowsocksRequestParser :: Parser ClientRequest
 shadowsocksRequestParser = do
   __addressType <- addressTypeParser
-  __portNumber <- (,) <$> anyWord8 <*> anyWord8
+  __portNumber <- portParser
+
   pure - 
           ClientRequest
             TCP_IP_stream_connection
