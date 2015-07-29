@@ -25,17 +25,18 @@ data ConnectionType =
   deriving (Show, Eq)
 
 data AddressType = 
-    IPv4_address [Word8]
-  | Domain_name ByteString
-  | IPv6_address [Word8]
+    IPv4_address (Word8, Word8, Word8, Word8)
+  | Domain_name Text
+  | IPv6_address (Word32, Word32, Word32, Word32)
   deriving (Show, Eq)
 
+type Port = Int
 
 data ClientRequest = ClientRequest
   {
     _connectionType :: ConnectionType
   , _addressType :: AddressType
-  , _portNumber :: Int 
+  , _portNumber :: Port
   }
   deriving (Show, Eq)
 
@@ -67,7 +68,6 @@ data MoeOptions = MoeOptions
   {
     _runningMode :: RunningMode
   , _configFile :: Text
-  , _socks5Header :: Socks5Header
   }
   deriving (Show, Eq)
 

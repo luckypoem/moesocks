@@ -31,8 +31,9 @@ import qualified System.IO.Streams as Stream
 
 
 showAddressType :: AddressType -> String
-showAddressType (IPv4_address xs) = concat - L.intersperse "." - map show xs
-showAddressType (Domain_name x)   = view _Text - x ^. utf8
+showAddressType (IPv4_address xs) = concat - L.intersperse "." - 
+                                      map show - xs ^.. each
+showAddressType (Domain_name x)   = x ^. _Text
 showAddressType x                 = error -
                                             "IPv6 target not supported:"
                                             <> show x
@@ -42,8 +43,8 @@ showConnectionType TCP_IP_stream_connection = "TCP_Stream"
 showConnectionType TCP_IP_port_binding      = "TCP_Bind  "
 showConnectionType UDP_port                 = "UDP       "
 
-localRequestHandler:: MoeOptions -> MoeConfig -> Socket -> IO ()
-localRequestHandler options aConfig aSocket = do
+localRequestHandler:: MoeConfig -> Socket -> IO ()
+localRequestHandler aConfig aSocket = do
   (inputStream, outputStream) <- socketToStreams aSocket
 
   r <- parseFromStream greetingParser inputStream
@@ -57,14 +58,6 @@ localRequestHandler options aConfig aSocket = do
     _clientRequest <- parseFromStream connectionParser inputStream
     puts - "L : " <> show _clientRequest
 
-    case options ^. socks5Header of
-      Strict -> 
-            Stream.write (Just - builder_To_ByteString -
-                                  connectionReplyBuilder _clientRequest)
-                          outputStream
-      _ -> 
-            Stream.write (Just - builder_To_ByteString nonStandardReplyBuilder)
-                          outputStream
     let 
         _c = aConfig 
         _initSocket = 
@@ -78,6 +71,17 @@ localRequestHandler options aConfig aSocket = do
 
       _localPeerAddr <- getPeerName aSocket
 
+      _remoteSocketName <- getSocketName _remoteSocket
+
+      puts - "remoteSocketName: " <> show _remoteSocketName
+
+      puts- "socket pair: " <> show (sockAddr_To_Pair _remoteSocketName)
+
+      let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
+
+      Stream.write (Just - builder_To_ByteString _connectionReplyBuilder)
+                    outputStream
+      
       let showRequest :: ClientRequest -> String
           showRequest _r =  
                             showAddressType (_r ^. addressType)
@@ -291,7 +295,7 @@ moeApp options = do
                   (_newSocket, _) <- accept _socket
                   forkIO - catchAllLog "L thread" - 
                             logSocket "L handler" (pure _newSocket) -
-                              localRequestHandler options config
+                              localRequestHandler config
 
             forever - handleLocal _localSocket
 

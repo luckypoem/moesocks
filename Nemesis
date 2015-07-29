@@ -11,7 +11,7 @@ ping = do
 nemesis = do
 
   desc "halive"
-  task "halive" - do
+  task "h" - do
     sh "halive src/HaliveMain.hs src"
 
 
@@ -63,3 +63,7 @@ nemesis = do
     sh "git push origin master"
     sh "git checkout dev"
 
+
+  desc "project playground"
+  task "p" - do
+    sh "halive src/Playground.hs src"

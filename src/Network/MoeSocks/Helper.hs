@@ -40,6 +40,9 @@ type OB = OutputStream ByteString
 _Debug :: Bool
 _Debug = False 
 
+flip4 :: (a, b, c, d) -> (d, c, b, a)
+flip4 (_a, _b, _c, _d) = (_d, _c, _b, _a)
+
 boolToMaybe :: Bool -> Maybe ()
 boolToMaybe True = Just ()
 boolToMaybe False = Nothing
@@ -69,8 +72,6 @@ puteT = pute . view _Text
 showBytes :: ByteString -> String
 showBytes = show . S.unpack
 
-fromWord8 :: forall t. Binary t => [Word8] -> t
-fromWord8 = decode . runPut . mapM_ put
       
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
@@ -247,11 +248,14 @@ getCipher method password =
   getEncDec method (review utf8 password)
 
 
+fromWord8 :: forall t. Binary t => [Word8] -> t
+fromWord8 = decode . runPut . mapM_ put
+
 portPairToInt :: (Word8, Word8) -> Int
 portPairToInt = fromIntegral . portPairToWord16 
   where
     portPairToWord16 :: (Word8, Word8) -> Word16
-    portPairToWord16 = fromWord8 . toListOf both 
+    portPairToWord16 = decode . runPut . put 
 
 duplicateKey :: (Eq a) => (a, a) -> [(a, b)] -> [(a, b)]
 duplicateKey (_from, _to) l = 
@@ -284,3 +288,4 @@ connectFor _doneFlag _i _o = do
   killThread _loopThreadID
 
   pure ()
+
