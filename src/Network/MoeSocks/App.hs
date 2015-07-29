@@ -331,10 +331,6 @@ moeApp options = do
         debugRun :: IO ()
         debugRun = do
           catchAllLog "Debug app" - do
-            {-puts "Waiting ..."-}
-            {-threadDelay 1000000 -- wait last instance terminate-}
-            {-puts "Done"-}
-
             runBoth localRun remoteRun
 
 
