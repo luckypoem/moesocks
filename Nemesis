@@ -14,6 +14,7 @@ nemesis = do
   task "halive" - do
     sh "halive src/HaliveMain.hs src"
 
+
   desc "dist"
   task "dist" - do
     sh "cabal clean"
@@ -53,3 +54,11 @@ nemesis = do
   desc "debug remote"
   task "dr" - do
     sh "cabal run -- -m remote -c config.json"
+
+
+  desc "merge debug to master"
+  task "m" - do
+    sh "git checkout master"
+    sh "git push origin master"
+    sh "git checkout debug"
+
