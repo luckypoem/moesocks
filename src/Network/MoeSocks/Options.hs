@@ -24,14 +24,16 @@ optionParser =
                   <>  long "config"
                   <>  metavar "CONFIG"
                   <>  help "path to the configuration file"
+                 
   in
 
   let __verbosity :: O.Parser Priority 
-      __verbosity = (option auto - 
-                      short 'v'
-                  <>  long "verbose"
-                  <>  help "DEBUG|INFO|NOTICE|WARNING"
-                  ) <|> pure NOTICE
+      __verbosity = ( option auto - 
+                          short 'v'
+                      <>  long "verbose"
+                      <>  metavar "PRIORITY"
+                      <>  help "DEBUG|INFO|NOTICE|WARNING"
+                    ) <|> pure INFO 
   in
   let parseMode :: String -> RunningMode
       parseMode x 
