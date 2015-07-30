@@ -4,6 +4,7 @@ module Network.MoeSocks.Config where
 
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Type
+import System.Log.Logger
 
 defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig
@@ -22,4 +23,5 @@ defaultMoeOptions = MoeOptions
   {
     _runningMode = DebugMode
   , _configFile = ""
+  , _verbosity = DEBUG
   } 

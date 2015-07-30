@@ -17,7 +17,6 @@ import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket
 import Prelude hiding (take, (-)) 
-import System.IO (hPutStrLn, stderr)
 import System.IO.Streams (InputStream, OutputStream)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString as S
@@ -25,6 +24,8 @@ import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
 import qualified System.IO.Streams as Stream
+
+import System.Log.Logger
 
 -- BEGIN backports
 
@@ -56,15 +57,13 @@ sync io = do
   io <* takeMVar syncLock
 
 puts :: String -> IO ()
-puts 
-  | _Debug = sync . putStrLn
-  | otherwise = const - pure ()
+puts = sync . debugM "moe"  
 
 pute :: String -> IO ()
-pute = sync . hPutStrLn stderr
+pute = sync . errorM "moe"
 
 _log :: String -> IO ()
-_log = sync . putStrLn
+_log = sync . infoM "moe" 
 
 puteT :: Text -> IO ()
 puteT = pute . view _Text
@@ -74,8 +73,8 @@ showBytes = show . S.unpack
 
       
 logClose :: String -> Socket -> IO ()
-logClose aID aSocket = do
-      puts - "Closing socket " <> aID
+logClose _ aSocket = do
+      {-puts - "Closing socket " <> aID-}
       close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
@@ -228,7 +227,7 @@ getSocket aHost aPort aSocketType = do
 
           _socket <- socket family socketType protocol
 
-          puts - "Getting socket: " <> show address
+          {-puts - "Getting socket: " <> show address-}
 
           pure (_socket, address)
           
