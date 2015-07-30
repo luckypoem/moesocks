@@ -29,6 +29,11 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO.Streams as Stream
 
+import qualified System.Log.Handler as LogHandler
+import System.Log.Handler.Simple
+import System.Log.Formatter
+import System.Log.Logger
+import qualified System.IO as IO
 
 showAddressType :: AddressType -> String
 showAddressType (IPv4_address xs) = concat - L.intersperse "." - 
@@ -73,9 +78,8 @@ localRequestHandler aConfig aSocket = do
 
       _remoteSocketName <- getSocketName _remoteSocket
 
-      puts - "remoteSocketName: " <> show _remoteSocketName
-
-      puts- "socket pair: " <> show (sockAddr_To_Pair _remoteSocketName)
+      {-puts - "remoteSocketName: " <> show _remoteSocketName-}
+      {-puts- "socket pair: " <> show (sockAddr_To_Pair _remoteSocketName)-}
 
       let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
 
@@ -87,7 +91,7 @@ localRequestHandler aConfig aSocket = do
                             showAddressType (_r ^. addressType)
                           <> ":"
                           <> show (_r ^. portNumber)
-      _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
+      _log - "L " <> showConnectionType (_clientRequest ^. connectionType)
                   <> ": " <>
               (
                 concat - L.intersperse " -> " 
@@ -278,8 +282,23 @@ parseConfig aConfigFile = do
 
 moeApp:: MoeOptions -> IO ()
 moeApp options = do
+  stdoutHandler <- streamHandler IO.stdout DEBUG
+
+  {-puts - "stdoutHandler Level" <> -}
+          {-show (LogHandler.getLevel stdoutHandler)-}
+
+  let formattedHandler = 
+          LogHandler.setFormatter stdoutHandler -
+            simpleLogFormatter "[$time $prio] $msg"
+
+  updateGlobalLogger rootLoggerName removeHandler
+  updateGlobalLogger "moe" - addHandler formattedHandler
+
+  updateGlobalLogger "moe" - setLevel (options ^. verbosity)
+      
+
   maybeConfig <- parseConfig - options ^. configFile 
-  
+
   forM_ maybeConfig - \config -> do
     let localApp :: (Socket, SockAddr) -> IO ()
         localApp s = logSA "L loop" (pure s) - 

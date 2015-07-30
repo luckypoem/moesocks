@@ -9,6 +9,7 @@ import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Word
 import GHC.Generics
+import System.Log.Logger
 
 data ClientGreeting = ClientGreeting
   {
@@ -61,13 +62,14 @@ makeLenses ''MoeConfig
 data RunningMode = RemoteMode | LocalMode | DebugMode
       deriving (Show, Eq)
 
-data Socks5Header = Strict | Polipo
+data Verbosity = Normal | Verbose
       deriving (Show, Eq)
 
 data MoeOptions = MoeOptions
   {
     _runningMode :: RunningMode
   , _configFile :: Text
+  , _verbosity :: Priority
   }
   deriving (Show, Eq)
 

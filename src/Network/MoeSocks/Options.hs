@@ -9,7 +9,7 @@ import Network.MoeSocks.Type
 import Options.Applicative hiding (Parser)
 import Prelude hiding ((-))
 import qualified Options.Applicative as O
-
+import System.Log.Logger
 
 optionParser :: O.Parser MoeOptions
 optionParser = 
@@ -26,6 +26,13 @@ optionParser =
                   <>  help "path to the configuration file"
   in
 
+  let __verbosity :: O.Parser Priority 
+      __verbosity = (option auto - 
+                      short 'v'
+                  <>  long "verbose"
+                  <>  help "DEBUG|INFO|NOTICE|WARNING"
+                  ) <|> pure NOTICE
+  in
   let parseMode :: String -> RunningMode
       parseMode x 
         | x `elem` ["server", "remote"] = RemoteMode
@@ -37,6 +44,7 @@ optionParser =
   MoeOptions 
               <$> fmap parseMode _mode 
               <*> fmap (view packed) _config
+              <*> __verbosity
 
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 
