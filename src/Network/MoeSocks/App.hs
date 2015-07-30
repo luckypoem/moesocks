@@ -91,7 +91,7 @@ localRequestHandler aConfig aSocket = do
                             showAddressType (_r ^. addressType)
                           <> ":"
                           <> show (_r ^. portNumber)
-      _log - "L " <> showConnectionType (_clientRequest ^. connectionType)
+      _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
                   <> ": " <>
               (
                 concat - L.intersperse " -> " 
@@ -289,7 +289,8 @@ moeApp options = do
 
   let formattedHandler = 
           LogHandler.setFormatter stdoutHandler -
-            simpleLogFormatter "[$time $prio] $msg"
+            {-simpleLogFormatter "$time $prio $msg"-}
+            simpleLogFormatter "$time $msg"
 
   updateGlobalLogger rootLoggerName removeHandler
   updateGlobalLogger "moe" - addHandler formattedHandler
