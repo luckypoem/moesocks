@@ -303,7 +303,7 @@ moeApp options = do
     let localApp :: (Socket, SockAddr) -> IO ()
         localApp s = logSA "L loop" (pure s) - 
           \(_localSocket, _localAddr) -> do
-            puts "Moe local!"
+            _say "Moe local!"
               
             setSocketOption _localSocket ReuseAddr 1
             bindSocket _localSocket _localAddr
@@ -321,7 +321,7 @@ moeApp options = do
     let remoteApp :: (Socket, SockAddr) -> IO ()
         remoteApp s = logSA "R loop" (pure s) -
           \(_remoteSocket, _remoteAddr) -> do
-          puts "Moe remote!"
+          _say "Moe remote!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr

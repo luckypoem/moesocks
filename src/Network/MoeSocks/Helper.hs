@@ -65,6 +65,9 @@ pute = sync . errorM "moe"
 _log :: String -> IO ()
 _log = sync . infoM "moe" 
 
+_say :: String -> IO ()
+_say = sync . noticeM "moe"
+
 puteT :: Text -> IO ()
 puteT = pute . view _Text
 
