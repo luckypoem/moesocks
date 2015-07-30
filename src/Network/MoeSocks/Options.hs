@@ -31,7 +31,7 @@ optionParser =
                       short 'v'
                   <>  long "verbose"
                   <>  help "DEBUG|INFO|NOTICE|WARNING"
-                  ) <|> pure NOTICE
+                  ) <|> pure INFO 
   in
   let parseMode :: String -> RunningMode
       parseMode x 
