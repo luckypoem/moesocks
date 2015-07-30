@@ -121,62 +121,9 @@ catchIO aID io = catch (() <$ io) - \e ->
 wrapIO :: (Maybe String, IO c) -> IO c
 wrapIO (s,  _io) = do
   pure s
-  {-forM_ s - puts . ("+ " <>)-}
+  forM_ s - puts . ("+ " <>)
   _io 
-    {-<* (forM_ s - puts . ("- " <>))-}
-
-waitOneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO () -> IO ()
-waitOneDebug x y doneX = do
-  waitY <- newEmptyMVar
-  forkFinally (wrapIO y) -
-                  const - putMVar waitY ()
-
-  wrapIO x
-  {-puts - "waitOneDebug: finalize"-}
-  doneX
-  {-puts - "waitOneDebug: waiting thread y"-}
-  takeMVar waitY
-
-  {-puts - "waitOneDebug: done thread y"-}
-
---    killThread yThreadID
-
-waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitBothDebug x y = do
-  let
-    initChildren :: IO (MVar [MVar ()])
-    initChildren = newMVar []
-
-    waitForChildren :: (MVar [MVar ()]) -> IO ()
-    waitForChildren _children = do
-     cs <- takeMVar _children
-     case cs of
-       []   -> return ()
-       m:ms -> do
-          putMVar _children ms
-          takeMVar m
-          waitForChildren _children
-
-    forkChild :: (MVar [MVar ()]) -> (Maybe String, IO ()) -> IO ThreadId
-    forkChild _children io = do
-       mvar <- newEmptyMVar
-       childs <- takeMVar _children
-       putMVar _children (mvar:childs)
-       forkFinally (wrapIO io) (\_ -> putMVar mvar ())
-
-    action _children = do
-      forkChild _children x
-      forkChild _children y
-      waitForChildren _children
-
-  bracket 
-    initChildren
-    (const - pure ())
-    action
-
-waitBoth :: IO () -> IO () -> IO ()
-waitBoth x y = do
-  waitBothDebug (Nothing, x) (Nothing, y)
+    <* (forM_ s - puts . ("- " <>))
                 
 runBoth :: IO () -> IO () -> IO ()
 runBoth x y = do
