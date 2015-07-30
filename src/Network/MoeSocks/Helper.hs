@@ -57,16 +57,16 @@ sync io = do
   io <* takeMVar syncLock
 
 puts :: String -> IO ()
-puts = sync . debugM "moe"  
+puts = sync . debugM "moe" . ("😽  " <>)
 
 pute :: String -> IO ()
-pute = sync . errorM "moe"
+pute = sync . errorM "moe" . ("😾  " <>)
 
 _log :: String -> IO ()
-_log = sync . infoM "moe" 
+_log = sync . infoM "moe" . ("😺  " <>)
 
 _say :: String -> IO ()
-_say = sync . noticeM "moe"
+_say = sync . noticeM "moe" . ("😼  " <>)
 
 puteT :: Text -> IO ()
 puteT = pute . view _Text
