@@ -16,7 +16,8 @@ cabal-version:      >=1.10
 copyright:          Copyright (C) 2015 Jinjing Wang
 tested-with:        GHC == 7.10.1
 
-extra-source-files: config.json
+extra-source-files:     config.json
+                      , readme.md
 
 source-repository head
   type: git
