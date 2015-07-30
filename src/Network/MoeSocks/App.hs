@@ -124,20 +124,18 @@ localRequestHandler aConfig aSocket = do
               Stream.mapM _decrypt remoteInputStream
             
             let
-                sendChannel = 
-                    Stream.connect inputStream remoteOutputEncryptedStream
+                sendChannel = connectFor "L sendChannel"
+                                inputStream 
+                                remoteOutputEncryptedStream
             
-            doneFlag <- newEmptyMVar
-            
-            
-            let receiveChannel =  connectFor doneFlag
+            let receiveChannel =  connectFor "L receiveChannel"
                                     remoteInputDecryptedStream
                                     outputStream
 
-            waitOneDebug 
+
+            runBothDebug
               (Just "L -->", sendChannel)
               (Just "L <--", receiveChannel)
-              (setDone doneFlag)
 
 
       handleLocal _remoteSocket
@@ -204,20 +202,18 @@ remoteRequestHandler aConfig aSocket = do
           remoteOutputEncryptedStream <- 
             Stream.contramapM _encrypt remoteOutputStream
 
-          let sendChannel = 
-                Stream.connect remoteInputDecryptedStream targetOutputStream
+          let sendChannel = connectFor "R sendChannel"
+                              remoteInputDecryptedStream
+                              targetOutputStream
 
-
-          doneFlag <- newEmptyMVar
 
           let receiveChannel = 
-                connectFor doneFlag 
+                connectFor "R receiveChannel"
                   targetInputStream remoteOutputEncryptedStream
 
-          waitOneDebug 
+          runBothDebug
             (Just "R -->", sendChannel)
             (Just "R <--", receiveChannel)
-            (setDone doneFlag)
           
     handleTarget _targetSocket
 
@@ -293,6 +289,8 @@ moeApp options = do
             simpleLogFormatter "$time $msg"
 
   updateGlobalLogger rootLoggerName removeHandler
+  updateGlobalLogger "moe" removeHandler
+
   updateGlobalLogger "moe" - addHandler formattedHandler
 
   updateGlobalLogger "moe" - setLevel (options ^. verbosity)
