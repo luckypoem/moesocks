@@ -13,17 +13,19 @@ import System.Log.Logger
 
 optionParser :: O.Parser MoeOptions
 optionParser = 
-  let _mode = strOption -
+  let _mode = ( strOption -
                       short 'm'
                   <>  long "mode"
                   <>  metavar "MODE"
                   <>  help "local | remote"
+              ) <|> pure "local" 
   in
-  let _config = strOption -
+  let _config = ( strOption -
                       short 'c'
                   <>  long "config"
                   <>  metavar "CONFIG"
                   <>  help "path to the configuration file"
+                ) <|> pure "config.json"
                  
   in
 
