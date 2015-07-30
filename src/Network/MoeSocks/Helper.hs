@@ -283,10 +283,8 @@ setDone x = do
   {-puts - "setting done complete"-}
 
 
-connectFor :: String -> MVar () -> IB -> OB -> IO ()
-connectFor aID _doneFlag _i _o = do
-  {-puts - "connecting"-}
-
+connectFor :: String -> IB -> OB -> IO ()
+connectFor aID _i _o = do
   _i2 <- Stream.lockingInputStream _i
   _o2 <- Stream.lockingOutputStream _o
 

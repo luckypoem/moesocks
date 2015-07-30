@@ -124,19 +124,13 @@ localRequestHandler aConfig aSocket = do
               Stream.mapM _decrypt remoteInputStream
             
             let
-                sendChannel = 
-                    Stream.connect inputStream remoteOutputEncryptedStream
+                sendChannel = connectFor "L sendChannel"
+                                inputStream 
+                                remoteOutputEncryptedStream
             
-            doneFlag <- newEmptyMVar
-            
-            let receiveChannel =  connectFor "L receiveChannel" doneFlag
+            let receiveChannel =  connectFor "L receiveChannel"
                                     remoteInputDecryptedStream
                                     outputStream
-
-            {-waitOneDebug -}
-              {-(Just "L -->", sendChannel)-}
-              {-(Just "L <--", receiveChannel)-}
-              {-(setDone doneFlag)-}
 
 
             runBothDebug
@@ -208,20 +202,14 @@ remoteRequestHandler aConfig aSocket = do
           remoteOutputEncryptedStream <- 
             Stream.contramapM _encrypt remoteOutputStream
 
-          let sendChannel = 
-                Stream.connect remoteInputDecryptedStream targetOutputStream
+          let sendChannel = connectFor "R sendChannel"
+                              remoteInputDecryptedStream
+                              targetOutputStream
 
-
-          doneFlag <- newEmptyMVar
 
           let receiveChannel = 
-                connectFor "R receiveChannel" doneFlag 
+                connectFor "R receiveChannel"
                   targetInputStream remoteOutputEncryptedStream
-
-          {-waitOneDebug -}
-            {-(Just "R -->", sendChannel)-}
-            {-(Just "R <--", receiveChannel)-}
-            {-(setDone doneFlag)-}
 
           runBothDebug
             (Just "R -->", sendChannel)
