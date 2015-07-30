@@ -76,8 +76,8 @@ showBytes = show . S.unpack
 
       
 logClose :: String -> Socket -> IO ()
-logClose _ aSocket = do
-      {-puts - "Closing socket " <> aID-}
+logClose aID aSocket = do
+      puts - "Closing socket " <> aID
       close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
@@ -112,9 +112,10 @@ catchAllLog aID io = catches (() <$ io)
                                     <> " : " <> show e
                 ]
 
-catchIO:: IO a -> IO ()
-catchIO io = catch (() <$ io) - \e ->
-                pute - "Catch IO: " <> show (e :: IOException)
+catchIO:: String -> IO a -> IO ()
+catchIO aID io = catch (() <$ io) - \e ->
+                pute - "Catch IO in " <> aID <> ": " 
+                  <> show (e :: IOException)
                 
 
 wrapIO :: (Maybe String, IO c) -> IO c
@@ -177,29 +178,39 @@ waitBoth :: IO () -> IO () -> IO ()
 waitBoth x y = do
   waitBothDebug (Nothing, x) (Nothing, y)
                 
-runBoth :: IO a -> IO b -> IO ()
+runBoth :: IO () -> IO () -> IO ()
 runBoth x y = do
-  let _init = do
-        (xThreadID, xLock) <- do
-          _lock <- newEmptyMVar
-          _threadID <- 
-            forkFinally x -
-               const - putMVar _lock ()
+  runBothDebug (Nothing, x) (Nothing, y)
 
-          return (_threadID, _lock)
+runBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+runBothDebug x y = do
+  let _x = wrapIO x
+      _y = wrapIO y
+
+  _threadXDone <- newEmptyMVar
+  _threadYDone <- newEmptyMVar
+
+  let _init = do
+        xThreadID <-
+          forkFinally _x -
+             const - putMVar _threadXDone ()
 
         yThreadID <- 
-          forkFinally y - const - killThread xThreadID 
+          forkFinally _y - const - do
+            _threadXRunning <- isEmptyMVar _threadXDone
+            putMVar _threadYDone ()
+            when _threadXRunning - killThread xThreadID 
 
-        return (xThreadID, xLock, yThreadID)
+        return (xThreadID, yThreadID)
 
-  let handleError (xThreadID, _, yThreadID) = do
+  let handleError (xThreadID, yThreadID) = do
         killThread yThreadID
         killThread xThreadID
 
-  let action (_, xLock, yThreadID) = do
-        takeMVar xLock 
-        killThread yThreadID
+  let action (_, yThreadID) = do
+        takeMVar _threadXDone 
+        _threadYRunning <- isEmptyMVar _threadYDone
+        when _threadYRunning - killThread yThreadID
 
   bracket 
     _init
@@ -272,22 +283,14 @@ setDone x = do
   {-puts - "setting done complete"-}
 
 
-connectFor :: MVar () -> IB -> OB -> IO ()
-connectFor _doneFlag _i _o = do
+connectFor :: String -> MVar () -> IB -> OB -> IO ()
+connectFor aID _doneFlag _i _o = do
   {-puts - "connecting"-}
 
   _i2 <- Stream.lockingInputStream _i
   _o2 <- Stream.lockingOutputStream _o
 
-  let _io = catchIO - Stream.connect _i2 _o2
+  let _io = catchIO ("connectFor " <> aID) - Stream.connect _i2 _o2
 
-  _loopThreadID <- forkFinally _io - 
-                    const - setDone _doneFlag
-  
-  takeMVar _doneFlag
-
-  {-puts - "killing loop"-}
-  killThread _loopThreadID
-
-  pure ()
+  _io
 

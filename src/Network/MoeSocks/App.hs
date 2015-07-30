@@ -129,15 +129,19 @@ localRequestHandler aConfig aSocket = do
             
             doneFlag <- newEmptyMVar
             
-            
-            let receiveChannel =  connectFor doneFlag
+            let receiveChannel =  connectFor "L receiveChannel" doneFlag
                                     remoteInputDecryptedStream
                                     outputStream
 
-            waitOneDebug 
+            {-waitOneDebug -}
+              {-(Just "L -->", sendChannel)-}
+              {-(Just "L <--", receiveChannel)-}
+              {-(setDone doneFlag)-}
+
+
+            runBothDebug
               (Just "L -->", sendChannel)
               (Just "L <--", receiveChannel)
-              (setDone doneFlag)
 
 
       handleLocal _remoteSocket
@@ -211,13 +215,17 @@ remoteRequestHandler aConfig aSocket = do
           doneFlag <- newEmptyMVar
 
           let receiveChannel = 
-                connectFor doneFlag 
+                connectFor "R receiveChannel" doneFlag 
                   targetInputStream remoteOutputEncryptedStream
 
-          waitOneDebug 
+          {-waitOneDebug -}
+            {-(Just "R -->", sendChannel)-}
+            {-(Just "R <--", receiveChannel)-}
+            {-(setDone doneFlag)-}
+
+          runBothDebug
             (Just "R -->", sendChannel)
             (Just "R <--", receiveChannel)
-            (setDone doneFlag)
           
     handleTarget _targetSocket
 
@@ -293,6 +301,8 @@ moeApp options = do
             simpleLogFormatter "$time $msg"
 
   updateGlobalLogger rootLoggerName removeHandler
+  updateGlobalLogger "moe" removeHandler
+
   updateGlobalLogger "moe" - addHandler formattedHandler
 
   updateGlobalLogger "moe" - setLevel (options ^. verbosity)
