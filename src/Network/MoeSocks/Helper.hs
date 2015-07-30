@@ -188,7 +188,7 @@ getSocket aHost aPort aSocketType = do
 
           _socket <- socket family socketType protocol
 
-          {-puts - "Getting socket: " <> show address-}
+          puts - "Getting socket: " <> show address
 
           pure (_socket, address)
           
@@ -222,12 +222,6 @@ duplicateKey (_from, _to) l =
   case lookup _from l of
     Nothing -> l
     Just v -> (_to,v) : l
-
-setDone :: MVar () -> IO ()
-setDone x = do
-  {-puts - "setting Done!"-}
-  putMVar x ()
-  {-puts - "setting done complete"-}
 
 
 connectFor :: String -> IB -> OB -> IO ()

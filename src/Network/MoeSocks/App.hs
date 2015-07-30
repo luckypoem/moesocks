@@ -154,9 +154,7 @@ remoteRequestHandler aConfig aSocket = do
   _clientRequest <- parseFromStream 
                       shadowsocksRequestParser remoteInputDecryptedStream
 
-  {-
-   -puts - "Remote get: " <> show _clientRequest
-   -}
+  puts - "Remote get: " <> show _clientRequest
   
   let
       initTarget :: ClientRequest -> IO (Socket, SockAddr)
