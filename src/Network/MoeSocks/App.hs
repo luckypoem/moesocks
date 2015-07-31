@@ -222,16 +222,23 @@ remoteRequestHandler aConfig aSocket = do
 
                 let sendChannelLoop = do 
                       r <- recv_ aSocket
-                      when (r & isn't _Empty) - do
-                        send_ __targetSocket =<< _decrypt r
-                        sendChannelLoop
+                      if (r & isn't _Empty) 
+                        then do
+                          send_ __targetSocket =<< _decrypt r
+                          sendChannelLoop
+                        else do
+                          puts - "received 0 bytes from remote socket!"
+
                 sendChannelLoop
 
           let receiveChannel = do
                 r <- recv_ __targetSocket
-                when (r & isn't _Empty) - do
-                  send_ aSocket =<< _encrypt r
-                  receiveChannel
+                if (r & isn't _Empty) 
+                  then do
+                    send_ aSocket =<< _encrypt r
+                    receiveChannel
+                  else do
+                    puts - "received 0 bytes from target socket!"
 
           runBothDebug
             (Just "R -->", sendChannel)
