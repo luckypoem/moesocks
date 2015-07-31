@@ -3,11 +3,11 @@
 
 module Network.MoeSocks.Helper where
 
-import Data.Attoparsec.ByteString
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
 import Control.Monad
+import Data.Attoparsec.ByteString
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
@@ -20,11 +20,10 @@ import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.IO.Unsafe (unsafePerformIO)
+import System.Log.Logger
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
-
-import System.Log.Logger
 
 -- BEGIN backports
 

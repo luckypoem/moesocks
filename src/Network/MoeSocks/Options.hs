@@ -8,8 +8,8 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Options.Applicative hiding (Parser)
 import Prelude hiding ((-))
-import qualified Options.Applicative as O
 import System.Log.Logger
+import qualified Options.Applicative as O
 
 optionParser :: O.Parser MoeOptions
 optionParser = 

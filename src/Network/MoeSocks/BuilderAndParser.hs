@@ -6,19 +6,19 @@ import Control.Lens
 import Data.Attoparsec.ByteString
 import Data.Binary
 import Data.Binary.Put
-import Data.Monoid
 import Data.Maybe
+import Data.Monoid
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
-import Safe (readMay)
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import Network.Socket
 import Prelude hiding ((-), take)
-import qualified Prelude as P
+import Safe (readMay)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
-import Network.Socket
+import qualified Prelude as P
 
 socksVersion :: Word8
 socksVersion = 5
