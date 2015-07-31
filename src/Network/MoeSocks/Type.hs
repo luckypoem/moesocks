@@ -10,7 +10,6 @@ import Data.Text (Text)
 import Data.Word
 import GHC.Generics
 import System.Log.Logger
-import Control.Exception (Exception)                
 
 data ClientGreeting = ClientGreeting
   {

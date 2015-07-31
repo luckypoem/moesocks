@@ -4,7 +4,6 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
-import Control.Exception (throwIO)
 import Control.Lens
 import Control.Monad
 import Data.Aeson hiding (Result)
@@ -20,18 +19,15 @@ import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv)
-import Network.Socket.ByteString
 import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple
 import System.Log.Logger
-import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
-import qualified System.IO.Streams as Stream
 import qualified System.Log.Handler as LogHandler
 
 showAddressType :: AddressType -> String
@@ -66,6 +62,11 @@ localRequestHandler aConfig aSocket = do
 
     puts - "L : " <> show _clientRequest
     
+    let 
+        _c = aConfig 
+        _initSocket = 
+            getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream 
+
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
       connect _remoteSocket _remoteAddress
@@ -114,10 +115,10 @@ localRequestHandler aConfig aSocket = do
                       _encrypt _leftBytesAfterClientRequest
 
                   let sendChannelLoop = do 
-                        r <- recv_ aSocket
-                        if (r & isn't _Empty) 
+                        _r <- recv_ aSocket
+                        if (_r & isn't _Empty) 
                           then do
-                            send_ __remoteSocket =<< _encrypt r
+                            send_ __remoteSocket =<< _encrypt _r
                             sendChannelLoop
                           else do
                             puts - "0 bytes from remote!"
@@ -126,10 +127,10 @@ localRequestHandler aConfig aSocket = do
                   sendChannelLoop
 
             let receiveChannel = do
-                  r <- recv_ __remoteSocket
-                  if (r & isn't _Empty) 
+                  _r <- recv_ __remoteSocket
+                  if (_r & isn't _Empty) 
                     then do
-                      send_ aSocket =<< _decrypt r
+                      send_ aSocket =<< _decrypt _r
                       receiveChannel
                     else do
                       puts - "0 bytes from target!"

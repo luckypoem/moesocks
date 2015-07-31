@@ -19,13 +19,10 @@ import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
-import System.IO.Streams (InputStream, OutputStream)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
-import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
-import qualified System.IO.Streams as Stream
 
 import System.Log.Logger
 
@@ -36,12 +33,6 @@ infixr 0 -
 (-) = ($)
 
 -- END backports
-
-type IB = InputStream ByteString
-type OB = OutputStream ByteString
-
-_Debug :: Bool
-_Debug = False
 
 flip4 :: (a, b, c, d) -> (d, c, b, a)
 flip4 (_a, _b, _c, _d) = (_d, _c, _b, _a)
@@ -166,13 +157,6 @@ runBothDebug x y = do
     handleError
     action
 
-pushStream :: (OutputStream ByteString) -> B.Builder -> IO ()
-pushStream s b = do
-  _builderStream <- Stream.builderStream s 
-  Stream.write (Just b) _builderStream
-  Stream.write (Just BE.flush) _builderStream
-
-
 getSocket :: (Integral i, Show i) => HostName -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket aHost aPort aSocketType = do
@@ -226,15 +210,6 @@ duplicateKey (_from, _to) l =
     Nothing -> l
     Just v -> (_to,v) : l
 
-
-connectFor :: String -> IB -> OB -> IO ()
-connectFor aID _i _o = do
-  _i2 <- Stream.lockingInputStream _i
-  _o2 <- Stream.lockingOutputStream _o
-
-  let _io = catchIO ("connectFor " <> aID) - Stream.connect _i2 _o2
-
-  _io
 
 recv_ :: Socket -> IO ByteString
 recv_ = flip recv 4096
