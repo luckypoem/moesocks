@@ -233,9 +233,9 @@ instance Show ParseException where
 
 instance Exception ParseException
 
-parseSocket :: ByteString -> (ByteString -> IO ByteString) ->
+parseSocket :: String -> ByteString -> (ByteString -> IO ByteString) ->
                   Parser a -> Socket -> IO (ByteString, a)
-parseSocket _left _decrypt aParser = parseSocketWith - parse aParser
+parseSocket aID _left _decrypt aParser = parseSocketWith - parse aParser
   where
     parseSocketWith :: (ByteString -> Result a) ->
                         Socket -> IO (ByteString, a)
@@ -248,6 +248,5 @@ parseSocket _left _decrypt aParser = parseSocketWith - parse aParser
       case r of
         Done i _r -> pure (i, _r)
         Fail _ _ msg -> throwIO - ParseException -
-                    "Failed to parse shadowSocksRequestParser: "
-                    <> msg
+                    "Failed to parse " <> aID <> ": " <> msg
         Partial _p -> parseSocketWith _p _socket

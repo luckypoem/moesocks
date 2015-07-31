@@ -46,7 +46,7 @@ showConnectionType UDP_port                 = "UDP       "
 localRequestHandler:: MoeConfig -> Socket -> IO ()
 localRequestHandler aConfig aSocket = do
   (_leftBytesAfterGreeting, r) <- 
-      parseSocket mempty pure greetingParser aSocket
+      parseSocket "clientGreeting" mempty pure greetingParser aSocket
 
   forM_ (boolToMaybe - 
           _No_authentication `elem` (r ^. authenticationMethods)) - const -
@@ -55,6 +55,7 @@ localRequestHandler aConfig aSocket = do
     sendBuilder aSocket greetingReplyBuilder 
 
     (_leftBytesAfterClientRequest, _clientRequest) <- parseSocket 
+                                  "clientRequest" 
                                   _leftBytesAfterGreeting
                                   pure
                                   connectionParser
@@ -147,6 +148,7 @@ remoteRequestHandler aConfig aSocket = do
                             (aConfig ^. password)
   
   (_leftOverBytes, _clientRequest) <- parseSocket 
+                                          "clientRequest"
                                           mempty
                                           _decrypt
                                           shadowSocksRequestParser 
