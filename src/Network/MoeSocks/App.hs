@@ -227,7 +227,7 @@ remoteRequestHandler aConfig aSocket = do
                           send_ __targetSocket =<< _decrypt r
                           sendChannelLoop
                         else do
-                          puts - "received 0 bytes from remote socket!"
+                          puts - "0 bytes from remote!"
 
                 sendChannelLoop
 
@@ -238,7 +238,7 @@ remoteRequestHandler aConfig aSocket = do
                     send_ aSocket =<< _encrypt r
                     receiveChannel
                   else do
-                    puts - "received 0 bytes from target socket!"
+                    puts - "0 bytes from target!"
 
           runBothDebug
             (Just "R -->", sendChannel)
