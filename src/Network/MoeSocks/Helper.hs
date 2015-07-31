@@ -3,6 +3,7 @@
 
 module Network.MoeSocks.Helper where
 
+import Data.Attoparsec.ByteString
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
@@ -15,7 +16,8 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
-import Network.Socket
+import Network.Socket hiding (send, recv)
+import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.IO.Streams (InputStream, OutputStream)
 import System.IO.Unsafe (unsafePerformIO)
@@ -234,3 +236,43 @@ connectFor aID _i _o = do
 
   _io
 
+recv_ :: Socket -> IO ByteString
+recv_ = flip recv 4096
+
+send_ :: Socket -> ByteString -> IO ()
+send_ = sendAll
+
+sendBuilder :: Socket -> B.Builder -> IO ()
+sendBuilder aSocket = send_ aSocket . builder_To_ByteString
+
+sendBuilderEncrypted :: (ByteString -> IO ByteString) -> 
+                        Socket -> B.Builder -> IO ()
+sendBuilderEncrypted _encrypt aSocket x = send_ aSocket =<< 
+                                      _encrypt (builder_To_ByteString x)
+
+-- | An exception raised when parsing fails.
+data ParseException = ParseException String
+
+instance Show ParseException where
+    show (ParseException s) = "Parse exception: " ++ s
+
+instance Exception ParseException
+
+parseSocket :: ByteString -> (ByteString -> IO ByteString) ->
+                  Parser a -> Socket -> IO (ByteString, a)
+parseSocket _left _decrypt aParser = parseSocketWith - parse aParser
+  where
+    parseSocketWith :: (ByteString -> Result a) ->
+                        Socket -> IO (ByteString, a)
+    parseSocketWith _parser _socket = do
+      _rawBytes <- recv_ _socket
+      {-puts - "rawBytes: " <> show _rawBytes-}
+      _bytes <- _decrypt _rawBytes
+
+      let r =  _parser - _left <> _bytes
+      case r of
+        Done i _r -> pure (i, _r)
+        Fail _ _ msg -> throwIO - ParseException -
+                    "Failed to parse shadowSocksRequestParser: "
+                    <> msg
+        Partial _p -> parseSocketWith _p _socket

@@ -80,10 +80,3 @@ makeLenses ''MoeOptions
 type Cipher = ByteString -> IO ByteString 
 
 
--- | An exception raised when parsing fails.
-data ParseException = ParseException String
-
-instance Show ParseException where
-    show (ParseException s) = "Parse exception: " ++ s
-
-instance Exception ParseException
