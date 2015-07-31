@@ -51,7 +51,6 @@ localRequestHandler aConfig aSocket = do
   forM_ (boolToMaybe - 
           _No_authentication `elem` (r ^. authenticationMethods)) - const -
     do
-    
     sendBuilder aSocket greetingReplyBuilder 
 
     (_leftBytesAfterClientRequest, _clientRequest) <- parseSocket 
@@ -102,7 +101,6 @@ localRequestHandler aConfig aSocket = do
 
             let 
                 _header = shadowSocksRequestBuilder _clientRequest
-            
             
             let sendChannel = do
                   sendBuilderEncrypted _encrypt __remoteSocket _header
@@ -232,7 +230,6 @@ parseConfig aConfigFile = do
   _configFile <- TIO.readFile - aConfigFile ^. _Text
 
   let 
-
       fromShadowSocksConfig :: [(Text, Value)] -> [(Text, Value)]
       fromShadowSocksConfig _configList = 
         let fixes =
@@ -297,7 +294,7 @@ moeApp options = do
 
   updateGlobalLogger "moe" removeHandler
   updateGlobalLogger "moe" - addHandler formattedHandler
-  updateGlobalLogger "moe" - setLevel (options ^. verbosity)
+  updateGlobalLogger "moe" - setLevel - options ^. verbosity
       
 
   maybeConfig <- parseConfig - options ^. configFile 
