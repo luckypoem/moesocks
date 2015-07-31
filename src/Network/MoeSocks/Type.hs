@@ -10,6 +10,7 @@ import Data.Text (Text)
 import Data.Word
 import GHC.Generics
 import System.Log.Logger
+import Control.Exception (Exception)                
 
 data ClientGreeting = ClientGreeting
   {
@@ -77,3 +78,12 @@ makeLenses ''MoeOptions
 
 
 type Cipher = ByteString -> IO ByteString 
+
+
+-- | An exception raised when parsing fails.
+data ParseException = ParseException String
+
+instance Show ParseException where
+    show (ParseException s) = "Parse exception: " ++ s
+
+instance Exception ParseException

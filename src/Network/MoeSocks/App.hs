@@ -4,9 +4,11 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
+import Control.Exception (throwIO)
 import Control.Lens
 import Control.Monad
-import Data.Aeson
+import Data.Aeson hiding (Result)
+import Data.Attoparsec.ByteString
 import Data.ByteString (ByteString)
 import Data.ByteString.Lazy (toStrict)
 import Data.Monoid
@@ -18,22 +20,22 @@ import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.Socket
+import Network.Socket hiding (send, recv)
+import Network.Socket.ByteString
 import Prelude hiding ((-), take)
-import System.IO.Streams.Attoparsec
+import System.IO.Streams.Attoparsec hiding (ParseException)
 import System.IO.Streams.Network
+import System.Log.Formatter
+import System.Log.Handler.Simple
+import System.Log.Logger
 import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import qualified System.IO.Streams as Stream
-
-import qualified System.Log.Handler as LogHandler
-import System.Log.Handler.Simple
-import System.Log.Formatter
-import System.Log.Logger
 import qualified System.IO as IO
+import qualified System.IO.Streams as Stream
+import qualified System.Log.Handler as LogHandler
 
 showAddressType :: AddressType -> String
 showAddressType (IPv4_address xs) = concat - L.intersperse "." - 
@@ -112,7 +114,7 @@ localRequestHandler aConfig aSocket = do
 
 
             let 
-                _header = shadowsocksRequestBuilder _clientRequest
+                _header = shadowSocksRequestBuilder _clientRequest
             
             remoteOutputEncryptedStream <-
               Stream.contramapM _encrypt remoteOutputStream 
@@ -143,16 +145,39 @@ localRequestHandler aConfig aSocket = do
 
 remoteRequestHandler:: MoeConfig -> Socket -> IO ()
 remoteRequestHandler aConfig aSocket = do
-  (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
+  {-(remoteInputStream, remoteOutputStream) <- socketToStreams aSocket-}
 
   (_encrypt, _decrypt) <- getCipher
                             (aConfig ^. method)
                             (aConfig ^. password)
   
-  remoteInputDecryptedStream <- Stream.mapM _decrypt remoteInputStream
+  let recv_ = flip recv 4096
+      send_ = sendAll
+
+  let parseSocket :: Socket -> IO (ByteString, ClientRequest)
+      parseSocket = parseSocketWith - parse shadowSocksRequestParser
+        where
+          parseSocketWith :: (ByteString -> Result ClientRequest) ->
+                              Socket -> IO (ByteString, ClientRequest)
+          parseSocketWith _parser _socket = do
+            _rawBytes <- recv_ _socket
+            puts - "rawBytes: " <> show _rawBytes
+            _bytes <- _decrypt _rawBytes
+
+            let r =  _parser _bytes
+            
+            puts - "parser result: " <> show r
+
+            case r of
+              Done i r -> pure (i, r)
+              Fail _ _ msg -> throwIO - ParseException -
+                          "Failed to parse shadowSocksRequestParser: "
+                          <> msg
+              Partial _p -> parseSocketWith _p _socket
+
+
+  (_leftOverBytes, _clientRequest) <- parseSocket aSocket
                                           
-  _clientRequest <- parseFromStream 
-                      shadowsocksRequestParser remoteInputDecryptedStream
 
   puts - "Remote get: " <> show _clientRequest
   
@@ -193,27 +218,29 @@ remoteRequestHandler aConfig aSocket = do
               ]
             )
     let 
-        handleTarget __targetSocket = do
-          (targetInputStream, targetOutputStream) <- 
-            socketToStreams _targetSocket
+        handleTarget __leftOverBytes __targetSocket = do
+          let sendChannel = do
+                when (__leftOverBytes & isn't _Empty) -
+                  send_ __targetSocket _leftOverBytes
 
-          remoteOutputEncryptedStream <- 
-            Stream.contramapM _encrypt remoteOutputStream
+                let sendChannelLoop = do 
+                      r <- recv_ aSocket
+                      when (r & isn't _Empty) - do
+                        send_ __targetSocket =<< _decrypt r
+                        sendChannelLoop
+                sendChannelLoop
 
-          let sendChannel = connectFor "R sendChannel"
-                              remoteInputDecryptedStream
-                              targetOutputStream
-
-
-          let receiveChannel = 
-                connectFor "R receiveChannel"
-                  targetInputStream remoteOutputEncryptedStream
+          let receiveChannel = do
+                r <- recv_ __targetSocket
+                when (r & isn't _Empty) - do
+                  send_ aSocket =<< _encrypt r
+                  receiveChannel
 
           runBothDebug
             (Just "R -->", sendChannel)
             (Just "R <--", receiveChannel)
           
-    handleTarget _targetSocket
+    handleTarget _leftOverBytes _targetSocket
 
 parseConfig :: Text -> IO (Maybe MoeConfig)
 parseConfig aConfigFile = do

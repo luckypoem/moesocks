@@ -156,8 +156,8 @@ requestBuilder aClientRequest =
   <>  addressTypeBuilder (aClientRequest ^. addressType)
   <>  portBuilder (aClientRequest ^. portNumber)
 
-shadowsocksRequestBuilder :: ClientRequest -> B.Builder
-shadowsocksRequestBuilder aClientRequest =
+shadowSocksRequestBuilder :: ClientRequest -> B.Builder
+shadowSocksRequestBuilder aClientRequest =
       addressTypeBuilder (aClientRequest ^. addressType)
   <>  portBuilder (aClientRequest ^. portNumber)
 
@@ -192,8 +192,8 @@ addressTypeParser = choice
   ]
 
 
-shadowsocksRequestParser :: Parser ClientRequest
-shadowsocksRequestParser = do
+shadowSocksRequestParser :: Parser ClientRequest
+shadowSocksRequestParser = do
   __addressType <- addressTypeParser
   __portNumber <- portParser
 
