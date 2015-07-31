@@ -98,8 +98,8 @@ logSocket aID _init f =
       pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       throw e
 
-catchAllLog :: String -> IO a -> IO ()
-catchAllLog aID io = catches (() <$ io) 
+catchExceptAsyncLog :: String -> IO a -> IO ()
+catchExceptAsyncLog aID io = catches (() <$ io) 
                 [ 
                   Handler - \(e :: AsyncException) -> do
                             pute - "ASyncException in " 
