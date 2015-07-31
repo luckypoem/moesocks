@@ -4,9 +4,11 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
+import Control.Exception (throwIO)
 import Control.Lens
 import Control.Monad
-import Data.Aeson
+import Data.Aeson hiding (Result)
+import Data.Attoparsec.ByteString
 import Data.ByteString (ByteString)
 import Data.ByteString.Lazy (toStrict)
 import Data.Monoid
@@ -18,22 +20,22 @@ import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.Socket
+import Network.Socket hiding (send, recv)
+import Network.Socket.ByteString
 import Prelude hiding ((-), take)
-import System.IO.Streams.Attoparsec
+import System.IO.Streams.Attoparsec hiding (ParseException)
 import System.IO.Streams.Network
+import System.Log.Formatter
+import System.Log.Handler.Simple
+import System.Log.Logger
 import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import qualified System.IO.Streams as Stream
-
-import qualified System.Log.Handler as LogHandler
-import System.Log.Handler.Simple
-import System.Log.Formatter
-import System.Log.Logger
 import qualified System.IO as IO
+import qualified System.IO.Streams as Stream
+import qualified System.Log.Handler as LogHandler
 
 showAddressType :: AddressType -> String
 showAddressType (IPv4_address xs) = concat - L.intersperse "." - 
@@ -112,7 +114,7 @@ localRequestHandler aConfig aSocket = do
 
 
             let 
-                _header = shadowsocksRequestBuilder _clientRequest
+                _header = shadowSocksRequestBuilder _clientRequest
             
             remoteOutputEncryptedStream <-
               Stream.contramapM _encrypt remoteOutputStream 
@@ -143,80 +145,102 @@ localRequestHandler aConfig aSocket = do
 
 remoteRequestHandler:: MoeConfig -> Socket -> IO ()
 remoteRequestHandler aConfig aSocket = do
-  (remoteInputStream, remoteOutputStream) <- socketToStreams aSocket
+  {-(remoteInputStream, remoteOutputStream) <- socketToStreams aSocket-}
 
   (_encrypt, _decrypt) <- getCipher
                             (aConfig ^. method)
                             (aConfig ^. password)
   
+  let recv_ = flip recv 4096
+      send_ = sendAll
+
+  let parseSocket :: Socket -> IO (ByteString, ClientRequest)
+      parseSocket = parseSocketWith - parse shadowSocksRequestParser
+        where
+          parseSocketWith :: (ByteString -> Result ClientRequest) ->
+                              Socket -> IO (ByteString, ClientRequest)
+          parseSocketWith _parser _socket = do
+            _rawBytes <- recv_ _socket
+            puts - "rawBytes: " <> show _rawBytes
+            _bytes <- _decrypt _rawBytes
+
+            let r =  _parser _bytes
+            
+            puts - "parser result: " <> show r
+
+            case r of
+              Done i r -> pure (i, r)
+              Fail _ _ msg -> throwIO - ParseException -
+                          "Failed to parse shadowSocksRequestParser: "
+                          <> msg
+              Partial _p -> parseSocketWith _p _socket
 
 
-  pure ()
-  {-remoteInputDecryptedStream <- Stream.mapM _decrypt remoteInputStream-}
+  (_leftOverBytes, _clientRequest) <- parseSocket aSocket
                                           
-  {-_clientRequest <- parseFromStream -}
-                      {-shadowsocksRequestParser remoteInputDecryptedStream-}
 
-  {-puts - "Remote get: " <> show _clientRequest-}
+  puts - "Remote get: " <> show _clientRequest
   
-  {-let-}
-      {-initTarget :: ClientRequest -> IO (Socket, SockAddr)-}
-      {-initTarget _clientRequest = do-}
-        {-let -}
-            {-connectionType_To_SocketType :: ConnectionType -> SocketType-}
-            {-connectionType_To_SocketType TCP_IP_stream_connection = Stream-}
-            {-connectionType_To_SocketType TCP_IP_port_binding = NoSocketType-}
-            {-connectionType_To_SocketType UDP_port = Datagram-}
+  let
+      initTarget :: ClientRequest -> IO (Socket, SockAddr)
+      initTarget _clientRequest = do
+        let 
+            connectionType_To_SocketType :: ConnectionType -> SocketType
+            connectionType_To_SocketType TCP_IP_stream_connection = Stream
+            connectionType_To_SocketType TCP_IP_port_binding = NoSocketType
+            connectionType_To_SocketType UDP_port = Datagram
                
-            {-_socketType = connectionType_To_SocketType --}
-                            {-_clientRequest ^. connectionType-}
+            _socketType = connectionType_To_SocketType -
+                            _clientRequest ^. connectionType
 
 
-            {-_hostName = _clientRequest ^. addressType . to showAddressType-}
-            {-_port = _clientRequest ^. portNumber-}
+            _hostName = _clientRequest ^. addressType . to showAddressType
+            _port = _clientRequest ^. portNumber
 
         
-        {-getSocket _hostName _port _socketType-}
+        getSocket _hostName _port _socketType
 
-  {-logSA "R target socket" (initTarget _clientRequest) - \_r -> do-}
-    {-let (_targetSocket, _targetSocketAddress) = _r -}
+  logSA "R target socket" (initTarget _clientRequest) - \_r -> do
+    let (_targetSocket, _targetSocketAddress) = _r 
 
-    {-connect _targetSocket _targetSocketAddress-}
+    connect _targetSocket _targetSocketAddress
 
-    {-_remotePeerAddr <- getPeerName aSocket-}
-    {-_targetPeerAddr <- getPeerName _targetSocket-}
+    _remotePeerAddr <- getPeerName aSocket
+    _targetPeerAddr <- getPeerName _targetSocket
 
-    {-_log - "R " -- <> showConnectionType (_clientRequest ^. connectionType)-}
-                  {-<> ": " <>-}
-            {-(-}
-              {-concat - L.intersperse " -> " - map show-}
-              {-[ -}
-                {-_remotePeerAddr-}
-              {-, _targetPeerAddr-}
-              {-]-}
-            {-)-}
-    {-let -}
-        {-handleTarget __targetSocket = do-}
-          {-(targetInputStream, targetOutputStream) <- -}
-            {-socketToStreams _targetSocket-}
+    _log - "R " -- <> showConnectionType (_clientRequest ^. connectionType)
+                  <> ": " <>
+            (
+              concat - L.intersperse " -> " - map show
+              [ 
+                _remotePeerAddr
+              , _targetPeerAddr
+              ]
+            )
+    let 
+        handleTarget __leftOverBytes __targetSocket = do
+          let sendChannel = do
+                when (__leftOverBytes & isn't _Empty) -
+                  send_ __targetSocket _leftOverBytes
 
-          {-remoteOutputEncryptedStream <- -}
-            {-Stream.contramapM _encrypt remoteOutputStream-}
+                let sendChannelLoop = do 
+                      r <- recv_ aSocket
+                      when (r & isn't _Empty) - do
+                        send_ __targetSocket =<< _decrypt r
+                        sendChannelLoop
+                sendChannelLoop
 
-          {-let sendChannel = connectFor "R sendChannel"-}
-                              {-remoteInputDecryptedStream-}
-                              {-targetOutputStream-}
+          let receiveChannel = do
+                r <- recv_ __targetSocket
+                when (r & isn't _Empty) - do
+                  send_ aSocket =<< _encrypt r
+                  receiveChannel
 
-
-          {-let receiveChannel = -}
-                {-connectFor "R receiveChannel"-}
-                  {-targetInputStream remoteOutputEncryptedStream-}
-
-          {-runBothDebug-}
-            {-(Just "R -->", sendChannel)-}
-            {-(Just "R <--", receiveChannel)-}
+          runBothDebug
+            (Just "R -->", sendChannel)
+            (Just "R <--", receiveChannel)
           
-    {-handleTarget _targetSocket-}
+    handleTarget _leftOverBytes _targetSocket
 
 parseConfig :: Text -> IO (Maybe MoeConfig)
 parseConfig aConfigFile = do
