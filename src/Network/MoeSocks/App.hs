@@ -72,11 +72,7 @@ localRequestHandler aConfig aSocket = do
       connect _remoteSocket _remoteAddress
 
       _localPeerAddr <- getPeerName aSocket
-
       _remoteSocketName <- getSocketName _remoteSocket
-
-      {-puts - "remoteSocketName: " <> show _remoteSocketName-}
-      {-puts- "socket pair: " <> show (sockAddr_To_Pair _remoteSocketName)-}
 
       let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
 
@@ -146,8 +142,6 @@ localRequestHandler aConfig aSocket = do
 
 remoteRequestHandler:: MoeConfig -> Socket -> IO ()
 remoteRequestHandler aConfig aSocket = do
-  {-(remoteInputStream, remoteOutputStream) <- socketToStreams aSocket-}
-
   (_encrypt, _decrypt) <- getCipher
                             (aConfig ^. method)
                             (aConfig ^. password)
@@ -293,20 +287,14 @@ parseConfig aConfigFile = do
 moeApp:: MoeOptions -> IO ()
 moeApp options = do
   stdoutHandler <- streamHandler IO.stdout DEBUG
-
-  {-puts - "stdoutHandler Level" <> -}
-          {-show (LogHandler.getLevel stdoutHandler)-}
-
   let formattedHandler = 
           LogHandler.setFormatter stdoutHandler -
-            {-simpleLogFormatter "$time $prio $msg"-}
             simpleLogFormatter "$time $msg"
 
   updateGlobalLogger rootLoggerName removeHandler
+
   updateGlobalLogger "moe" removeHandler
-
   updateGlobalLogger "moe" - addHandler formattedHandler
-
   updateGlobalLogger "moe" - setLevel (options ^. verbosity)
       
 
@@ -367,10 +355,6 @@ moeApp options = do
         debugRun :: IO ()
         debugRun = do
           catchExceptAsyncLog "Debug app" - do
-            {-puts "Waiting ..."-}
-            {-threadDelay 1000000 -- wait last instance terminate-}
-            {-puts "Done"-}
-
             runBoth localRun remoteRun
 
 
