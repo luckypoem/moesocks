@@ -229,7 +229,6 @@ remoteRequestHandler aConfig aSocket = do
                         else do
                           puts - "0 bytes from remote!"
                           close aSocket
-                          close __targetSocket
 
                 sendChannelLoop
 
@@ -242,7 +241,6 @@ remoteRequestHandler aConfig aSocket = do
                   else do
                     puts - "0 bytes from target!"
                     close __targetSocket
-                    close aSocket
 
           runBothDebug
             (Just "R -->", sendChannel)
