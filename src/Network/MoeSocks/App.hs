@@ -68,7 +68,7 @@ localRequestHandler aConfig aSocket = do
         _initSocket = 
             getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream 
     
-    logSA "L connect remote" _initSocket - 
+    logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
 
                           
@@ -175,7 +175,7 @@ remoteRequestHandler aConfig aSocket = do
         
         getSocket _hostName _port _socketType
 
-  logSA "R connect target" (initTarget _clientRequest) - \_r -> do
+  logSA "R target socket" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetSocketAddress) = _r 
 
     connect _targetSocket _targetSocketAddress
@@ -309,8 +309,8 @@ moeApp options = do
 
             let handleLocal _socket = do
                   (_newSocket, _) <- accept _socket
-                  forkIO - catchAllLog "L thread" - 
-                            logSocket "L handler" (pure _newSocket) -
+                  forkIO - catchExceptAsyncLog "L thread" - 
+                            logSocket "L client socket" (pure _newSocket) -
                               localRequestHandler config
 
             forever - handleLocal _localSocket
@@ -329,8 +329,8 @@ moeApp options = do
 
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
-                forkIO - catchAllLog "R thread" - 
-                            logSocket "R handler" (pure _newSocket) -
+                forkIO - catchExceptAsyncLog "R thread" - 
+                            logSocket "R remote socket" (pure _newSocket) -
                               remoteRequestHandler config 
 
           forever - handleRemote _remoteSocket
@@ -340,17 +340,17 @@ moeApp options = do
         remoteRun = do
           let _c = config
           getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream
-            >>= catchAllLog "R app" . remoteApp 
+            >>= catchExceptAsyncLog "R app" . remoteApp 
           
         localRun :: IO ()
         localRun = do
           let _c = config
           getSocket (_c ^. local . _Text) (_c ^. localPort) Stream
-            >>= catchAllLog "L app" . localApp 
+            >>= catchExceptAsyncLog "L app" . localApp 
 
         debugRun :: IO ()
         debugRun = do
-          catchAllLog "Debug app" - do
+          catchExceptAsyncLog "Debug app" - do
             {-puts "Waiting ..."-}
             {-threadDelay 1000000 -- wait last instance terminate-}
             {-puts "Done"-}
