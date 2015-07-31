@@ -4,11 +4,9 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
-import Control.Exception (throwIO)
 import Control.Lens
 import Control.Monad
 import Data.Aeson hiding (Result)
-import Data.Attoparsec.ByteString
 import Data.ByteString (ByteString)
 import Data.ByteString.Lazy (toStrict)
 import Data.Monoid
@@ -21,20 +19,15 @@ import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv)
-import Network.Socket.ByteString
 import Prelude hiding ((-), take)
-import System.IO.Streams.Attoparsec hiding (ParseException)
-import System.IO.Streams.Network
 import System.Log.Formatter
 import System.Log.Handler.Simple
 import System.Log.Logger
-import qualified Data.ByteString.Builder as B
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
-import qualified System.IO.Streams as Stream
 import qualified System.Log.Handler as LogHandler
 
 showAddressType :: AddressType -> String
@@ -52,28 +45,30 @@ showConnectionType UDP_port                 = "UDP       "
 
 localRequestHandler:: MoeConfig -> Socket -> IO ()
 localRequestHandler aConfig aSocket = do
-  (inputStream, outputStream) <- socketToStreams aSocket
-
-  r <- parseFromStream greetingParser inputStream
-  {-puts - "greetings: " <> show r-}
+  (_leftBytesAfterGreeting, r) <- 
+      parseSocket mempty pure greetingParser aSocket
 
   forM_ (boolToMaybe - 
           _No_authentication `elem` (r ^. authenticationMethods)) - const -
     do
-    pushStream outputStream - greetingReplyBuilder 
+    
+    sendBuilder aSocket greetingReplyBuilder 
 
-    _clientRequest <- parseFromStream connectionParser inputStream
+    (_leftBytesAfterClientRequest, _clientRequest) <- parseSocket 
+                                  _leftBytesAfterGreeting
+                                  pure
+                                  connectionParser
+                                  aSocket
+
     puts - "L : " <> show _clientRequest
-
+    
     let 
         _c = aConfig 
         _initSocket = 
             getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream 
-    
+
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
-
-                          
       connect _remoteSocket _remoteAddress
 
       _localPeerAddr <- getPeerName aSocket
@@ -85,8 +80,7 @@ localRequestHandler aConfig aSocket = do
 
       let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
 
-      Stream.write (Just - builder_To_ByteString _connectionReplyBuilder)
-                    outputStream
+      sendBuilder aSocket _connectionReplyBuilder
       
       let showRequest :: ClientRequest -> String
           showRequest _r =  
@@ -104,10 +98,6 @@ localRequestHandler aConfig aSocket = do
               )
 
       let handleLocal __remoteSocket = do
-
-            (remoteInputStream, remoteOutputStream) <- 
-              socketToStreams _remoteSocket
-
             (_encrypt, _decrypt) <- getCipher
                                       (aConfig ^. method)
                                       (aConfig ^. password)
@@ -116,24 +106,35 @@ localRequestHandler aConfig aSocket = do
             let 
                 _header = shadowSocksRequestBuilder _clientRequest
             
-            remoteOutputEncryptedStream <-
-              Stream.contramapM _encrypt remoteOutputStream 
             
-            pushStream remoteOutputEncryptedStream - 
-                B.byteString - builder_To_ByteString _header
-            
-            remoteInputDecryptedStream <-
-              Stream.mapM _decrypt remoteInputStream
-            
-            let
-                sendChannel = connectFor "L sendChannel"
-                                inputStream 
-                                remoteOutputEncryptedStream
-            
-            let receiveChannel =  connectFor "L receiveChannel"
-                                    remoteInputDecryptedStream
-                                    outputStream
+            let sendChannel = do
+                  sendBuilderEncrypted _encrypt __remoteSocket _header
 
+                  when (_leftBytesAfterClientRequest & isn't _Empty) -
+                    send_ __remoteSocket =<< 
+                      _encrypt _leftBytesAfterClientRequest
+
+                  let sendChannelLoop = do 
+                        _r <- recv_ aSocket
+                        if (_r & isn't _Empty) 
+                          then do
+                            send_ __remoteSocket =<< _encrypt _r
+                            sendChannelLoop
+                          else do
+                            puts - "0 bytes from remote!"
+                            close aSocket
+
+                  sendChannelLoop
+
+            let receiveChannel = do
+                  _r <- recv_ __remoteSocket
+                  if (_r & isn't _Empty) 
+                    then do
+                      send_ aSocket =<< _decrypt _r
+                      receiveChannel
+                    else do
+                      puts - "0 bytes from target!"
+                      close __remoteSocket
 
             runBothDebug
               (Just "L -->", sendChannel)
@@ -151,29 +152,11 @@ remoteRequestHandler aConfig aSocket = do
                             (aConfig ^. method)
                             (aConfig ^. password)
   
-  let recv_ = flip recv 4096
-      send_ = sendAll
-
-  let parseSocket :: Socket -> IO (ByteString, ClientRequest)
-      parseSocket = parseSocketWith - parse shadowSocksRequestParser
-        where
-          parseSocketWith :: (ByteString -> Result ClientRequest) ->
-                              Socket -> IO (ByteString, ClientRequest)
-          parseSocketWith _parser _socket = do
-            _rawBytes <- recv_ _socket
-            {-puts - "rawBytes: " <> show _rawBytes-}
-            _bytes <- _decrypt _rawBytes
-
-            let r =  _parser _bytes
-            case r of
-              Done i _r -> pure (i, _r)
-              Fail _ _ msg -> throwIO - ParseException -
-                          "Failed to parse shadowSocksRequestParser: "
-                          <> msg
-              Partial _p -> parseSocketWith _p _socket
-
-
-  (_leftOverBytes, _clientRequest) <- parseSocket aSocket
+  (_leftOverBytes, _clientRequest) <- parseSocket 
+                                          mempty
+                                          _decrypt
+                                          shadowSocksRequestParser 
+                                          aSocket
                                           
 
   puts - "Remote get: " <> show _clientRequest

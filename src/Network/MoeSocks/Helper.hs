@@ -3,6 +3,7 @@
 
 module Network.MoeSocks.Helper where
 
+import Data.Attoparsec.ByteString
 import Control.Concurrent
 import Control.Exception
 import Control.Lens
@@ -15,15 +16,13 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
-import Network.Socket
+import Network.Socket hiding (send, recv)
+import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
-import System.IO.Streams (InputStream, OutputStream)
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
-import qualified Data.ByteString.Builder.Extra as BE
 import qualified Data.ByteString.Lazy as LB
-import qualified System.IO.Streams as Stream
 
 import System.Log.Logger
 
@@ -34,12 +33,6 @@ infixr 0 -
 (-) = ($)
 
 -- END backports
-
-type IB = InputStream ByteString
-type OB = OutputStream ByteString
-
-_Debug :: Bool
-_Debug = False
 
 flip4 :: (a, b, c, d) -> (d, c, b, a)
 flip4 (_a, _b, _c, _d) = (_d, _c, _b, _a)
@@ -164,13 +157,6 @@ runBothDebug x y = do
     handleError
     action
 
-pushStream :: (OutputStream ByteString) -> B.Builder -> IO ()
-pushStream s b = do
-  _builderStream <- Stream.builderStream s 
-  Stream.write (Just b) _builderStream
-  Stream.write (Just BE.flush) _builderStream
-
-
 getSocket :: (Integral i, Show i) => HostName -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket aHost aPort aSocketType = do
@@ -225,12 +211,43 @@ duplicateKey (_from, _to) l =
     Just v -> (_to,v) : l
 
 
-connectFor :: String -> IB -> OB -> IO ()
-connectFor aID _i _o = do
-  _i2 <- Stream.lockingInputStream _i
-  _o2 <- Stream.lockingOutputStream _o
+recv_ :: Socket -> IO ByteString
+recv_ = flip recv 4096
 
-  let _io = catchIO ("connectFor " <> aID) - Stream.connect _i2 _o2
+send_ :: Socket -> ByteString -> IO ()
+send_ = sendAll
 
-  _io
+sendBuilder :: Socket -> B.Builder -> IO ()
+sendBuilder aSocket = send_ aSocket . builder_To_ByteString
 
+sendBuilderEncrypted :: (ByteString -> IO ByteString) -> 
+                        Socket -> B.Builder -> IO ()
+sendBuilderEncrypted _encrypt aSocket x = send_ aSocket =<< 
+                                      _encrypt (builder_To_ByteString x)
+
+-- | An exception raised when parsing fails.
+data ParseException = ParseException String
+
+instance Show ParseException where
+    show (ParseException s) = "Parse exception: " ++ s
+
+instance Exception ParseException
+
+parseSocket :: ByteString -> (ByteString -> IO ByteString) ->
+                  Parser a -> Socket -> IO (ByteString, a)
+parseSocket _left _decrypt aParser = parseSocketWith - parse aParser
+  where
+    parseSocketWith :: (ByteString -> Result a) ->
+                        Socket -> IO (ByteString, a)
+    parseSocketWith _parser _socket = do
+      _rawBytes <- recv_ _socket
+      {-puts - "rawBytes: " <> show _rawBytes-}
+      _bytes <- _decrypt _rawBytes
+
+      let r =  _parser - _left <> _bytes
+      case r of
+        Done i _r -> pure (i, _r)
+        Fail _ _ msg -> throwIO - ParseException -
+                    "Failed to parse shadowSocksRequestParser: "
+                    <> msg
+        Partial _p -> parseSocketWith _p _socket
