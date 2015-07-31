@@ -45,7 +45,7 @@ showConnectionType UDP_port                 = "UDP       "
 
 localRequestHandler:: MoeConfig -> Socket -> IO ()
 localRequestHandler aConfig aSocket = do
-  (_leftBytesAfterGreeting, r) <- 
+  (_partialBytesAfterGreeting, r) <- 
       parseSocket "clientGreeting" mempty pure greetingParser aSocket
 
   forM_ (boolToMaybe - 
@@ -53,9 +53,9 @@ localRequestHandler aConfig aSocket = do
     do
     sendBuilder aSocket greetingReplyBuilder 
 
-    (_leftBytesAfterClientRequest, _clientRequest) <- parseSocket 
+    (_partialBytesAfterClientRequest, _clientRequest) <- parseSocket 
                                   "clientRequest" 
-                                  _leftBytesAfterGreeting
+                                  _partialBytesAfterGreeting
                                   pure
                                   connectionParser
                                   aSocket
@@ -105,9 +105,9 @@ localRequestHandler aConfig aSocket = do
             let sendChannel = do
                   sendBuilderEncrypted _encrypt __remoteSocket _header
 
-                  when (_leftBytesAfterClientRequest & isn't _Empty) -
+                  when (_partialBytesAfterClientRequest & isn't _Empty) -
                     send_ __remoteSocket =<< 
-                      _encrypt _leftBytesAfterClientRequest
+                      _encrypt _partialBytesAfterClientRequest
 
                   let sendChannelLoop = do 
                         _r <- recv_ aSocket

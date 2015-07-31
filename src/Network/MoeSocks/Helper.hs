@@ -235,7 +235,7 @@ instance Exception ParseException
 
 parseSocket :: String -> ByteString -> (ByteString -> IO ByteString) ->
                   Parser a -> Socket -> IO (ByteString, a)
-parseSocket aID _left _decrypt aParser = parseSocketWith - parse aParser
+parseSocket aID _partial _decrypt aParser = parseSocketWith - parse aParser
   where
     parseSocketWith :: (ByteString -> Result a) ->
                         Socket -> IO (ByteString, a)
@@ -244,7 +244,7 @@ parseSocket aID _left _decrypt aParser = parseSocketWith - parse aParser
       {-puts - "rawBytes: " <> show _rawBytes-}
       _bytes <- _decrypt _rawBytes
 
-      let r =  _parser - _left <> _bytes
+      let r =  _parser - _partial <> _bytes
       case r of
         Done i _r -> pure (i, _r)
         Fail _ _ msg -> throwIO - ParseException -
