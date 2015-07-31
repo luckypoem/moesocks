@@ -161,15 +161,12 @@ remoteRequestHandler aConfig aSocket = do
                               Socket -> IO (ByteString, ClientRequest)
           parseSocketWith _parser _socket = do
             _rawBytes <- recv_ _socket
-            puts - "rawBytes: " <> show _rawBytes
+            {-puts - "rawBytes: " <> show _rawBytes-}
             _bytes <- _decrypt _rawBytes
 
             let r =  _parser _bytes
-            
-            puts - "parser result: " <> show r
-
             case r of
-              Done i r -> pure (i, r)
+              Done i _r -> pure (i, _r)
               Fail _ _ msg -> throwIO - ParseException -
                           "Failed to parse shadowSocksRequestParser: "
                           <> msg
