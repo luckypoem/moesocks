@@ -26,7 +26,7 @@ nemesis = do
   task "test" - do
     forever - do
       ping
-      sleep 1
+      sleep 3
 
   desc "ping"
   task "ping" - ping
@@ -38,6 +38,14 @@ nemesis = do
   desc "local"
   task "local" - do
     sh "cabal run -- -m local -c dev.json -v DEBUG"
+
+  desc "ssserver"
+  task "ssremote" - do
+    sh "ssserver -c dev.json"
+  
+  desc "sslocal"
+  task "sslocal" - do
+    sh "sslocal -c dev.json"
 
   desc "local2"
   task "local2" - do
