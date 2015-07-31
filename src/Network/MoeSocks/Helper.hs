@@ -113,9 +113,9 @@ catchIO aID io = catch (() <$ io) - \e ->
 wrapIO :: (Maybe String, IO c) -> IO c
 wrapIO (s,  _io) = do
   pure s
-  forM_ s - puts . ("+ " <>)
+  {-forM_ s - puts . ("+ " <>)-}
   _io 
-    <* (forM_ s - puts . ("- " <>))
+    {-<* (forM_ s - puts . ("- " <>))-}
                 
 runBoth :: IO () -> IO () -> IO ()
 runBoth x y = do
