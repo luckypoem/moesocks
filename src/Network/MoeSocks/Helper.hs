@@ -216,12 +216,12 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
-sendBuilder :: Socket -> B.Builder -> IO ()
-sendBuilder aSocket = send_ aSocket . builder_To_ByteString
+sendBuilder :: Chan ByteString -> B.Builder -> IO ()
+sendBuilder _chan = writeChan _chan . builder_To_ByteString
 
-sendBuilderEncrypted :: (ByteString -> IO ByteString) -> 
-                        Socket -> B.Builder -> IO ()
-sendBuilderEncrypted _encrypt aSocket x = send_ aSocket =<< 
+sendBuilderEncrypted ::  Chan ByteString -> (ByteString -> IO ByteString) -> 
+                          B.Builder -> IO ()
+sendBuilderEncrypted _chan _encrypt x = writeChan _chan =<< 
                                       _encrypt (builder_To_ByteString x)
 
 -- | An exception raised when parsing fails.
