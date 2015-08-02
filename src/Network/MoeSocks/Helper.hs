@@ -69,8 +69,9 @@ showBytes = show . S.unpack
       
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
-      {-puts - "Closing socket " <> aID-}
-      close aSocket 
+  pure aID
+  {-puts - "Closing socket " <> aID-}
+  close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
                         ((Socket, SockAddr) -> IO a) -> IO a
@@ -156,15 +157,16 @@ runBothDebug x y = do
     handleError
     action
 
-getSocket :: (Integral i, Show i) => HostName -> i -> SocketType ->
+getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket aHost aPort aSocketType = do
     maybeAddrInfo <- firstOf folded <$>
-                  getAddrInfo (Just hints) (Just aHost) (Just $ show aPort)
+                  getAddrInfo (Just hints) 
+                              (Just - aHost ^. _Text) (Just - show aPort)
 
     case maybeAddrInfo of
-      Nothing -> error - "Error in getSocket for: " <> aHost <> ":" <> 
-                              show aPort
+      Nothing -> error - "Error in getSocket for: " <> aHost ^. _Text 
+                              <> ":" <> show aPort
       Just addrInfo -> do
           let family     = addrFamily addrInfo
           let socketType = addrSocketType addrInfo
@@ -234,11 +236,11 @@ instance Exception ParseException
 
 parseSocket :: String -> ByteString -> (ByteString -> IO ByteString) ->
                   Parser a -> Socket -> IO (ByteString, a)
-parseSocket aID _partial _decrypt aParser = parseSocketWith - parse aParser
+parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
   where
-    parseSocketWith :: (ByteString -> Result a) ->
+    parseSocketWith :: String -> (ByteString -> Result a) ->
                         Socket -> IO (ByteString, a)
-    parseSocketWith _parser _socket = do
+    parseSocketWith _id _parser _socket = do
       _rawBytes <- recv_ _socket
       {-puts - "rawBytes: " <> show _rawBytes-}
       _bytes <- _decrypt _rawBytes
@@ -247,5 +249,5 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith - parse aParser
       case r of
         Done i _r -> pure (i, _r)
         Fail _ _ msg -> throwIO - ParseException -
-                    "Failed to parse " <> aID <> ": " <> msg
-        Partial _p -> parseSocketWith _p _socket
+                    "Failed to parse " <> _id <> ": " <> msg
+        Partial _p -> parseSocketWith _id _p _socket

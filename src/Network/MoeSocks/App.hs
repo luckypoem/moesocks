@@ -30,10 +30,11 @@ import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
-showAddressType :: AddressType -> String
-showAddressType (IPv4_address xs) = concat - L.intersperse "." - 
+showAddressType :: AddressType -> Text
+showAddressType (IPv4_address xs) = view (from _Text) - 
+                                      concat - L.intersperse "." - 
                                       map show - xs ^.. each
-showAddressType (Domain_name x)   = x ^. _Text
+showAddressType (Domain_name x)   = x 
 showAddressType x                 = error -
                                             "IPv6 target not supported:"
                                             <> show x
@@ -65,7 +66,7 @@ localRequestHandler aConfig aSocket = do
     let 
         _c = aConfig 
         _initSocket = 
-            getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream 
+            getSocket (_c ^. remote) (_c ^. remotePort) Stream 
 
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
@@ -80,7 +81,7 @@ localRequestHandler aConfig aSocket = do
       
       let showRequest :: ClientRequest -> String
           showRequest _r =  
-                            showAddressType (_r ^. addressType)
+                             view _Text (showAddressType (_r ^. addressType))
                           <> ":"
                           <> show (_r ^. portNumber)
       _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
@@ -364,34 +365,34 @@ moeApp options = do
     let remoteApp :: (Socket, SockAddr) -> IO ()
         remoteApp s = logSA "R loop" (pure s) -
           \(_remoteSocket, _remoteAddr) -> do
-          _say "R : nyaa!"
+            _say "R : nyaa!"
 
-          setSocketOption _remoteSocket ReuseAddr 1
-          bindSocket _remoteSocket _remoteAddr
+            setSocketOption _remoteSocket ReuseAddr 1
+            bindSocket _remoteSocket _remoteAddr
 
-          let _maximum_number_of_queued_connection = 1
+            let _maximum_number_of_queued_connection = 1
 
-          listen _remoteSocket _maximum_number_of_queued_connection 
+            listen _remoteSocket _maximum_number_of_queued_connection 
 
-          let handleRemote _socket = do
-                (_newSocket, _) <- accept _socket
-                forkIO - catchExceptAsyncLog "R thread" - 
-                            logSocket "R remote socket" (pure _newSocket) -
-                              remoteRequestHandler config 
+            let handleRemote _socket = do
+                  (_newSocket, _) <- accept _socket
+                  forkIO - catchExceptAsyncLog "R thread" - 
+                              logSocket "R remote socket" (pure _newSocket) -
+                                remoteRequestHandler config 
 
-          forever - handleRemote _remoteSocket
+            forever - handleRemote _remoteSocket
 
     let 
         remoteRun :: IO ()
         remoteRun = do
           let _c = config
-          getSocket (_c ^. remote . _Text) (_c ^. remotePort) Stream
+          getSocket (_c ^. remote) (_c ^. remotePort) Stream
             >>= catchExceptAsyncLog "R app" . remoteApp 
           
         localRun :: IO ()
         localRun = do
           let _c = config
-          getSocket (_c ^. local . _Text) (_c ^. localPort) Stream
+          getSocket (_c ^. local) (_c ^. localPort) Stream
             >>= catchExceptAsyncLog "L app" . localApp 
 
         debugRun :: IO ()
