@@ -69,7 +69,7 @@ showBytes = show . S.unpack
       
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
-      puts - "Closing socket " <> aID
+      {-puts - "Closing socket " <> aID-}
       close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
@@ -173,7 +173,7 @@ getSocket aHost aPort aSocketType = do
 
           _socket <- socket family socketType protocol
 
-          puts - "Getting socket: " <> show address
+          {-puts - "Getting socket: " <> show address-}
 
           pure (_socket, address)
           

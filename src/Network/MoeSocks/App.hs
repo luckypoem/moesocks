@@ -123,7 +123,7 @@ localRequestHandler aConfig aSocket = do
                                       writeChan sendChannel =<< _encrypt _r
                                       _produce 
                                     else do
-                                      puts - "0 bytes from client!"
+                                      {-puts - "0 bytes from client!"-}
                                       close aSocket
 
                         let _consume = forever - 
@@ -144,7 +144,7 @@ localRequestHandler aConfig aSocket = do
                                 writeChan receiveChannel =<< _decrypt _r
                                 _produce 
                               else do
-                                puts - "0 bytes from remote!"
+                                {-puts - "0 bytes from remote!"-}
                                 close __remoteSocket
 
                   let _consume = forever - 
@@ -232,7 +232,7 @@ remoteRequestHandler aConfig aSocket = do
                                     writeChan sendChannel =<< _decrypt _r
                                     _produce 
                                   else do
-                                    puts - "0 bytes from remote!"
+                                    {-puts - "0 bytes from remote!"-}
                                     close aSocket
 
                       let _consume = forever - 
@@ -253,7 +253,7 @@ remoteRequestHandler aConfig aSocket = do
                               writeChan receiveChannel =<< _encrypt _r
                               _produce 
                             else do
-                              puts - "0 bytes from target!"
+                              {-puts - "0 bytes from target!"-}
                               close __targetSocket
 
                 let _consume = forever - 
