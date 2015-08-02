@@ -182,13 +182,13 @@ addressTypeParser = choice
                         _nameLength <- anyWord8
                         view utf8 <$> (take - fromIntegral _nameLength)
 
-  , IPv6_address <$>  do
-                        word8 4 
-                        _a <- anyWord32be
-                        _b <- anyWord32be
-                        _c <- anyWord32be
-                        _d <- anyWord32be 
-                        pure - (_a, _b, _c, _d)
+  {-, IPv6_address <$>  do-}
+                        {-word8 4 -}
+                        {-_a <- anyWord32be-}
+                        {-_b <- anyWord32be-}
+                        {-_c <- anyWord32be-}
+                        {-_d <- anyWord32be -}
+                        {-pure - (_a, _b, _c, _d)-}
   ]
 
 
