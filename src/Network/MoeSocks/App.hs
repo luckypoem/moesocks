@@ -115,17 +115,15 @@ localRequestHandler aConfig aSocket = do
                       _encrypt _partialBytesAfterClientRequest
 
                   let sendThreadLoop = do 
-                        let _produce = loop
-                              where 
-                                loop = do
-                                  _r <- recv_ aSocket
-                                  if (_r & isn't _Empty) 
-                                    then do
-                                      writeChan sendChannel =<< _encrypt _r
-                                      _produce 
-                                    else do
-                                      {-puts - "0 bytes from client!"-}
-                                      close aSocket
+                        let _produce = do
+                              _r <- recv_ aSocket
+                              if (_r & isn't _Empty) 
+                                then do
+                                  writeChan sendChannel =<< _encrypt _r
+                                  _produce 
+                                else do
+                                  {-puts - "0 bytes from client!"-}
+                                  close aSocket
 
                         let _consume = forever - 
                                           send_ __remoteSocket =<<
@@ -136,17 +134,15 @@ localRequestHandler aConfig aSocket = do
                   sendThreadLoop
 
             let receiveThread = do
-                  let _produce = loop
-                        where
-                          loop = do
-                            _r <- recv_ __remoteSocket
-                            if (_r & isn't _Empty) 
-                              then do
-                                writeChan receiveChannel =<< _decrypt _r
-                                _produce 
-                              else do
-                                {-puts - "0 bytes from remote!"-}
-                                close __remoteSocket
+                  let _produce = do
+                        _r <- recv_ __remoteSocket
+                        if (_r & isn't _Empty) 
+                          then do
+                            writeChan receiveChannel =<< _decrypt _r
+                            _produce 
+                          else do
+                            {-puts - "0 bytes from remote!"-}
+                            close __remoteSocket
 
                   let _consume = forever - 
                                     send_ aSocket =<< 
@@ -224,17 +220,15 @@ remoteRequestHandler aConfig aSocket = do
                   writeChan sendChannel _leftOverBytes
 
                 let sendThreadLoop = do 
-                      let _produce = loop
-                            where 
-                              loop = do
-                                _r <- recv_ aSocket
-                                if (_r & isn't _Empty) 
-                                  then do
-                                    writeChan sendChannel =<< _decrypt _r
-                                    _produce 
-                                  else do
-                                    {-puts - "0 bytes from remote!"-}
-                                    close aSocket
+                      let _produce = do
+                            _r <- recv_ aSocket
+                            if (_r & isn't _Empty) 
+                              then do
+                                writeChan sendChannel =<< _decrypt _r
+                                _produce 
+                              else do
+                                {-puts - "0 bytes from remote!"-}
+                                close aSocket
 
                       let _consume = forever - 
                                         send_ __targetSocket =<<
@@ -245,17 +239,15 @@ remoteRequestHandler aConfig aSocket = do
                 sendThreadLoop
 
           let receiveThread = do
-                let _produce = loop
-                      where
-                        loop = do
-                          _r <- recv_ __targetSocket
-                          if (_r & isn't _Empty) 
-                            then do
-                              writeChan receiveChannel =<< _encrypt _r
-                              _produce 
-                            else do
-                              {-puts - "0 bytes from target!"-}
-                              close __targetSocket
+                let _produce = do
+                      _r <- recv_ __targetSocket
+                      if (_r & isn't _Empty) 
+                        then do
+                          writeChan receiveChannel =<< _encrypt _r
+                          _produce 
+                        else do
+                          {-puts - "0 bytes from target!"-}
+                          close __targetSocket
 
                 let _consume = forever - 
                                   send_ aSocket =<< 
