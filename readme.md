@@ -26,7 +26,7 @@ Planning features
 Note
 ------
 
-You might want to the python implementation of [shadowsocks] on the remote
+You might want to use the python implementation of [shadowsocks] on the remote
 server. 
 
 The remote mode of moesocks is still buggy :(
