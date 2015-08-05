@@ -10,10 +10,11 @@ A sample `config.json` file is included in this repository and the cabal archive
 
 type `moesocks --help` for help.
 
-Notes
+Note
 ------
 
-Remote mode is still buggy :(
+Please use shadowsocks on the remote server, currently remote mode of moesocks
+is still buggy :(
 
 There is an earlier implementation of [shadowsocks in Haskell] by rnons. 
 
