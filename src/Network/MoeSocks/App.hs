@@ -265,8 +265,8 @@ remoteRequestHandler aConfig aSocket = do
     handleTarget _leftOverBytes _targetSocket
 
 parseConfig :: Text -> MoeMonadT MoeConfig
-parseConfig aConfigFile = do
-  _configFile <- io - TIO.readFile - aConfigFile ^. _Text
+parseConfig aFilePath = do
+  _configFile <- io - TIO.readFile - aFilePath ^. _Text
 
   let 
       fromShadowSocksConfig :: [(Text, Value)] -> [(Text, Value)]
