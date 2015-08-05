@@ -70,7 +70,7 @@ data Verbosity = Normal | Verbose
 data LocalForwarding = LocalForwarding
   {
     _localForwardingPort :: Port
-  , _localForwardingRemoteHostName :: Text
+  , _localForwardingRemoteHost :: Text
   , _localForwardingRemotePort :: Port
   }
   deriving (Show, Eq)

@@ -33,7 +33,6 @@ import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 import Control.Exception
-import Data.Maybe (isNothing)
 
 import OpenSSL (withOpenSSL)
 import OpenSSL.EVP.Cipher (getCipherByName)
@@ -70,24 +69,37 @@ processLocalSocks5Request aSocket = do
                                 connectionParser
                                 aSocket
 
-  puts - "L : " <> show _clientRequest
 
   pure - (_clientRequest, _partialBytesAfterClientRequest)
 
 localSocks5RequestHandler :: MoeConfig -> Socket -> IO ()
 localSocks5RequestHandler aConfig aSocket = do
   _r <- processLocalSocks5Request aSocket 
-  localRequestHandler _r aConfig aSocket
+  localRequestHandler aConfig _r True aSocket
 
-localRequestHandler :: (ClientRequest, ByteString) -> 
-                        MoeConfig -> Socket -> IO ()
-localRequestHandler (_clientRequest, _partialBytesAfterClientRequest) 
-                    aConfig aSocket = do
+localForwardingRequestHandler :: MoeConfig -> LocalForwarding -> 
+                                  Socket -> IO ()
+localForwardingRequestHandler aConfig aForwarding aSocket = do
+  let _clientRequest = ClientRequest
+                          TCP_IP_stream_connection
+                          (Domain_name - aForwarding ^. 
+                            localForwardingRemoteHost)
+                          (aForwarding ^. localForwardingRemotePort)
+              
+  localRequestHandler aConfig (_clientRequest, mempty) False aSocket
+
+
+localRequestHandler :: MoeConfig -> (ClientRequest, ByteString) -> 
+                        Bool -> Socket -> IO ()
+localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest) 
+                    shouldReplyClient aSocket = do
   let 
       _c = aConfig 
       _initSocket = 
           getSocket (_c ^. remote) (_c ^. remotePort) Stream 
 
+  puts - "L : " <> show _clientRequest
+  
   logSA "L remote socket" _initSocket - 
     \(_remoteSocket, _remoteAddress) -> do
     connect _remoteSocket _remoteAddress
@@ -95,9 +107,9 @@ localRequestHandler (_clientRequest, _partialBytesAfterClientRequest)
     _localPeerAddr <- getPeerName aSocket
     _remoteSocketName <- getSocketName _remoteSocket
 
-    let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
-
-    send_ aSocket - builder_To_ByteString _connectionReplyBuilder
+    when shouldReplyClient - do
+      let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
+      send_ aSocket - builder_To_ByteString _connectionReplyBuilder
     
     let showRequest :: ClientRequest -> String
         showRequest _r =  
@@ -351,10 +363,11 @@ moeApp = do
                             <> _options ^. configFile . _Text
     Just _ -> pure ()
 
-  let localAppBuilder :: (Socket -> IO ()) -> (Socket, SockAddr) -> IO ()
-      localAppBuilder aHandler s = logSA "L loop" (pure s) - 
+  let localAppBuilder :: String -> (Socket -> IO ()) -> (Socket, SockAddr) -> 
+                            IO ()
+      localAppBuilder aID aHandler s = logSA "L loop" (pure s) - 
         \(_localSocket, _localAddr) -> do
-          _say "L : nyaa!"
+          _say - "L " <> aID <> ": nyaa!"
             
           setSocketOption _localSocket ReuseAddr 1
           bindSocket _localSocket _localAddr
@@ -372,7 +385,12 @@ moeApp = do
           forever - handleLocal _localSocket
 
   let localSocks5App :: (Socket, SockAddr) -> IO ()
-      localSocks5App = localAppBuilder - localSocks5RequestHandler _config
+      localSocks5App = localAppBuilder "socks5" - 
+                            localSocks5RequestHandler _config
+
+      localForwardingApp :: LocalForwarding -> (Socket, SockAddr) -> IO ()
+      localForwardingApp _f = localAppBuilder "forwarding" - 
+                                localForwardingRequestHandler _config _f
 
   let remoteApp :: (Socket, SockAddr) -> IO ()
       remoteApp s = logSA "R loop" (pure s) -
@@ -406,8 +424,21 @@ moeApp = do
       localRun :: IO ()
       localRun = do
         let _c = _config
-        getSocket (_c ^. local) (_c ^. localPort) Stream
-          >>= catchExceptAsyncLog "L app" . localSocks5App 
+            _forwardings = _options ^. localForwarding
+
+        let _forwardingApp = do
+              forM_ _forwardings - \forwarding -> do
+                getSocket (_c ^. local) 
+                              (forwarding ^. localForwardingPort) 
+                              Stream
+                  >>= catchExceptAsyncLog "L Forwarding app" 
+                      . localForwardingApp forwarding
+          
+        let _socks5App = 
+              getSocket (_c ^. local) (_c ^. localPort) Stream
+                >>= catchExceptAsyncLog "L socks5 app" . localSocks5App 
+
+        runBoth _socks5App _forwardingApp
 
       debugRun :: IO ()
       debugRun = do
