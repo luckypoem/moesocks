@@ -103,7 +103,7 @@ getSSLEncDec method password = do
 
     cipherMethod <- fmap fromJust $ withOpenSSL $ getCipherByName $ 
                                         method ^. _Text
-    ctx <- cipherInitBS cipherMethod key cipher_iv Encrypt
+    ctx <- withOpenSSL $ cipherInitBS cipherMethod key cipher_iv Encrypt
     let
         encrypt buf = 
           if S.null buf
@@ -127,7 +127,8 @@ getSSLEncDec method password = do
               if empty
                   then do
                       let decipher_iv = S.take m1 buf
-                      dctx <- cipherInitBS cipherMethod key decipher_iv Decrypt
+                      dctx <- withOpenSSL $ 
+                              cipherInitBS cipherMethod key decipher_iv Decrypt
                       putMVar decipherCtx $! dctx
                       if S.null (S.drop m1 buf)
                           then return ""

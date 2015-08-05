@@ -14,10 +14,10 @@ import qualified Options.Applicative as O
 optionParser :: O.Parser MoeOptions
 optionParser = 
   let _mode = ( strOption -
-                      short 'm'
-                  <>  long "mode"
-                  <>  metavar "MODE"
-                  <>  help "local | remote"
+                    short 'm'
+                <>  long "mode"
+                <>  metavar "MODE"
+                <>  help "local | remote"
               ) <|> pure "local" 
   in
   let _config = ( strOption -
@@ -34,7 +34,7 @@ optionParser =
                           short 'v'
                       <>  long "verbose"
                       <>  metavar "PRIORITY"
-                      <>  help "DEBUG|INFO|NOTICE|WARNING"
+                      <>  help "DEBUG|INFO|NOTICE"
                     ) <|> pure INFO 
   in
   let parseMode :: String -> RunningMode
