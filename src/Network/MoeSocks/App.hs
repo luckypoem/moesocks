@@ -259,7 +259,20 @@ remoteRequestHandler aConfig aSocket = do
                                   aSocket
                                   receiveChannel
 
-                forkTwin _consume _produce
+                {-forkTwin _consume _produce-}
+                let loop = do
+                      _r <- recv_ __targetSocket 
+                      if _r & isn't _Empty
+                        then do
+                          send_ aSocket =<< _encrypt _r
+                          loop
+                        else do
+                          close __targetSocket
+                          close aSocket
+
+                loop
+                       
+                  
 
           forkTwinDebug
             (Just "R <--", receiveThread)
