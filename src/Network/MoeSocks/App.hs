@@ -262,8 +262,8 @@ remoteRequestHandler aConfig aSocket = do
                 waitFirst _consume _produce
 
           waitFirstDebug 
-            (Just "R <--", receiveThread)
             (Just "R -->", sendThread)
+            (Just "R <--", receiveThread)
           
     handleTarget _leftOverBytes _targetSocket
 
