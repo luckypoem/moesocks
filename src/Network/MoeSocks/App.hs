@@ -76,93 +76,94 @@ processLocalSocks5Request aSocket = do
 
 localSocks5RequestHandler :: MoeConfig -> Socket -> IO ()
 localSocks5RequestHandler aConfig aSocket = do
-  processLocalSocks5Request aSocket >>= localRequestHandler aConfig aSocket
+  _r <- processLocalSocks5Request aSocket 
+  localRequestHandler _r aConfig aSocket
 
-localRequestHandler :: MoeConfig -> Socket -> 
-                        (ClientRequest, ByteString) -> IO ()
-localRequestHandler aConfig aSocket 
-                    (_clientRequest, _partialBytesAfterClientRequest) = do
-    let 
-        _c = aConfig 
-        _initSocket = 
-            getSocket (_c ^. remote) (_c ^. remotePort) Stream 
+localRequestHandler :: (ClientRequest, ByteString) -> 
+                        MoeConfig -> Socket -> IO ()
+localRequestHandler (_clientRequest, _partialBytesAfterClientRequest) 
+                    aConfig aSocket = do
+  let 
+      _c = aConfig 
+      _initSocket = 
+          getSocket (_c ^. remote) (_c ^. remotePort) Stream 
 
-    logSA "L remote socket" _initSocket - 
-      \(_remoteSocket, _remoteAddress) -> do
-      connect _remoteSocket _remoteAddress
+  logSA "L remote socket" _initSocket - 
+    \(_remoteSocket, _remoteAddress) -> do
+    connect _remoteSocket _remoteAddress
 
-      _localPeerAddr <- getPeerName aSocket
-      _remoteSocketName <- getSocketName _remoteSocket
+    _localPeerAddr <- getPeerName aSocket
+    _remoteSocketName <- getSocketName _remoteSocket
 
-      let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
+    let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
 
-      send_ aSocket - builder_To_ByteString _connectionReplyBuilder
-      
-      let showRequest :: ClientRequest -> String
-          showRequest _r =  
-                             view _Text (showAddressType (_r ^. addressType))
-                          <> ":"
-                          <> show (_r ^. portNumber)
-      _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
-                  <> ": " <>
-              (
-                concat - L.intersperse " -> " 
-                [ 
-                  show _localPeerAddr
-                , showRequest _clientRequest
-                ]
-              )
+    send_ aSocket - builder_To_ByteString _connectionReplyBuilder
+    
+    let showRequest :: ClientRequest -> String
+        showRequest _r =  
+                           view _Text (showAddressType (_r ^. addressType))
+                        <> ":"
+                        <> show (_r ^. portNumber)
+    _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
+                <> ": " <>
+            (
+              concat - L.intersperse " -> " 
+              [ 
+                show _localPeerAddr
+              , showRequest _clientRequest
+              ]
+            )
 
-      let handleLocal __remoteSocket = do
-            (_encrypt, _decrypt) <- getCipher
-                                      (aConfig ^. method)
-                                      (aConfig ^. password)
-
-
-            let 
-                _header = shadowSocksRequestBuilder _clientRequest
-            
-            sendChannel <- newChan
-            receiveChannel <- newChan
-
-            let sendThread = do
-                  sendBuilderEncrypted 
-                    sendChannel _encrypt _header
-
-                  when (_partialBytesAfterClientRequest & isn't _Empty) -
-                    writeChan sendChannel =<< 
-                      _encrypt _partialBytesAfterClientRequest
-
-                  let _produce = produceLoop 
-                                    aSocket 
-                                    sendChannel 
-                                    _encrypt
-
-                  let _consume = consumeLoop 
-                                    __remoteSocket 
-                                    sendChannel
-
-                  runBoth _produce _consume
+    let handleLocal __remoteSocket = do
+          (_encrypt, _decrypt) <- getCipher
+                                    (aConfig ^. method)
+                                    (aConfig ^. password)
 
 
-            let receiveThread = do
-                  let _produce = produceLoop 
-                                    __remoteSocket 
-                                    receiveChannel
-                                    _decrypt
+          let 
+              _header = shadowSocksRequestBuilder _clientRequest
+          
+          sendChannel <- newChan
+          receiveChannel <- newChan
 
-                  let _consume = consumeLoop 
-                                    aSocket 
-                                    receiveChannel
+          let sendThread = do
+                sendBuilderEncrypted 
+                  sendChannel _encrypt _header
 
-                  runBoth _produce _consume
+                when (_partialBytesAfterClientRequest & isn't _Empty) -
+                  writeChan sendChannel =<< 
+                    _encrypt _partialBytesAfterClientRequest
 
-            runBothDebug
-              (Just "L -->", sendThread)
-              (Just "L <--", receiveThread)
+                let _produce = produceLoop 
+                                  aSocket 
+                                  sendChannel 
+                                  _encrypt
+
+                let _consume = consumeLoop 
+                                  __remoteSocket 
+                                  sendChannel
+
+                runBoth _produce _consume
 
 
-      handleLocal _remoteSocket
+          let receiveThread = do
+                let _produce = produceLoop 
+                                  __remoteSocket 
+                                  receiveChannel
+                                  _decrypt
+
+                let _consume = consumeLoop 
+                                  aSocket 
+                                  receiveChannel
+
+                runBoth _produce _consume
+
+          runBothDebug
+            (Just "L -->", sendThread)
+            (Just "L <--", receiveThread)
+
+
+    handleLocal _remoteSocket
 
 
 remoteRequestHandler:: MoeConfig -> Socket -> IO ()
@@ -350,8 +351,8 @@ moeApp = do
                             <> _options ^. configFile . _Text
     Just _ -> pure ()
 
-  let localApp :: (Socket, SockAddr) -> IO ()
-      localApp s = logSA "L loop" (pure s) - 
+  let localAppBuilder :: (Socket -> IO ()) -> (Socket, SockAddr) -> IO ()
+      localAppBuilder aHandler s = logSA "L loop" (pure s) - 
         \(_localSocket, _localAddr) -> do
           _say "L : nyaa!"
             
@@ -366,9 +367,12 @@ moeApp = do
                 
                 forkIO - catchExceptAsyncLog "L thread" - 
                           logSocket "L client socket" (pure _newSocket) -
-                            localSocks5RequestHandler _config
+                            aHandler
 
           forever - handleLocal _localSocket
+
+  let localSocks5App :: (Socket, SockAddr) -> IO ()
+      localSocks5App = localAppBuilder - localSocks5RequestHandler _config
 
   let remoteApp :: (Socket, SockAddr) -> IO ()
       remoteApp s = logSA "R loop" (pure s) -
@@ -403,7 +407,7 @@ moeApp = do
       localRun = do
         let _c = _config
         getSocket (_c ^. local) (_c ^. localPort) Stream
-          >>= catchExceptAsyncLog "L app" . localApp 
+          >>= catchExceptAsyncLog "L app" . localSocks5App 
 
       debugRun :: IO ()
       debugRun = do
