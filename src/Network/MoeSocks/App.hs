@@ -3,8 +3,8 @@
 
 module Network.MoeSocks.App where
 
-
 import Control.Concurrent
+import Control.Exception
 import Control.Lens
 import Control.Monad
 import Control.Monad.Except
@@ -22,6 +22,8 @@ import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv)
+import OpenSSL (withOpenSSL)
+import OpenSSL.EVP.Cipher (getCipherByName)
 import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple
@@ -32,10 +34,6 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
-import Control.Exception
-
-import OpenSSL (withOpenSSL)
-import OpenSSL.EVP.Cipher (getCipherByName)
 
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 
