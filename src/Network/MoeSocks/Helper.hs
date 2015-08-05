@@ -130,11 +130,11 @@ waitFirst = runWait True
 waitFirstDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitFirstDebug = runWaitDebug True
 
-runBoth :: IO () -> IO () -> IO ()
-runBoth = runWait False
+forkTwin :: IO () -> IO () -> IO ()
+forkTwin = runWait False
 
-runBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-runBothDebug = runWaitDebug False
+forkTwinDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+forkTwinDebug = runWaitDebug False
 
 runWait :: Bool -> IO () -> IO () -> IO ()
 runWait _wait x y = do

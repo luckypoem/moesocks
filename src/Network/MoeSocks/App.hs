@@ -448,7 +448,7 @@ moeApp = do
       debugRun :: IO ()
       debugRun = do
         catchExceptAsyncLog "Debug app" - do
-          runBoth localRun remoteRun
+          forkTwin localRun remoteRun
 
   io - case _options ^. runningMode of
     DebugMode -> debugRun
