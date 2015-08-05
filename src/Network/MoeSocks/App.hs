@@ -117,19 +117,17 @@ localRequestHandler aConfig aSocket = do
                     writeChan sendChannel =<< 
                       _encrypt _partialBytesAfterClientRequest
 
-                  let sendThreadLoop = do 
-                        let _produce = produceChan 
-                                          aSocket 
-                                          sendChannel 
-                                          _encrypt
+                  let _produce = produceChan 
+                                    aSocket 
+                                    sendChannel 
+                                    _encrypt
 
-                        let _consume = consumeChan 
-                                          __remoteSocket 
-                                          sendChannel
+                  let _consume = consumeChan 
+                                    __remoteSocket 
+                                    sendChannel
 
-                        runBoth _produce _consume
+                  runBoth _produce _consume
 
-                  sendThreadLoop
 
             let receiveThread = do
                   let _produce = produceChan 
@@ -212,19 +210,17 @@ remoteRequestHandler aConfig aSocket = do
                 when (_leftOverBytes & isn't _Empty) -
                   writeChan sendChannel _leftOverBytes
 
-                let sendThreadLoop = do 
-                      let _produce = produceChan
-                                      aSocket
-                                      sendChannel
-                                      _decrypt
+                let _produce = produceChan
+                                aSocket
+                                sendChannel
+                                _decrypt
 
-                      let _consume = consumeChan 
-                                        __targetSocket
-                                        sendChannel
+                let _consume = consumeChan 
+                                  __targetSocket
+                                  sendChannel
 
-                      runBoth _produce _consume
+                runBoth _produce _consume
 
-                sendThreadLoop
 
           let receiveThread = do
                 let _produce = produceChan
