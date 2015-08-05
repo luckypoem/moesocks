@@ -54,7 +54,7 @@ optionParser =
       _forwarding = ( strOption -
                           short 'L'
                       <>  metavar "port:host:hostport"
-                      <>  help ("as in ssh: " 
+                      <>  help (""
                                 <> "Specifies that the given port on the local"
                                 <> "(client) host is to be forwarded to the "
                                 <> "given host and port on the remote side."
