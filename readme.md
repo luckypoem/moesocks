@@ -14,7 +14,7 @@ type `moesocks --help` for help.
 Features
 --------
 * GFW compatibility
-* Can be used as a drop down replacement of shadowsocks (only client mode)
+* Can be used as a drop in replacement of shadowsocks (only client mode)
 * TCP port forwarding 
 
 Planning features
