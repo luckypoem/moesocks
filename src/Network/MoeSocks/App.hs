@@ -32,6 +32,8 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
+import Control.Exception
+import Data.Maybe (isNothing)
 
 import OpenSSL (withOpenSSL)
 import OpenSSL.EVP.Cipher (getCipherByName)
@@ -50,25 +52,36 @@ showConnectionType TCP_IP_stream_connection = "TCP_Stream"
 showConnectionType TCP_IP_port_binding      = "TCP_Bind  "
 showConnectionType UDP_port                 = "UDP       "
 
-localRequestHandler:: MoeConfig -> Socket -> IO ()
-localRequestHandler aConfig aSocket = do
+processLocalSocks5Request :: Socket -> IO (ClientRequest, ByteString)
+processLocalSocks5Request aSocket = do
   (_partialBytesAfterGreeting, r) <- 
       parseSocket "clientGreeting" mempty pure greetingParser aSocket
 
-  forM_ (boolToMaybe - 
-          _No_authentication `elem` (r ^. authenticationMethods)) - const -
-    do
-    send_ aSocket - builder_To_ByteString greetingReplyBuilder 
+  when (not - _No_authentication `elem` (r ^. authenticationMethods)) - 
+    throwIO - ParseException
+               "Client does not support no authentication method"
 
-    (_partialBytesAfterClientRequest, _clientRequest) <- parseSocket 
-                                  "clientRequest" 
-                                  _partialBytesAfterGreeting
-                                  pure
-                                  connectionParser
-                                  aSocket
+  send_ aSocket - builder_To_ByteString greetingReplyBuilder 
 
-    puts - "L : " <> show _clientRequest
-    
+  (_partialBytesAfterClientRequest, _clientRequest) <- parseSocket 
+                                "clientRequest" 
+                                _partialBytesAfterGreeting
+                                pure
+                                connectionParser
+                                aSocket
+
+  puts - "L : " <> show _clientRequest
+
+  pure - (_clientRequest, _partialBytesAfterClientRequest)
+
+localSocks5RequestHandler :: MoeConfig -> Socket -> IO ()
+localSocks5RequestHandler aConfig aSocket = do
+  processLocalSocks5Request aSocket >>= localRequestHandler aConfig aSocket
+
+localRequestHandler :: MoeConfig -> Socket -> 
+                        (ClientRequest, ByteString) -> IO ()
+localRequestHandler aConfig aSocket 
+                    (_clientRequest, _partialBytesAfterClientRequest) = do
     let 
         _c = aConfig 
         _initSocket = 
@@ -353,7 +366,7 @@ moeApp = do
                 
                 forkIO - catchExceptAsyncLog "L thread" - 
                           logSocket "L client socket" (pure _newSocket) -
-                            localRequestHandler _config
+                            localSocks5RequestHandler _config
 
           forever - handleLocal _localSocket
 
