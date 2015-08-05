@@ -125,24 +125,24 @@ wrapIO (s,  _io) = do
     {-<* (forM_ s - puts . ("- " <>))-}
                 
 waitFirst :: IO () -> IO () -> IO ()
-waitFirst = runBothWaitFirst True
+waitFirst = runWait True
 
 waitFirstDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitFirstDebug = runBothDebugWaitFirst True
+waitFirstDebug = runWaitDebug True
 
 runBoth :: IO () -> IO () -> IO ()
-runBoth = runBothWaitFirst False
+runBoth = runWait False
 
 runBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-runBothDebug = runBothDebugWaitFirst False
+runBothDebug = runWaitDebug False
 
-runBothWaitFirst :: Bool -> IO () -> IO () -> IO ()
-runBothWaitFirst _wait x y = do
-  runBothDebugWaitFirst _wait (Nothing, x) (Nothing, y)
+runWait :: Bool -> IO () -> IO () -> IO ()
+runWait _wait x y = do
+  runWaitDebug _wait (Nothing, x) (Nothing, y)
 
-runBothDebugWaitFirst :: Bool -> (Maybe String, IO ()) -> 
+runWaitDebug :: Bool -> (Maybe String, IO ()) -> 
                           (Maybe String, IO ()) -> IO ()
-runBothDebugWaitFirst _wait x y = do
+runWaitDebug _wait x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
