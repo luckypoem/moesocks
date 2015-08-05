@@ -180,6 +180,7 @@ getSocket aHost aPort aSocketType = do
           let address    = addrAddress addrInfo
 
           _socket <- socket family socketType protocol
+          setSocketCloseOnExec _socket
 
           {-puts - "Getting socket: " <> show address-}
 

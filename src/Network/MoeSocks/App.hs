@@ -349,9 +349,7 @@ moeApp = do
 
           let handleLocal _socket = do
                 (_newSocket, _) <- accept _socket
-                forkIO - do
-                  setSocketCloseOnExec _newSocket
-                  catchExceptAsyncLog "L thread" - 
+                forkIO - catchExceptAsyncLog "L thread" - 
                           logSocket "L client socket" (pure _newSocket) -
                             localRequestHandler _config
 
@@ -371,9 +369,7 @@ moeApp = do
 
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
-                forkIO - do
-                  setSocketCloseOnExec _newSocket
-                  catchExceptAsyncLog "R thread" - 
+                forkIO - catchExceptAsyncLog "R thread" - 
                             logSocket "R remote socket" (pure _newSocket) -
                               remoteRequestHandler _config 
 
