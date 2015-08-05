@@ -33,6 +33,9 @@ import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
+import OpenSSL (withOpenSSL)
+import OpenSSL.EVP.Cipher (getCipherByName)
+
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 
                                       concat - L.intersperse "." - 
@@ -322,6 +325,17 @@ moeApp = do
   io - initLogger - _options ^. verbosity
   
   _config <- parseConfig - _options ^. configFile
+
+  let _method = _config ^. method . _Text
+
+  _cipher <- io - withOpenSSL - getCipherByName _method
+
+  case _cipher of
+    Nothing -> throwError - "Invalid method '" 
+                            <> _method
+                            <> "' in "
+                            <> _options ^. configFile . _Text
+    Just _ -> pure ()
 
   let localApp :: (Socket, SockAddr) -> IO ()
       localApp s = logSA "L loop" (pure s) - 
