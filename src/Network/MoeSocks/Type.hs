@@ -67,11 +67,22 @@ data RunningMode = RemoteMode | LocalMode | DebugMode
 data Verbosity = Normal | Verbose
       deriving (Show, Eq)
 
+data LocalForwarding = LocalForwarding
+  {
+    _localForwardingPort :: Port
+  , _localForwardingRemoteHostName :: Text
+  , _localForwardingRemotePort :: Port
+  }
+  deriving (Show, Eq)
+
+makeLenses ''LocalForwarding
+
 data MoeOptions = MoeOptions
   {
     _runningMode :: RunningMode
   , _configFile :: Text
   , _verbosity :: Priority
+  , _localForwarding :: [LocalForwarding]
   }
   deriving (Show, Eq)
 
