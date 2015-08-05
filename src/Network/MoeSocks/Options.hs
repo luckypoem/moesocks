@@ -6,11 +6,12 @@ import Control.Lens
 import Data.Text.Lens
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.MoeSocks.Config
 import Options.Applicative hiding (Parser)
-import Prelude hiding ((-))
+import Prelude hiding ((-), takeWhile)
 import System.Log.Logger
 import qualified Options.Applicative as O
+import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace, 
+                              parseOnly, many')
 
 optionParser :: O.Parser MoeOptions
 optionParser = 
@@ -61,8 +62,29 @@ optionParser =
                     ) <|> pure ""
                       
 
+      forwardingParser :: Parser LocalForwarding
+      forwardingParser = do
+        skipSpace
+        _localForwardingPort <- decimal
+        char ':'
+        _localForwardingRemoteHost <- takeWhile (/= ':')
+        char ':'
+        _localForwardingRemotePort <- decimal
+
+        pure - LocalForwarding  _localForwardingPort
+                                _localForwardingRemoteHost
+                                _localForwardingRemotePort
+
+      forwardingListParser :: Parser [LocalForwarding]
+      forwardingListParser = many' forwardingParser
+
       parseForwarding :: String -> [LocalForwarding]
-      parseForwarding _ = defaultMoeOptions ^. localForwarding
+      parseForwarding x = 
+        let r = x ^. from _Text & parseOnly forwardingListParser 
+        in
+        case r of
+          Left _ -> []
+          Right xs -> xs
   in
         
 

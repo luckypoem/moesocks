@@ -12,6 +12,7 @@ import Network.MoeSocks.App
 import Network.MoeSocks.Config
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import Network.MoeSocks.Options
 import Prelude ((.))
 import System.Exit
 import System.Random

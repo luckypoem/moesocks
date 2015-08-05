@@ -24,5 +24,5 @@ defaultMoeOptions = MoeOptions
     _runningMode = DebugMode
   , _configFile = ""
   , _verbosity = DEBUG
-  , _localForwarding = [LocalForwarding 5300 "8.8.8.8" 53]
+  , _localForwarding = []
   } 

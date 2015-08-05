@@ -350,6 +350,8 @@ moeApp = do
   _options <- ask 
   io - initLogger - _options ^. verbosity
   
+  io - puts - show _options
+  
   _config <- parseConfig - _options ^. configFile
 
   let _method = _config ^. method . _Text
