@@ -4,14 +4,14 @@
 module Network.MoeSocks.Type where
 
 import Control.Lens
+import Control.Monad.Except
+import Control.Monad.Reader
 import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Word
 import GHC.Generics
 import System.Log.Logger
-import Control.Monad.Except
-import Control.Monad.Reader
 
 data ClientGreeting = ClientGreeting
   {

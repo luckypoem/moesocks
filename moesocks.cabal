@@ -43,6 +43,7 @@ executable moesocks
                       , cryptohash
                       , safe
                       , hslogger
+                      , transformers
                       , mtl
 
   hs-source-dirs:      src

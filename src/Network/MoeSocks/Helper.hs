@@ -7,6 +7,7 @@ import Control.Concurrent
 import Control.Exception
 import Control.Lens
 import Control.Monad
+import Control.Monad.IO.Class
 import Data.Attoparsec.ByteString
 import Data.Binary
 import Data.Binary.Put
@@ -24,7 +25,6 @@ import System.Log.Logger
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
-import Control.Monad.IO.Class
 
 -- BEGIN backports
 
@@ -48,9 +48,9 @@ syncLock :: MVar ()
 syncLock = unsafePerformIO - newEmptyMVar
 
 sync :: IO a -> IO a
-sync io = do
+sync aIO = do
   putMVar syncLock ()
-  io <* takeMVar syncLock
+  aIO <* takeMVar syncLock
 
 puts :: String -> IO ()
 puts = sync . debugM "moe" . ("😽  " <>)
@@ -96,7 +96,7 @@ logSocket aID _init f =
       throw e
 
 catchExceptAsyncLog :: String -> IO a -> IO ()
-catchExceptAsyncLog aID io = catches (() <$ io) 
+catchExceptAsyncLog aID aIO = catches (() <$ aIO) 
                 [ 
                   Handler - \(e :: AsyncException) -> do
                             pute - "ASyncException in " 
@@ -110,7 +110,7 @@ catchExceptAsyncLog aID io = catches (() <$ io)
                 ]
 
 catchIO:: String -> IO a -> IO ()
-catchIO aID io = catch (() <$ io) - \e ->
+catchIO aID aIO = catch (() <$ aIO) - \e ->
                 pute - "Catch IO in " <> aID <> ": " 
                   <> show (e :: IOException)
                 

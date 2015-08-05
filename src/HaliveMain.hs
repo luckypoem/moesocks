@@ -4,18 +4,18 @@ module Main where
 
 import Air.Env hiding ((.), has, take, puts, (-)) 
 import Control.Lens
+import Control.Monad.Except
+import Control.Monad.Reader hiding (local)
 import Data.ByteString.Lens
 import Data.Maybe
 import Network.MoeSocks.App
 import Network.MoeSocks.Config
+import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Prelude ((.))
+import System.Exit
 import System.Random
 import qualified Prelude as P
-import Control.Monad.Reader hiding (local)
-import Control.Monad.Except
-import Network.MoeSocks.Helper
-import System.Exit
 
 main :: IO ()
 main = do

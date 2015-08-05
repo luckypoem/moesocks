@@ -3,13 +3,16 @@
 
 module Network.MoeSocks.App where
 
+
 import Control.Concurrent
 import Control.Lens
 import Control.Monad
+import Control.Monad.Except
+import Control.Monad.Reader hiding (local)
+import Control.Monad.Writer hiding (listen)
 import Data.Aeson hiding (Result)
 import Data.ByteString (ByteString)
 import Data.ByteString.Lazy (toStrict)
-import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
@@ -23,17 +26,13 @@ import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple
 import System.Log.Logger
+import qualified Control.Monad.Reader as Reader
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
-
-import Control.Monad.Except
-import Control.Monad.Reader hiding (local)
-import qualified Control.Monad.Reader as Reader
-import Control.Monad.Writer hiding (listen)
 
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 
