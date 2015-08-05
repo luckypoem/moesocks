@@ -168,7 +168,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
 
                 waitFirst _consume _produce
 
-          waitFirstDebug
+          forkTwinDebug
             (Just "L -->", sendThread)
             (Just "L <--", receiveThread)
 
@@ -261,9 +261,9 @@ remoteRequestHandler aConfig aSocket = do
 
                 waitFirst _consume _produce
 
-          waitFirstDebug 
-            (Just "R -->", sendThread)
+          forkTwinDebug
             (Just "R <--", receiveThread)
+            (Just "R -->", sendThread)
           
     handleTarget _leftOverBytes _targetSocket
 
