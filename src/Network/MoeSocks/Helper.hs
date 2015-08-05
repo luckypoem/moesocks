@@ -18,7 +18,6 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
-import Network.Socket (fdSocket)
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
@@ -181,7 +180,6 @@ getSocket aHost aPort aSocketType = do
           let address    = addrAddress addrInfo
 
           _socket <- socket family socketType protocol
-          setSocketCloseOnExec _socket
 
           {-puts - "Getting socket: " <> show address-}
 
@@ -279,7 +277,8 @@ consumeLoop aSocket aChan =
   forever - readChan aChan >>= send_ aSocket 
 
 
--- Copied from: https://github.com/mzero/plush/blob/master/src/Plush/Server/Warp.hs
+-- Copied and slightly modified from: 
+-- https://github.com/mzero/plush/blob/master/src/Plush/Server/Warp.hs
 setSocketCloseOnExec :: Socket -> IO ()
-setSocketCloseOnExec socket =
-    setFdOption (fromIntegral $ fdSocket socket) CloseOnExec True
+setSocketCloseOnExec aSocket =
+    setFdOption (fromIntegral $ fdSocket aSocket) CloseOnExec True
