@@ -24,6 +24,7 @@ import System.Log.Logger
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
+import Control.Monad.IO.Class
 
 -- BEGIN backports
 
@@ -32,6 +33,9 @@ infixr 0 -
 (-) = ($)
 
 -- END backports
+
+io :: (MonadIO m) => IO a -> m a
+io = liftIO
 
 flip4 :: (a, b, c, d) -> (d, c, b, a)
 flip4 (_a, _b, _c, _d) = (_d, _c, _b, _a)

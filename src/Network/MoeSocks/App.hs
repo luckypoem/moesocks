@@ -30,6 +30,11 @@ import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
+import Control.Monad.Except
+import Control.Monad.Reader hiding (local)
+import qualified Control.Monad.Reader as Reader
+import Control.Monad.Writer hiding (listen)
+
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 
                                       concat - L.intersperse "." - 
@@ -261,9 +266,9 @@ remoteRequestHandler aConfig aSocket = do
           
     handleTarget _leftOverBytes _targetSocket
 
-parseConfig :: Text -> IO (Maybe MoeConfig)
+parseConfig :: Text -> MoeMonadT MoeConfig
 parseConfig aConfigFile = do
-  _configFile <- TIO.readFile - aConfigFile ^. _Text
+  _configFile <- io - TIO.readFile - aConfigFile ^. _Text
 
   let 
       fromShadowSocksConfig :: [(Text, Value)] -> [(Text, Value)]
@@ -292,7 +297,7 @@ parseConfig aConfigFile = do
                 over (mapped . _1) (T.cons '_')  & H.fromList
       fixConfig _ = Null
   
-      _maybeConfig = _v >>= decode . encode . fixConfig
+      _maybeConfig = _v >>= decode . encode . fixConfig :: Maybe MoeConfig
 
 
       formatConfig :: Value -> Value
@@ -306,36 +311,44 @@ parseConfig aConfigFile = do
 
   case _maybeConfig of
     Nothing -> do
-      pute "Failed to parse configuration file"
-      pute "Example: "
+      let _r = 
+            execWriter - do
+              tell "\n\n"
+              tell "Failed to parse configuration file\n"
+              tell "Example: \n"
 
-      let configBS :: ByteString  
-          configBS = toStrict .encode . formatConfig . toJSON - 
-                        defaultMoeConfig
-      
-      puteT - configBS ^. utf8
+              let configBS :: ByteString  
+                  configBS = toStrict .encode . formatConfig . toJSON - 
+                                defaultMoeConfig
+              
+              tell - configBS ^. utf8 <> "\n"
 
-      pure Nothing
-    _config -> do
+      throwError - _r ^. _Text 
+
+    Just _config -> do
       pure - _config 
 
-moeApp:: MoeOptions -> IO ()
-moeApp options = do
-  stdoutHandler <- streamHandler IO.stdout DEBUG
-  let formattedHandler = 
-          LogHandler.setFormatter stdoutHandler -
-            simpleLogFormatter "$time $msg"
 
-  updateGlobalLogger rootLoggerName removeHandler
+moeApp:: MoeMonadT ()
+moeApp = do
+  _options <- ask <&> view options
+  _config <- parseConfig - _options ^. configFile 
 
-  updateGlobalLogger "moe" removeHandler
-  updateGlobalLogger "moe" - addHandler formattedHandler
-  updateGlobalLogger "moe" - setLevel - options ^. verbosity
-      
+  Reader.local (config .~ _config) - do
+    io - do
+            stdoutHandler <- streamHandler IO.stdout DEBUG
+            let formattedHandler = 
+                    LogHandler.setFormatter stdoutHandler -
+                      simpleLogFormatter "$time $msg"
 
-  maybeConfig <- parseConfig - options ^. configFile 
+            updateGlobalLogger rootLoggerName removeHandler
 
-  forM_ maybeConfig - \config -> do
+            updateGlobalLogger "moe" removeHandler
+            updateGlobalLogger "moe" - addHandler formattedHandler
+            updateGlobalLogger "moe" - setLevel - _options ^. verbosity
+        
+
+
     let localApp :: (Socket, SockAddr) -> IO ()
         localApp s = logSA "L loop" (pure s) - 
           \(_localSocket, _localAddr) -> do
@@ -350,7 +363,7 @@ moeApp options = do
                   (_newSocket, _) <- accept _socket
                   forkIO - catchExceptAsyncLog "L thread" - 
                             logSocket "L client socket" (pure _newSocket) -
-                              localRequestHandler config
+                              localRequestHandler _config
 
             forever - handleLocal _localSocket
 
@@ -370,20 +383,20 @@ moeApp options = do
                   (_newSocket, _) <- accept _socket
                   forkIO - catchExceptAsyncLog "R thread" - 
                               logSocket "R remote socket" (pure _newSocket) -
-                                remoteRequestHandler config 
+                                remoteRequestHandler _config 
 
             forever - handleRemote _remoteSocket
 
     let 
         remoteRun :: IO ()
         remoteRun = do
-          let _c = config
+          let _c = _config
           getSocket (_c ^. remote) (_c ^. remotePort) Stream
             >>= catchExceptAsyncLog "R app" . remoteApp 
           
         localRun :: IO ()
         localRun = do
-          let _c = config
+          let _c = _config
           getSocket (_c ^. local) (_c ^. localPort) Stream
             >>= catchExceptAsyncLog "L app" . localApp 
 
@@ -393,7 +406,7 @@ moeApp options = do
             runBoth localRun remoteRun
 
 
-    case options ^. runningMode of
+    io - case _options ^. runningMode of
       DebugMode -> debugRun
       RemoteMode -> remoteRun
       LocalMode -> localRun

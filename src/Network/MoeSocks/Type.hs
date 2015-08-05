@@ -10,6 +10,8 @@ import Data.Text (Text)
 import Data.Word
 import GHC.Generics
 import System.Log.Logger
+import Control.Monad.Except
+import Control.Monad.Reader
 
 data ClientGreeting = ClientGreeting
   {
@@ -75,7 +77,16 @@ data MoeOptions = MoeOptions
 
 makeLenses ''MoeOptions
 
+data Env = Env
+  {
+    _options :: MoeOptions
+  , _config :: MoeConfig
+  }
+  deriving (Show, Eq)
+
+makeLenses ''Env
 
 type Cipher = ByteString -> IO ByteString 
 
 
+type MoeMonadT = ReaderT Env (ExceptT String IO)
