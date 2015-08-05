@@ -125,49 +125,24 @@ wrapIO (s,  _io) = do
     {-<* (forM_ s - puts . ("- " <>))-}
                 
 waitFirst :: IO () -> IO () -> IO ()
-waitFirst x y = do
-  waitFirstDebug (Nothing, x) (Nothing, y)
+waitFirst = runBothWaitFirst True
 
 waitFirstDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitFirstDebug x y = do
-  let _x = wrapIO x
-      _y = wrapIO y
-
-  _threadXDone <- newEmptyMVar
-  _threadYDone <- newEmptyMVar
-
-  let _init = do
-        xThreadID <-
-          forkFinally _x -
-             const - putMVar _threadXDone ()
-
-        yThreadID <- 
-          forkFinally _y - const - do
-            _threadXRunning <- isEmptyMVar _threadXDone
-            putMVar _threadYDone ()
-
-        return (xThreadID, yThreadID)
-
-  let handleError (xThreadID, yThreadID) = do
-        killThread yThreadID
-        killThread xThreadID
-
-  let action (_, yThreadID) = do
-        takeMVar _threadXDone 
-        _threadYRunning <- isEmptyMVar _threadYDone
-        when _threadYRunning - killThread yThreadID
-
-  bracket 
-    _init
-    handleError
-    action
+waitFirstDebug = runBothDebugWaitFirst True
 
 runBoth :: IO () -> IO () -> IO ()
-runBoth x y = do
-  runBothDebug (Nothing, x) (Nothing, y)
+runBoth = runBothWaitFirst False
 
 runBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-runBothDebug x y = do
+runBothDebug = runBothDebugWaitFirst False
+
+runBothWaitFirst :: Bool -> IO () -> IO () -> IO ()
+runBothWaitFirst _wait x y = do
+  runBothDebugWaitFirst _wait (Nothing, x) (Nothing, y)
+
+runBothDebugWaitFirst :: Bool -> (Maybe String, IO ()) -> 
+                          (Maybe String, IO ()) -> IO ()
+runBothDebugWaitFirst _wait x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
@@ -183,7 +158,8 @@ runBothDebug x y = do
           forkFinally _y - const - do
             _threadXRunning <- isEmptyMVar _threadXDone
             putMVar _threadYDone ()
-            when _threadXRunning - killThread xThreadID 
+            when (not _wait) - do
+              when _threadXRunning - killThread xThreadID 
 
         return (xThreadID, yThreadID)
 
