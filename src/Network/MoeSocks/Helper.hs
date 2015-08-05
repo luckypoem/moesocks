@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 
 module Network.MoeSocks.Helper where
 
@@ -17,11 +18,13 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
+import Network.Socket (fdSocket)
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.IO.Unsafe (unsafePerformIO)
 import System.Log.Logger
+import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
@@ -178,6 +181,7 @@ getSocket aHost aPort aSocketType = do
           let address    = addrAddress addrInfo
 
           _socket <- socket family socketType protocol
+          setSocketCloseOnExec _socket
 
           {-puts - "Getting socket: " <> show address-}
 
@@ -273,3 +277,9 @@ produceLoop aSocket aChan f = _produce
 consumeLoop :: Socket -> Chan ByteString -> IO ()
 consumeLoop aSocket aChan = 
   forever - readChan aChan >>= send_ aSocket 
+
+
+-- Copied from: https://github.com/mzero/plush/blob/master/src/Plush/Server/Warp.hs
+setSocketCloseOnExec :: Socket -> IO ()
+setSocketCloseOnExec socket =
+    setFdOption (fromIntegral $ fdSocket socket) CloseOnExec True
