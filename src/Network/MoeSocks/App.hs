@@ -26,7 +26,6 @@ import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple
 import System.Log.Logger
-import qualified Control.Monad.Reader as Reader
 import qualified Data.HashMap.Strict as H
 import qualified Data.List as L
 import qualified Data.Text as T
@@ -328,85 +327,84 @@ parseConfig aConfigFile = do
       pure - _config 
 
 
+initLogger :: Priority -> IO ()
+initLogger aLevel = do
+  stdoutHandler <- streamHandler IO.stdout DEBUG
+  let formattedHandler = 
+          LogHandler.setFormatter stdoutHandler -
+            simpleLogFormatter "$time $msg"
+
+  updateGlobalLogger rootLoggerName removeHandler
+
+  updateGlobalLogger "moe" removeHandler
+  updateGlobalLogger "moe" - addHandler formattedHandler
+  updateGlobalLogger "moe" - setLevel aLevel
+
 moeApp:: MoeMonadT ()
 moeApp = do
-  _options <- ask <&> view options
-  _config <- parseConfig - _options ^. configFile 
+  _options <- ask 
+  io - initLogger - _options ^. verbosity
+  
+  _config <- parseConfig - _options ^. configFile
 
-  Reader.local (config .~ _config) - do
-    io - do
-            stdoutHandler <- streamHandler IO.stdout DEBUG
-            let formattedHandler = 
-                    LogHandler.setFormatter stdoutHandler -
-                      simpleLogFormatter "$time $msg"
+  let localApp :: (Socket, SockAddr) -> IO ()
+      localApp s = logSA "L loop" (pure s) - 
+        \(_localSocket, _localAddr) -> do
+          _say "L : nyaa!"
+            
+          setSocketOption _localSocket ReuseAddr 1
+          bindSocket _localSocket _localAddr
 
-            updateGlobalLogger rootLoggerName removeHandler
+          listen _localSocket 1
 
-            updateGlobalLogger "moe" removeHandler
-            updateGlobalLogger "moe" - addHandler formattedHandler
-            updateGlobalLogger "moe" - setLevel - _options ^. verbosity
+          let handleLocal _socket = do
+                (_newSocket, _) <- accept _socket
+                forkIO - catchExceptAsyncLog "L thread" - 
+                          logSocket "L client socket" (pure _newSocket) -
+                            localRequestHandler _config
+
+          forever - handleLocal _localSocket
+
+  let remoteApp :: (Socket, SockAddr) -> IO ()
+      remoteApp s = logSA "R loop" (pure s) -
+        \(_remoteSocket, _remoteAddr) -> do
+          _say "R : nyaa!"
+
+          setSocketOption _remoteSocket ReuseAddr 1
+          bindSocket _remoteSocket _remoteAddr
+
+          let _maximum_number_of_queued_connection = 1
+
+          listen _remoteSocket _maximum_number_of_queued_connection 
+
+          let handleRemote _socket = do
+                (_newSocket, _) <- accept _socket
+                forkIO - catchExceptAsyncLog "R thread" - 
+                            logSocket "R remote socket" (pure _newSocket) -
+                              remoteRequestHandler _config 
+
+          forever - handleRemote _remoteSocket
+
+  let 
+      remoteRun :: IO ()
+      remoteRun = do
+        let _c = _config
+        getSocket (_c ^. remote) (_c ^. remotePort) Stream
+          >>= catchExceptAsyncLog "R app" . remoteApp 
         
+      localRun :: IO ()
+      localRun = do
+        let _c = _config
+        getSocket (_c ^. local) (_c ^. localPort) Stream
+          >>= catchExceptAsyncLog "L app" . localApp 
 
+      debugRun :: IO ()
+      debugRun = do
+        catchExceptAsyncLog "Debug app" - do
+          runBoth localRun remoteRun
 
-    let localApp :: (Socket, SockAddr) -> IO ()
-        localApp s = logSA "L loop" (pure s) - 
-          \(_localSocket, _localAddr) -> do
-            _say "L : nyaa!"
-              
-            setSocketOption _localSocket ReuseAddr 1
-            bindSocket _localSocket _localAddr
-
-            listen _localSocket 1
-
-            let handleLocal _socket = do
-                  (_newSocket, _) <- accept _socket
-                  forkIO - catchExceptAsyncLog "L thread" - 
-                            logSocket "L client socket" (pure _newSocket) -
-                              localRequestHandler _config
-
-            forever - handleLocal _localSocket
-
-    let remoteApp :: (Socket, SockAddr) -> IO ()
-        remoteApp s = logSA "R loop" (pure s) -
-          \(_remoteSocket, _remoteAddr) -> do
-            _say "R : nyaa!"
-
-            setSocketOption _remoteSocket ReuseAddr 1
-            bindSocket _remoteSocket _remoteAddr
-
-            let _maximum_number_of_queued_connection = 1
-
-            listen _remoteSocket _maximum_number_of_queued_connection 
-
-            let handleRemote _socket = do
-                  (_newSocket, _) <- accept _socket
-                  forkIO - catchExceptAsyncLog "R thread" - 
-                              logSocket "R remote socket" (pure _newSocket) -
-                                remoteRequestHandler _config 
-
-            forever - handleRemote _remoteSocket
-
-    let 
-        remoteRun :: IO ()
-        remoteRun = do
-          let _c = _config
-          getSocket (_c ^. remote) (_c ^. remotePort) Stream
-            >>= catchExceptAsyncLog "R app" . remoteApp 
-          
-        localRun :: IO ()
-        localRun = do
-          let _c = _config
-          getSocket (_c ^. local) (_c ^. localPort) Stream
-            >>= catchExceptAsyncLog "L app" . localApp 
-
-        debugRun :: IO ()
-        debugRun = do
-          catchExceptAsyncLog "Debug app" - do
-            runBoth localRun remoteRun
-
-
-    io - case _options ^. runningMode of
-      DebugMode -> debugRun
-      RemoteMode -> remoteRun
-      LocalMode -> localRun
+  io - case _options ^. runningMode of
+    DebugMode -> debugRun
+    RemoteMode -> remoteRun
+    LocalMode -> localRun
 

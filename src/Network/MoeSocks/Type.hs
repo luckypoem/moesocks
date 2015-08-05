@@ -89,4 +89,4 @@ makeLenses ''Env
 type Cipher = ByteString -> IO ByteString 
 
 
-type MoeMonadT = ReaderT Env (ExceptT String IO)
+type MoeMonadT = ReaderT MoeOptions (ExceptT String IO)

@@ -20,8 +20,7 @@ import qualified Prelude as P
 main :: IO ()
 main = do
   let _options = defaultMoeOptions & configFile .~ "config.json"
-  r <- runExceptT - runReaderT moeApp -
-                      Env _options defaultMoeConfig
+  r <- runExceptT - runReaderT moeApp _options
   case r of
     Left e -> pute e >> exitFailure
     Right _ -> pure ()
