@@ -255,3 +255,21 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
         Fail _ _ msg -> throwIO - ParseException -
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
+
+produceChan :: Socket -> Chan ByteString -> 
+              (ByteString -> IO ByteString) -> IO ()
+produceChan aSocket aChan f = _produce
+  where
+    _produce = do
+      _r <- recv_ aSocket
+      if (_r & isn't _Empty) 
+        then do
+          f _r >>= writeChan aChan
+          _produce 
+        else do
+          {-puts - "0 bytes from remote!"-}
+          close aSocket
+
+consumeChan :: Socket -> Chan ByteString -> IO ()
+consumeChan aSocket aChan = 
+  forever - readChan aChan >>= send_ aSocket 

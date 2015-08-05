@@ -118,38 +118,28 @@ localRequestHandler aConfig aSocket = do
                       _encrypt _partialBytesAfterClientRequest
 
                   let sendThreadLoop = do 
-                        let _produce = do
-                              _r <- recv_ aSocket
-                              if (_r & isn't _Empty) 
-                                then do
-                                  writeChan sendChannel =<< _encrypt _r
-                                  _produce 
-                                else do
-                                  {-puts - "0 bytes from client!"-}
-                                  close aSocket
+                        let _produce = produceChan 
+                                          aSocket 
+                                          sendChannel 
+                                          _encrypt
 
-                        let _consume = forever - 
-                                          send_ __remoteSocket =<<
-                                            readChan sendChannel
+                        let _consume = consumeChan 
+                                          __remoteSocket 
+                                          sendChannel
 
                         runBoth _produce _consume
 
                   sendThreadLoop
 
             let receiveThread = do
-                  let _produce = do
-                        _r <- recv_ __remoteSocket
-                        if (_r & isn't _Empty) 
-                          then do
-                            writeChan receiveChannel =<< _decrypt _r
-                            _produce 
-                          else do
-                            {-puts - "0 bytes from remote!"-}
-                            close __remoteSocket
+                  let _produce = produceChan 
+                                    __remoteSocket 
+                                    receiveChannel
+                                    _decrypt
 
-                  let _consume = forever - 
-                                    send_ aSocket =<< 
-                                      readChan receiveChannel
+                  let _consume = consumeChan 
+                                    aSocket 
+                                    receiveChannel
 
                   runBoth _produce _consume
 
@@ -223,38 +213,28 @@ remoteRequestHandler aConfig aSocket = do
                   writeChan sendChannel _leftOverBytes
 
                 let sendThreadLoop = do 
-                      let _produce = do
-                            _r <- recv_ aSocket
-                            if (_r & isn't _Empty) 
-                              then do
-                                writeChan sendChannel =<< _decrypt _r
-                                _produce 
-                              else do
-                                {-puts - "0 bytes from remote!"-}
-                                close aSocket
+                      let _produce = produceChan
+                                      aSocket
+                                      sendChannel
+                                      _decrypt
 
-                      let _consume = forever - 
-                                        send_ __targetSocket =<<
-                                          readChan sendChannel
+                      let _consume = consumeChan 
+                                        __targetSocket
+                                        sendChannel
 
                       runBoth _produce _consume
 
                 sendThreadLoop
 
           let receiveThread = do
-                let _produce = do
-                      _r <- recv_ __targetSocket
-                      if (_r & isn't _Empty) 
-                        then do
-                          writeChan receiveChannel =<< _encrypt _r
-                          _produce 
-                        else do
-                          {-puts - "0 bytes from target!"-}
-                          close __targetSocket
+                let _produce = produceChan
+                                  __targetSocket
+                                  receiveChannel
+                                  _encrypt
 
-                let _consume = forever - 
-                                  send_ aSocket =<< 
-                                    readChan receiveChannel
+                let _consume = consumeChan
+                                  aSocket
+                                  receiveChannel
 
                 runBoth _produce _consume
 
