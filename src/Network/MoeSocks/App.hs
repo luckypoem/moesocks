@@ -275,8 +275,8 @@ remoteRequestHandler aConfig aSocket = do
                   
 
           forkTwinDebug
-            (Just "R <--", receiveThread)
             (Just "R -->", sendThread)
+            (Just "R <--", receiveThread)
           
     handleTarget _leftOverBytes _targetSocket
 
