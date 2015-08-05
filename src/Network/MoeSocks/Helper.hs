@@ -124,6 +124,44 @@ wrapIO (s,  _io) = do
   _io 
     {-<* (forM_ s - puts . ("- " <>))-}
                 
+waitFirst :: IO () -> IO () -> IO ()
+waitFirst x y = do
+  waitFirstDebug (Nothing, x) (Nothing, y)
+
+waitFirstDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+waitFirstDebug x y = do
+  let _x = wrapIO x
+      _y = wrapIO y
+
+  _threadXDone <- newEmptyMVar
+  _threadYDone <- newEmptyMVar
+
+  let _init = do
+        xThreadID <-
+          forkFinally _x -
+             const - putMVar _threadXDone ()
+
+        yThreadID <- 
+          forkFinally _y - const - do
+            _threadXRunning <- isEmptyMVar _threadXDone
+            putMVar _threadYDone ()
+
+        return (xThreadID, yThreadID)
+
+  let handleError (xThreadID, yThreadID) = do
+        killThread yThreadID
+        killThread xThreadID
+
+  let action (_, yThreadID) = do
+        takeMVar _threadXDone 
+        _threadYRunning <- isEmptyMVar _threadYDone
+        when _threadYRunning - killThread yThreadID
+
+  bracket 
+    _init
+    handleError
+    action
+
 runBoth :: IO () -> IO () -> IO ()
 runBoth x y = do
   runBothDebug (Nothing, x) (Nothing, y)
