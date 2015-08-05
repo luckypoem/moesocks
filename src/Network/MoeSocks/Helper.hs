@@ -182,6 +182,9 @@ getSocket aHost aPort aSocketType = do
           _socket <- socket family socketType protocol
           setSocketCloseOnExec _socket
 
+          -- send immediately!
+          setSocketOption _socket NoDelay 1 
+
           {-puts - "Getting socket: " <> show address-}
 
           pure (_socket, address)
