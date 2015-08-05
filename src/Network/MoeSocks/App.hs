@@ -117,12 +117,12 @@ localRequestHandler aConfig aSocket = do
                     writeChan sendChannel =<< 
                       _encrypt _partialBytesAfterClientRequest
 
-                  let _produce = produceChan 
+                  let _produce = produceLoop 
                                     aSocket 
                                     sendChannel 
                                     _encrypt
 
-                  let _consume = consumeChan 
+                  let _consume = consumeLoop 
                                     __remoteSocket 
                                     sendChannel
 
@@ -130,12 +130,12 @@ localRequestHandler aConfig aSocket = do
 
 
             let receiveThread = do
-                  let _produce = produceChan 
+                  let _produce = produceLoop 
                                     __remoteSocket 
                                     receiveChannel
                                     _decrypt
 
-                  let _consume = consumeChan 
+                  let _consume = consumeLoop 
                                     aSocket 
                                     receiveChannel
 
@@ -210,12 +210,12 @@ remoteRequestHandler aConfig aSocket = do
                 when (_leftOverBytes & isn't _Empty) -
                   writeChan sendChannel _leftOverBytes
 
-                let _produce = produceChan
+                let _produce = produceLoop
                                 aSocket
                                 sendChannel
                                 _decrypt
 
-                let _consume = consumeChan 
+                let _consume = consumeLoop 
                                   __targetSocket
                                   sendChannel
 
@@ -223,12 +223,12 @@ remoteRequestHandler aConfig aSocket = do
 
 
           let receiveThread = do
-                let _produce = produceChan
+                let _produce = produceLoop
                                   __targetSocket
                                   receiveChannel
                                   _encrypt
 
-                let _consume = consumeChan
+                let _consume = consumeLoop
                                   aSocket
                                   receiveChannel
 

@@ -256,9 +256,9 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
-produceChan :: Socket -> Chan ByteString -> 
+produceLoop :: Socket -> Chan ByteString -> 
               (ByteString -> IO ByteString) -> IO ()
-produceChan aSocket aChan f = _produce
+produceLoop aSocket aChan f = _produce
   where
     _produce = do
       _r <- recv_ aSocket
@@ -270,6 +270,6 @@ produceChan aSocket aChan f = _produce
           {-puts - "0 bytes from remote!"-}
           close aSocket
 
-consumeChan :: Socket -> Chan ByteString -> IO ()
-consumeChan aSocket aChan = 
+consumeLoop :: Socket -> Chan ByteString -> IO ()
+consumeLoop aSocket aChan = 
   forever - readChan aChan >>= send_ aSocket 
