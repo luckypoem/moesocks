@@ -426,8 +426,8 @@ moeApp = do
         let _c = _config
             _forwardings = _options ^. localForwarding
 
-        let _forwardingApp = do
-              forM_ _forwardings - \forwarding -> do
+        let _forwardingApps = do
+              forM_ _forwardings - \forwarding -> forkIO - do
                 getSocket (_c ^. local) 
                               (forwarding ^. localForwardingPort) 
                               Stream
@@ -438,7 +438,8 @@ moeApp = do
               getSocket (_c ^. local) (_c ^. localPort) Stream
                 >>= catchExceptAsyncLog "L socks5 app" . localSocks5App 
 
-        runBoth _socks5App _forwardingApp
+        _forwardingApps
+        _socks5App
 
       debugRun :: IO ()
       debugRun = do
