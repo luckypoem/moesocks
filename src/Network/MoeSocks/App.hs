@@ -153,7 +153,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   __remoteSocket 
                                   sendChannel
 
-                forkTwin _produce _consume
+                waitNone _produce _consume
 
 
           let receiveThread = do
@@ -168,7 +168,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
 
                 waitFirst _produce _consume
 
-          forkTwinDebug
+          waitBothDebug
             (Just "L -->", sendThread)
             (Just "L <--", receiveThread)
 
@@ -261,7 +261,7 @@ remoteRequestHandler aConfig aSocket = do
 
                 waitFirst _produce _consume
 
-          forkTwinDebug
+          waitBothDebug
             (Just "R -->", sendThread)
             (Just "R <--", receiveThread)
           
@@ -448,7 +448,7 @@ moeApp = do
       debugRun :: IO ()
       debugRun = do
         catchExceptAsyncLog "Debug app" - do
-          forkTwin localRun remoteRun
+          waitNone localRun remoteRun
 
   io - case _options ^. runningMode of
     DebugMode -> debugRun

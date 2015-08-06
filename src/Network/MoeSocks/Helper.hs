@@ -125,24 +125,30 @@ wrapIO (s,  _io) = do
     {-<* (forM_ s - puts . ("- " <>))-}
                 
 waitFirst :: IO () -> IO () -> IO ()
-waitFirst = runWait True
+waitFirst = runWait True False
 
 waitFirstDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitFirstDebug = runWaitDebug True
+waitFirstDebug = runWaitDebug True False
 
-forkTwin :: IO () -> IO () -> IO ()
-forkTwin = runWait False
+waitBoth :: IO () -> IO () -> IO ()
+waitBoth = runWait True True
 
-forkTwinDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-forkTwinDebug = runWaitDebug False
+waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+waitBothDebug = runWaitDebug True True
 
-runWait :: Bool -> IO () -> IO () -> IO ()
-runWait _wait x y = do
-  runWaitDebug _wait (Nothing, x) (Nothing, y)
+waitNone :: IO () -> IO () -> IO ()
+waitNone = runWait False False
 
-runWaitDebug :: Bool -> (Maybe String, IO ()) -> 
+waitNoneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+waitNoneDebug = runWaitDebug False False
+
+runWait :: Bool -> Bool -> IO () -> IO () -> IO ()
+runWait _waitX _waitY x y = do
+  runWaitDebug _waitX _waitY (Nothing, x) (Nothing, y)
+
+runWaitDebug :: Bool -> Bool -> (Maybe String, IO ()) -> 
                           (Maybe String, IO ()) -> IO ()
-runWaitDebug _wait x y = do
+runWaitDebug _waitX _waitY x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
@@ -158,7 +164,7 @@ runWaitDebug _wait x y = do
           forkFinally _y - const - do
             _threadXRunning <- isEmptyMVar _threadXDone
             putMVar _threadYDone ()
-            when (not _wait) - do
+            when (not _waitX) - do
               when _threadXRunning - killThread xThreadID 
 
         return (xThreadID, yThreadID)
@@ -169,8 +175,11 @@ runWaitDebug _wait x y = do
 
   let action (_, yThreadID) = do
         takeMVar _threadXDone 
-        _threadYRunning <- isEmptyMVar _threadYDone
-        when _threadYRunning - killThread yThreadID
+        when (not _waitY) - do
+          _threadYRunning <- isEmptyMVar _threadYDone
+          when _threadYRunning - killThread yThreadID
+
+        takeMVar _threadYDone
 
   bracket 
     _init
