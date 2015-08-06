@@ -305,7 +305,7 @@ produceLoop :: Socket -> Chan (Maybe ByteString) ->
 produceLoop aSocket aChan f = _produce
   where
     _produce = do
-      _r <- recv_ aSocket `catch` \(e :: IOException) -> pure mempty
+      _r <- recv_ aSocket `catch` \(_ :: IOException) -> pure mempty
       if (_r & isn't _Empty) 
         then do
           f _r >>= writeChan aChan . Just
