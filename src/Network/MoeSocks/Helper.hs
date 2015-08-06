@@ -182,8 +182,8 @@ runWaitDebug _waitX _waitY x y = do
         pure xThreadID
         pure yThreadID
         pure ()
-        {-killThread yThreadID-}
-        {-killThread xThreadID-}
+        killThread yThreadID
+        killThread xThreadID
 
   let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
         catchExceptAsyncLog _hID - do
