@@ -145,34 +145,34 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                   atomically . writeTQueue sendChannel . Just =<< 
                     _encrypt _partialBytesAfterClientRequest
 
-                let _produce = produceLoop "L send produceLoop"
+                let _produce = produceLoop "L --> +Loop"
                                   aSocket 
                                   sendChannel 
                                   _encrypt
 
-                let _consume = consumeLoop "L send consumeLoop"
+                let _consume = consumeLoop "L --> -Loop"
                                   __remoteSocket 
                                   sendChannel
                 finally
                   (
-                    waitBothDebug (Just "L send produce", _produce)
-                              (Just "L send consume", _consume)
+                    waitBothDebug (Just "L --> +", _produce)
+                              (Just "L --> -", _consume)
                   ) -
                   shutdown __remoteSocket ShutdownSend
 
           let receiveThread = do
-                let _produce = produceLoop "L receive produceLoop"
+                let _produce = produceLoop "L <-- +Loop"
                                   __remoteSocket 
                                   receiveChannel
                                   _decrypt
 
-                let _consume = consumeLoop "L receive consumeLoop"
+                let _consume = consumeLoop "L <-- -Loop"
                                   aSocket 
                                   receiveChannel
                 finally 
                   (
-                    waitBothDebug (Just "L receive produce", _produce)
-                                  (Just "L receive consume", _consume)
+                    waitBothDebug (Just "L <-- +", _produce)
+                                  (Just "L <-- -", _consume)
                   ) -
                   shutdown aSocket ShutdownSend
 
@@ -245,36 +245,36 @@ remoteRequestHandler aConfig aSocket = do
                 when (_leftOverBytes & isn't _Empty) -
                   atomically - writeTQueue sendChannel - Just _leftOverBytes
 
-                let _produce = produceLoop "R send produceLoop"
+                let _produce = produceLoop "R --> +Loop"
                                 aSocket
                                 sendChannel
                                 _decrypt
 
-                let _consume = consumeLoop "R send consumeLoop"
+                let _consume = consumeLoop "R --> -Loop"
                                   __targetSocket
                                   sendChannel
 
                 finally
                   (
-                    waitBothDebug (Just "R send produce", _produce)
-                                  (Just "R send consume", _consume)
+                    waitBothDebug (Just "R --> +", _produce)
+                                  (Just "R --> -", _consume)
                   ) -
                   shutdown __targetSocket ShutdownSend
 
           let receiveThread = do
-                let _produce = produceLoop "R send produceLoop"
+                let _produce = produceLoop "R --> +Loop"
                                   __targetSocket
                                   receiveChannel
                                   _encrypt
 
-                let _consume = consumeLoop "R send consumeLoop"
+                let _consume = consumeLoop "R --> -Loop"
                                   aSocket
                                   receiveChannel
 
                 finally 
                   (
-                    waitBothDebug (Just "R receive produce", _produce)
-                                  (Just "R receive consume", _consume)
+                    waitBothDebug (Just "R <-- +", _produce)
+                                  (Just "R <-- -", _consume)
                   ) -
                   shutdown aSocket ShutdownSend
 
