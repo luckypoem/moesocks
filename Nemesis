@@ -36,11 +36,11 @@ nemesis = do
 
   desc "remote"
   task "remote" - do
-    sh "cabal run -- -m remote -c dev.json -v DEBUG"
+    sh "cabal run -- -m remote -c dev.json"
   
   desc "local"
   task "local" - do
-    sh "cabal run -- -m local -c dev.json -v DEBUG -L 5300:8.8.8.8:53"
+    sh "cabal run -- -m local -c dev.json -L 5300:8.8.8.8:53"
 
   desc "ssserver"
   task "ssserver" - do
@@ -59,12 +59,12 @@ nemesis = do
     sh "cabal repl"
 
   desc "debug local"
-  task "dl" - do
-    sh "cabal run -- -m local -c config.json"
+  task "debug-local" - do
+    sh "cabal run -- -m local -c dev.json -v DEBUG -L 5300:8.8.8.8:53"
   
   desc "debug remote"
-  task "dr" - do
-    sh "cabal run -- -m remote -c config.json"
+  task "debug-remoter" - do
+    sh "cabal run -- -m remote -c dev.json -v DEBUG"
 
 
   desc "merge debug to master"
