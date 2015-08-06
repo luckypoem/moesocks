@@ -126,7 +126,7 @@ wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
   pure s
   {-forM_ s - puts . ("+ " <>)-}
-  catchIO (fromMaybe "" s) _io 
+  catchExceptAsyncLog (fromMaybe "" s) _io 
   {-catch  (() <$ _io) - \(e :: IOException) -> pure ()-}
     {-<* (forM_ s - puts . ("- " <>))-}
                 
