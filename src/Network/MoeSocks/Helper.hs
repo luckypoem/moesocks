@@ -180,8 +180,8 @@ runWaitDebug _waitX _waitY x y = do
   let handleError ((_, xThreadID), (_, yThreadID)) = do
         puts - "handleError for " <> _hID 
         pure ()
-        killThread yThreadID
-        killThread xThreadID
+        {-killThread yThreadID-}
+        {-killThread xThreadID-}
 
   let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
         {-puts - "waiting for " <> _xID-}
