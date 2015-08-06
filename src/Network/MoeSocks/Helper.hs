@@ -143,12 +143,12 @@ waitBothDebug x y = do
   _threadXDone <- newEmptyMVar
 
   forkFinally _x - const - do
-    puts - "X done: " <> (x ^. _1 & fromMaybe "")
+    {-puts - "X done: " <> (x ^. _1 & fromMaybe "")-}
     putMVar _threadXDone ()
 
   _y
 
-  puts - "Y done: " <> (y ^. _1 & fromMaybe "")
+  {-puts - "Y done: " <> (y ^. _1 & fromMaybe "")-}
 
   takeMVar _threadXDone
 
@@ -182,7 +182,7 @@ runWaitDebug _waitX _waitY x y = do
             when (not _waitX) - do
               _threadXRunning <- isEmptyMVar _threadXDone
               when _threadXRunning - killThread xThreadID 
-              puts - "killing thread X: " <> (x ^. _1 & fromMaybe "")
+              {-puts - "killing thread X: " <> (x ^. _1 & fromMaybe "")-}
             
             putMVar _threadYDone ()
 
@@ -198,7 +198,7 @@ runWaitDebug _waitX _waitY x y = do
         when (not _waitY) - do
           _threadYRunning <- isEmptyMVar _threadYDone
           when _threadYRunning - killThread yThreadID
-          puts - "killing thread Y: " <> (y ^. _1 & fromMaybe "")
+          {-puts - "killing thread Y: " <> (y ^. _1 & fromMaybe "")-}
 
         takeMVar _threadYDone
 
@@ -317,7 +317,6 @@ produceLoop aSocket aChan f = _produce
           f _r >>= writeChan aChan . Just
           _produce 
         else do
-          puts - "writing Nothing"
           writeChan aChan Nothing
           close aSocket
 
@@ -328,7 +327,6 @@ consumeLoop aSocket aChan = _consume
       _r <- readChan aChan 
       case _r of
         Nothing -> do
-                      puts - "get Nothing!"
                       close aSocket
         Just _data -> send_ aSocket _data >> _consume
 
