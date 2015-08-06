@@ -28,7 +28,7 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 
--- import Data.Maybe
+import Data.Maybe
 
 -- BEGIN backports
 
@@ -119,11 +119,11 @@ catchIO aID aIO = catch (() <$ aIO) - \e ->
                   <> show (e :: IOException)
                 
 
-wrapIO :: (Maybe String, IO c) -> IO c
+wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
   pure s
   {-forM_ s - puts . ("+ " <>)-}
-  _io 
+  catchIO (fromMaybe "" s) _io 
     {-<* (forM_ s - puts . ("- " <>))-}
                 
 waitFirst :: IO () -> IO () -> IO ()
@@ -318,7 +318,7 @@ produceLoop aSocket aChan f = _produce
           _produce 
         else do
           writeChan aChan Nothing
-          close aSocket
+          {-close aSocket-}
 
 consumeLoop :: Socket -> Chan (Maybe ByteString) -> IO ()
 consumeLoop aSocket aChan = _consume 
@@ -327,7 +327,8 @@ consumeLoop aSocket aChan = _consume
       _r <- readChan aChan 
       case _r of
         Nothing -> do
-                      close aSocket
+                      {-close aSocket-}
+                      pure ()
         Just _data -> send_ aSocket _data >> _consume
 
 
