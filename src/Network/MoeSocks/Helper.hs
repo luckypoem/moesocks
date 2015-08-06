@@ -242,12 +242,12 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
-sendBuilder :: Chan ByteString -> B.Builder -> IO ()
-sendBuilder _chan = writeChan _chan . builder_To_ByteString
+sendBuilder :: Chan (Maybe ByteString) -> B.Builder -> IO ()
+sendBuilder _chan = writeChan _chan . Just . builder_To_ByteString
 
-sendBuilderEncrypted ::  Chan ByteString -> (ByteString -> IO ByteString) -> 
-                          B.Builder -> IO ()
-sendBuilderEncrypted _chan _encrypt x = writeChan _chan =<< 
+sendBuilderEncrypted ::  Chan (Maybe ByteString) -> 
+                          (ByteString -> IO ByteString) -> B.Builder -> IO ()
+sendBuilderEncrypted _chan _encrypt x = writeChan _chan . Just =<< 
                                       _encrypt (builder_To_ByteString x)
 
 -- | An exception raised when parsing fails.
@@ -276,7 +276,7 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
-produceLoop :: Socket -> Chan ByteString -> 
+produceLoop :: Socket -> Chan (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
 produceLoop aSocket aChan f = _produce
   where
@@ -284,15 +284,20 @@ produceLoop aSocket aChan f = _produce
       _r <- recv_ aSocket
       if (_r & isn't _Empty) 
         then do
-          f _r >>= writeChan aChan
+          f _r >>= writeChan aChan . Just
           _produce 
         else do
           {-puts - "0 bytes from remote!"-}
+          writeChan aChan Nothing
           close aSocket
 
-consumeLoop :: Socket -> Chan ByteString -> IO ()
-consumeLoop aSocket aChan = 
-  forever - readChan aChan >>= send_ aSocket 
+consumeLoop :: Socket -> Chan (Maybe ByteString) -> IO ()
+consumeLoop aSocket aChan = loop
+  where loop = do
+          _r <- readChan aChan 
+          case _r of
+            Nothing -> close aSocket
+            Just _data -> send_ aSocket _data >> loop
 
 
 -- Copied and slightly modified from: 

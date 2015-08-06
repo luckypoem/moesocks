@@ -141,7 +141,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                   sendChannel _encrypt _header
 
                 when (_partialBytesAfterClientRequest & isn't _Empty) -
-                  writeChan sendChannel =<< 
+                  writeChan sendChannel . Just =<< 
                     _encrypt _partialBytesAfterClientRequest
 
                 let _produce = produceLoop 
@@ -166,7 +166,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   aSocket 
                                   receiveChannel
 
-                waitFirst _consume _produce
+                waitFirst _produce _consume
 
           waitFirstDebug
             (Just "L -->", sendThread)
@@ -235,7 +235,7 @@ remoteRequestHandler aConfig aSocket = do
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
-                  writeChan sendChannel _leftOverBytes
+                  writeChan sendChannel - Just _leftOverBytes
 
                 let _produce = produceLoop
                                 aSocket
@@ -259,7 +259,7 @@ remoteRequestHandler aConfig aSocket = do
                                   aSocket
                                   receiveChannel
 
-                waitFirst _consume _produce
+                waitFirst _produce _consume
 
           waitFirstDebug 
             (Just "R <--", receiveThread)
