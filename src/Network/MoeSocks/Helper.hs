@@ -10,7 +10,7 @@ import Control.Exception
 import Control.Lens
 import Control.Monad
 import Control.Monad.IO.Class
-import Data.Attoparsec.ByteString
+import Data.Attoparsec.ByteString hiding (try)
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
@@ -181,7 +181,7 @@ runWaitDebug _waitX _waitY x y = do
         return ((_threadXDone, xThreadID), (_threadYDone, yThreadID))
 
   let handleError ((_, xThreadID), (_, yThreadID)) = do
-        puts - "handleError for " <> _hID 
+        pute - "handleError for " <> _hID 
         pure xThreadID
         pure yThreadID
         pure ()
@@ -348,3 +348,7 @@ consumeLoop aID aSocket aTBQueue = _consume
 setSocketCloseOnExec :: Socket -> IO ()
 setSocketCloseOnExec aSocket =
     setFdOption (fromIntegral $ fdSocket aSocket) CloseOnExec True
+
+
+tryIO :: IO a -> IO (Either IOException a)
+tryIO = try
