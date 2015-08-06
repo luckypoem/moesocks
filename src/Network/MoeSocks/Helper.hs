@@ -186,14 +186,20 @@ runWaitDebug _waitX _waitY x y = do
         
         xThreadID <- forkFinally 
             (onException _x - (do
-                                  puts - "onException: " <> _xID
+                                  puts - "onException: " 
+                                          <> _xID
+                                          <> ", ending thread: "
+                                          <> _yID
                                   throwTo yThreadID - WaitException _xID
                               )) -
               const - putMVar _threadXDone ()
 
         yThreadID <- forkFinally
             (onException _y - (do
-                                  puts - "onException: " <> _yID
+                                  puts - "onException: " 
+                                          <> _yID
+                                          <> ", ending thread: "
+                                          <> _xID
                                   throwTo xThreadID - WaitException _yID
                               )) -
               const - putMVar _threadYDone ()
