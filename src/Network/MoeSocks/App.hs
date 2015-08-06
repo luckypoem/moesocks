@@ -155,7 +155,8 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
 
                 waitBothDebug (Just "L send produce", _produce)
                               (Just "L send consume", _consume)
-
+                
+                shutdown __remoteSocket ShutdownSend
 
           let receiveThread = do
                 let _produce = produceLoop 
@@ -169,6 +170,8 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
 
                 waitBothDebug (Just "L receive produce", _produce)
                               (Just "L receive consume", _consume)
+
+                {-shutdown __remoteSocket ShutdownReceive-}
 
           waitBothDebug
             (Just "L -->", sendThread)
@@ -251,6 +254,7 @@ remoteRequestHandler aConfig aSocket = do
                 waitBothDebug (Just "R send produce", _produce)
                               (Just "R send consume", _consume)
 
+                shutdown __targetSocket ShutdownSend
 
           let receiveThread = do
                 let _produce = produceLoop
@@ -264,6 +268,8 @@ remoteRequestHandler aConfig aSocket = do
 
                 waitBothDebug (Just "R receive produce", _produce)
                               (Just "R receive consume", _consume)
+
+                {-shutdown __targetSocket ShutdownReceive-}
 
           waitBothDebug
             (Just "R -->", sendThread)

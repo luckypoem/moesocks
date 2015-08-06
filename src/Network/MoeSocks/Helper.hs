@@ -78,7 +78,7 @@ showBytes = show . S.unpack
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
   pure aID
-  {-puts - "Closing socket " <> aID-}
+  puts - "Closing socket " <> aID
   close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
@@ -123,35 +123,21 @@ wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
   pure s
   {-forM_ s - puts . ("+ " <>)-}
-  catchIO (fromMaybe "" s) _io 
+  catchExceptAsyncLog (fromMaybe "" s) _io 
+  {-catch  (() <$ _io) - \(e :: IOException) -> pure ()-}
     {-<* (forM_ s - puts . ("- " <>))-}
                 
-waitFirst :: IO () -> IO () -> IO ()
-waitFirst = runWait True False
+{-waitFirst :: IO () -> IO () -> IO ()-}
+{-waitFirst = runWait True False-}
 
-waitFirstDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitFirstDebug = runWaitDebug True False
+{-waitFirstDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
+{-waitFirstDebug = runWaitDebug True False-}
 
 waitBoth :: IO () -> IO () -> IO ()
 waitBoth = runWait True True
 
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitBothDebug x y = do
-  let _x = wrapIO x
-      _y = wrapIO y
-
-  _threadXDone <- newEmptyMVar
-
-  forkFinally _x - const - do
-    {-puts - "X done: " <> (x ^. _1 & fromMaybe "")-}
-    putMVar _threadXDone ()
-
-  _y
-
-  {-puts - "Y done: " <> (y ^. _1 & fromMaybe "")-}
-
-  takeMVar _threadXDone
-
+waitBothDebug = runWaitDebug True True
 
 waitNone :: IO () -> IO () -> IO ()
 waitNone = runWait False False
@@ -169,6 +155,10 @@ runWaitDebug _waitX _waitY x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
+      _xID = x ^. _1 & fromMaybe ""
+      _yID = y ^. _1 & fromMaybe ""
+      _hID = _xID <> " / " <> _yID
+
   _threadXDone <- newEmptyMVar
   _threadYDone <- newEmptyMVar
 
@@ -182,27 +172,32 @@ runWaitDebug _waitX _waitY x y = do
             when (not _waitX) - do
               _threadXRunning <- isEmptyMVar _threadXDone
               when _threadXRunning - killThread xThreadID 
-              {-puts - "killing thread X: " <> (x ^. _1 & fromMaybe "")-}
+              puts - "killing thread X: " <> _xID
             
             putMVar _threadYDone ()
 
         return (xThreadID, yThreadID)
 
   let handleError (xThreadID, yThreadID) = do
+        puts - "handleError for " <> _hID 
+        pure ()
         killThread yThreadID
         killThread xThreadID
 
   let action (_, yThreadID) = do
+        puts - "waiting for " <> _xID
         takeMVar _threadXDone 
 
         when (not _waitY) - do
           _threadYRunning <- isEmptyMVar _threadYDone
           when _threadYRunning - killThread yThreadID
-          {-puts - "killing thread Y: " <> (y ^. _1 & fromMaybe "")-}
+          puts - "killing thread Y: " <> _yID
 
+        puts - "waiting for " <> _yID
         takeMVar _threadYDone
+        puts - "All done for " <> _hID
 
-  bracket 
+  bracketOnError 
     _init
     handleError
     action
@@ -318,7 +313,6 @@ produceLoop aSocket aChan f = _produce
           _produce 
         else do
           writeChan aChan Nothing
-          {-close aSocket-}
 
 consumeLoop :: Socket -> Chan (Maybe ByteString) -> IO ()
 consumeLoop aSocket aChan = _consume 
@@ -327,7 +321,6 @@ consumeLoop aSocket aChan = _consume
       _r <- readChan aChan 
       case _r of
         Nothing -> do
-                      {-close aSocket-}
                       pure ()
         Just _data -> send_ aSocket _data >> _consume
 
