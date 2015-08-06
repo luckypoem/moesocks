@@ -1,6 +1,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE RecursiveDo #-}
 
 module Network.MoeSocks.Helper where
 
@@ -126,7 +127,9 @@ wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
   pure s
   {-forM_ s - puts . ("+ " <>)-}
-  catchExceptAsyncLog (fromMaybe "" s) _io 
+  {-catchExceptAsyncLog (fromMaybe "" s) _io -}
+  {-catchIO (fromMaybe "" s) _io -}
+  () <$ _io 
   {-catch  (() <$ _io) - \(e :: IOException) -> pure ()-}
     {-<* (forM_ s - puts . ("- " <>))-}
                 
@@ -152,6 +155,13 @@ runWait :: Bool -> Bool -> IO () -> IO () -> IO ()
 runWait _waitX _waitY x y = do
   runWaitDebug _waitX _waitY (Nothing, x) (Nothing, y)
 
+data WaitException = WaitException String
+
+instance Show WaitException where
+    show (WaitException s) = "Wait exception: " ++ s
+
+instance Exception WaitException
+
 runWaitDebug :: Bool -> Bool -> (Maybe String, IO ()) -> 
                           (Maybe String, IO ()) -> IO ()
 runWaitDebug _waitX _waitY x y = do
@@ -162,21 +172,24 @@ runWaitDebug _waitX _waitY x y = do
       _yID = y ^. _1 & fromMaybe ""
       _hID = _xID <> " / " <> _yID
 
-  let _init = do
+  let _init = mdo
         _threadXDone <- newEmptyMVar
         _threadYDone <- newEmptyMVar
-        xThreadID <-
-          forkFinally _x -
-             const - putMVar _threadXDone ()
 
-        yThreadID <- 
-          forkFinally _y - const - do
-            when (not _waitX) - do
-              _threadXRunning <- isEmptyMVar _threadXDone
-              when _threadXRunning - killThread xThreadID 
-              puts - "killing thread X: " <> _xID
-            
-            putMVar _threadYDone ()
+        
+        xThreadID <- forkFinally 
+            (onException _x - (do
+                                  pute - "onException: " <> _xID
+                                  {-throwTo yThreadID - WaitException _xID-}
+                              )) -
+              const - putMVar _threadXDone ()
+
+        yThreadID <- forkFinally
+            (onException _y - (do
+                                  pute - "onException: " <> _yID
+                                  throwTo xThreadID - WaitException _yID
+                              )) -
+              const - putMVar _threadYDone ()
 
         return ((_threadXDone, xThreadID), (_threadYDone, yThreadID))
 
@@ -185,7 +198,8 @@ runWaitDebug _waitX _waitY x y = do
         pure xThreadID
         pure yThreadID
         pure ()
-        {-killThread yThreadID-}
+        throwTo yThreadID - WaitException _yID
+        throwTo xThreadID - WaitException _xID
         {-killThread xThreadID-}
 
   let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
@@ -309,17 +323,13 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
 
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
-produceLoop aID aSocket aTBQueue f = 
-  onException _produce - do
+produceLoop _ aSocket aTBQueue f = 
+   finally _produce - do
     atomically - writeTBQueue aTBQueue Nothing
 
   where
     _produce = do
-      _r <- recv_ aSocket `catch` \(e :: IOException) -> 
-              do
-                puts - aID <> ": " <> show e
-                throw e
-
+      _r <- recv_ aSocket 
       if (_r & isn't _Empty) 
         then do
           f _r >>= atomically . writeTBQueue aTBQueue . Just
@@ -331,15 +341,12 @@ consumeLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> IO ()
 consumeLoop aID aSocket aTBQueue = _consume 
   where 
     _consume = do
-      _r <- atomically -readTBQueue aTBQueue 
+      _r <- atomically - readTBQueue aTBQueue 
       case _r of
         Nothing -> do
                       pure ()
         Just _data -> do
-                      (send_ aSocket _data >> _consume) `catch`
-                        \(e :: IOException) -> do
-                            puts - aID <> ": " <> show e
-                            throw e
+                      send_ aSocket _data >> _consume
 
 
 
