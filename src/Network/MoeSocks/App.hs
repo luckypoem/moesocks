@@ -153,7 +153,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   __remoteSocket 
                                   sendChannel
 
-                waitFirst _produce _consume
+                forkTwin _produce _consume
 
 
           let receiveThread = do
@@ -168,7 +168,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
 
                 waitFirst _produce _consume
 
-          waitFirstDebug
+          forkTwinDebug
             (Just "L -->", sendThread)
             (Just "L <--", receiveThread)
 
@@ -261,9 +261,9 @@ remoteRequestHandler aConfig aSocket = do
 
                 waitFirst _produce _consume
 
-          waitFirstDebug 
-            (Just "R <--", receiveThread)
+          forkTwinDebug
             (Just "R -->", sendThread)
+            (Just "R <--", receiveThread)
           
     handleTarget _leftOverBytes _targetSocket
 
