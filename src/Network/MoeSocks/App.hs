@@ -170,7 +170,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                 waitBothDebug (Just "L receive produce", _produce)
                               (Just "L receive consume", _consume)
 
-          waitFirstDebug
+          waitNoneDebug
             (Just "L -->", sendThread)
             (Just "L <--", receiveThread)
 
