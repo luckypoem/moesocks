@@ -134,15 +134,15 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
           let 
               _header = shadowSocksRequestBuilder _clientRequest
           
-          sendChannel <- newTQueueIO
-          receiveChannel <- newTQueueIO
+          sendChannel <- newTBQueueIO _TBQueue_Size
+          receiveChannel <- newTBQueueIO _TBQueue_Size
 
           let sendThread = do
                 sendBuilderEncrypted 
                   sendChannel _encrypt _header
 
                 when (_partialBytesAfterClientRequest & isn't _Empty) -
-                  atomically . writeTQueue sendChannel . Just =<< 
+                  atomically . writeTBQueue sendChannel . Just =<< 
                     _encrypt _partialBytesAfterClientRequest
 
                 let _produce = produceLoop "L --> +Loop"
@@ -238,12 +238,12 @@ remoteRequestHandler aConfig aSocket = do
             )
     let 
         handleTarget __leftOverBytes __targetSocket = do
-          sendChannel <- newTQueueIO 
-          receiveChannel <- newTQueueIO 
+          sendChannel <- newTBQueueIO _TBQueue_Size 
+          receiveChannel <- newTBQueueIO _TBQueue_Size 
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
-                  atomically - writeTQueue sendChannel - Just _leftOverBytes
+                  atomically - writeTBQueue sendChannel - Just _leftOverBytes
 
                 let _produce = produceLoop "R --> +Loop"
                                 aSocket
