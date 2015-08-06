@@ -122,6 +122,12 @@ catchIO aID aIO = catch (() <$ aIO) - \e ->
                 pute - "IOError in " <> aID <> ": " 
                   <> show (e :: IOException)
                 
+logException :: String -> IO a -> IO ()
+logException aID aIO = catch (() <$ aIO) - \e -> 
+                        do
+                          pute - "Error in " <> aID <> ": " 
+                            <> show (e :: SomeException)
+                          throw e
 
 wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
@@ -129,7 +135,8 @@ wrapIO (s,  _io) = do
   {-forM_ s - puts . ("+ " <>)-}
   {-catchExceptAsyncLog (fromMaybe "" s) _io -}
   {-catchIO (fromMaybe "" s) _io -}
-  () <$ _io 
+  {-() <$ _io -}
+  logException (fromMaybe "" s) _io 
   {-catch  (() <$ _io) - \(e :: IOException) -> pure ()-}
     {-<* (forM_ s - puts . ("- " <>))-}
                 
@@ -179,14 +186,14 @@ runWaitDebug _waitX _waitY x y = do
         
         xThreadID <- forkFinally 
             (onException _x - (do
-                                  pute - "onException: " <> _xID
+                                  puts - "onException: " <> _xID
                                   throwTo yThreadID - WaitException _xID
                               )) -
               const - putMVar _threadXDone ()
 
         yThreadID <- forkFinally
             (onException _y - (do
-                                  pute - "onException: " <> _yID
+                                  puts - "onException: " <> _yID
                                   throwTo xThreadID - WaitException _yID
                               )) -
               const - putMVar _threadYDone ()
