@@ -4,6 +4,7 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
+import Control.Concurrent.STM
 import Control.Exception
 import Control.Lens
 import Control.Monad
@@ -133,15 +134,15 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
           let 
               _header = shadowSocksRequestBuilder _clientRequest
           
-          sendChannel <- newChan
-          receiveChannel <- newChan
+          sendChannel <- newTQueueIO
+          receiveChannel <- newTQueueIO
 
           let sendThread = do
                 sendBuilderEncrypted 
                   sendChannel _encrypt _header
 
                 when (_partialBytesAfterClientRequest & isn't _Empty) -
-                  writeChan sendChannel . Just =<< 
+                  atomically . writeTQueue sendChannel . Just =<< 
                     _encrypt _partialBytesAfterClientRequest
 
                 let _produce = produceLoop "L send produceLoop"
@@ -237,12 +238,12 @@ remoteRequestHandler aConfig aSocket = do
             )
     let 
         handleTarget __leftOverBytes __targetSocket = do
-          sendChannel <- newChan
-          receiveChannel <- newChan
+          sendChannel <- newTQueueIO 
+          receiveChannel <- newTQueueIO 
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
-                  writeChan sendChannel - Just _leftOverBytes
+                  atomically - writeTQueue sendChannel - Just _leftOverBytes
 
                 let _produce = produceLoop "R send produceLoop"
                                 aSocket
@@ -464,7 +465,9 @@ moeApp = do
       debugRun :: IO ()
       debugRun = do
         catchExceptAsyncLog "Debug app" - do
-          waitNone localRun remoteRun
+          waitBothDebug
+            (Just "localRun", localRun)
+            (Just "remoteRun", remoteRun)
 
   io - case _options ^. runningMode of
     DebugMode -> debugRun
