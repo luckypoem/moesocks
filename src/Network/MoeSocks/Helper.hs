@@ -303,14 +303,14 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
-produceLoop :: Socket -> Chan (Maybe ByteString) -> 
+produceLoop :: String -> Socket -> Chan (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
-produceLoop aSocket aChan f = _produce
+produceLoop aID aSocket aChan f = _produce
   where
     _produce = do
       _r <- recv_ aSocket `catch` \(e :: IOException) -> 
               do
-                puts - "ERROR in produceLoop: " <> show e
+                puts - aID <> ": " <> show e
                 pure mempty
 
       if (_r & isn't _Empty) 
@@ -320,15 +320,18 @@ produceLoop aSocket aChan f = _produce
         else do
           writeChan aChan Nothing
 
-consumeLoop :: Socket -> Chan (Maybe ByteString) -> IO ()
-consumeLoop aSocket aChan = _consume 
+consumeLoop :: String -> Socket -> Chan (Maybe ByteString) -> IO ()
+consumeLoop aID aSocket aChan = _consume 
   where 
     _consume = do
       _r <- readChan aChan 
       case _r of
         Nothing -> do
                       pure ()
-        Just _data -> send_ aSocket _data >> _consume
+        Just _data -> do
+                      (send_ aSocket _data >> _consume) `catch`
+                        \(e :: IOException) ->
+                            (puts - aID <> ": " <> show e)
 
 
 -- Copied and slightly modified from: 
