@@ -38,6 +38,9 @@ infixr 0 -
 
 -- END backports
 
+_TBQueue_Size :: Int
+_TBQueue_Size = 16
+
 io :: (MonadIO m) => IO a -> m a
 io = liftIO
 
@@ -269,14 +272,14 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
-sendBuilder :: TQueue (Maybe ByteString) -> B.Builder -> IO ()
+sendBuilder :: TBQueue (Maybe ByteString) -> B.Builder -> IO ()
 sendBuilder _queue = 
-  atomically . writeTQueue _queue . Just . builder_To_ByteString
+  atomically . writeTBQueue _queue . Just . builder_To_ByteString
 
-sendBuilderEncrypted ::  TQueue (Maybe ByteString) -> 
+sendBuilderEncrypted ::  TBQueue (Maybe ByteString) -> 
                           (ByteString -> IO ByteString) -> B.Builder -> IO ()
 sendBuilderEncrypted _queue _encrypt x = 
-  atomically . writeTQueue _queue . Just =<< 
+  atomically . writeTBQueue _queue . Just =<< 
                                       _encrypt (builder_To_ByteString x)
 
 -- | An exception raised when parsing fails.
@@ -305,11 +308,11 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
-produceLoop :: String -> Socket -> TQueue (Maybe ByteString) -> 
+produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
-produceLoop aID aSocket aTQueue f = 
+produceLoop aID aSocket aTBQueue f = 
   onException _produce - do
-    atomically - writeTQueue aTQueue Nothing
+    atomically - writeTBQueue aTBQueue Nothing
 
   where
     _produce = do
@@ -320,16 +323,16 @@ produceLoop aID aSocket aTQueue f =
 
       if (_r & isn't _Empty) 
         then do
-          f _r >>= atomically . writeTQueue aTQueue . Just
+          f _r >>= atomically . writeTBQueue aTBQueue . Just
           _produce 
         else do
-          atomically - writeTQueue aTQueue Nothing
+          atomically - writeTBQueue aTBQueue Nothing
 
-consumeLoop :: String -> Socket -> TQueue (Maybe ByteString) -> IO ()
-consumeLoop aID aSocket aTQueue = _consume 
+consumeLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> IO ()
+consumeLoop aID aSocket aTBQueue = _consume 
   where 
     _consume = do
-      _r <- atomically -readTQueue aTQueue 
+      _r <- atomically -readTBQueue aTBQueue 
       case _r of
         Nothing -> do
                       pure ()
