@@ -78,7 +78,7 @@ showBytes = show . S.unpack
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
   pure aID
-  puts - "Closing socket " <> aID
+  {-puts - "Closing socket " <> aID-}
   close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
@@ -185,17 +185,17 @@ runWaitDebug _waitX _waitY x y = do
         killThread xThreadID
 
   let action (_, yThreadID) = do
-        puts - "waiting for " <> _xID
+        {-puts - "waiting for " <> _xID-}
         takeMVar _threadXDone 
 
         when (not _waitY) - do
           _threadYRunning <- isEmptyMVar _threadYDone
           when _threadYRunning - killThread yThreadID
-          puts - "killing thread Y: " <> _yID
+          {-puts - "killing thread Y: " <> _yID-}
 
-        puts - "waiting for " <> _yID
+        {-puts - "waiting for " <> _yID-}
         takeMVar _threadYDone
-        puts - "All done for " <> _hID
+        {-puts - "All done for " <> _hID-}
 
   bracketOnError 
     _init
