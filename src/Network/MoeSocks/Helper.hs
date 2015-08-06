@@ -159,10 +159,9 @@ runWaitDebug _waitX _waitY x y = do
       _yID = y ^. _1 & fromMaybe ""
       _hID = _xID <> " / " <> _yID
 
-  _threadXDone <- newEmptyMVar
-  _threadYDone <- newEmptyMVar
-
   let _init = do
+        _threadXDone <- newEmptyMVar
+        _threadYDone <- newEmptyMVar
         xThreadID <-
           forkFinally _x -
              const - putMVar _threadXDone ()
@@ -176,15 +175,15 @@ runWaitDebug _waitX _waitY x y = do
             
             putMVar _threadYDone ()
 
-        return (xThreadID, yThreadID)
+        return ((_threadXDone, xThreadID), (_threadYDone, yThreadID))
 
-  let handleError (xThreadID, yThreadID) = do
+  let handleError ((_, xThreadID), (_, yThreadID)) = do
         puts - "handleError for " <> _hID 
         pure ()
         killThread yThreadID
         killThread xThreadID
 
-  let action (_, yThreadID) = do
+  let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
         {-puts - "waiting for " <> _xID-}
         takeMVar _threadXDone 
 
