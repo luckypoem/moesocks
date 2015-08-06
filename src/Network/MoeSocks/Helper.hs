@@ -186,17 +186,18 @@ runWaitDebug _waitX _waitY x y = do
         killThread xThreadID
 
   let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
-        puts - "waiting for first: " <> _xID
-        takeMVar _threadXDone 
+        catchExceptAsyncLog _hID - do
+          puts - "waiting for first: " <> _xID
+          takeMVar _threadXDone 
 
-        when (not _waitY) - do
-          _threadYRunning <- isEmptyMVar _threadYDone
-          when _threadYRunning - killThread yThreadID
-          puts - "killing thread Y: " <> _yID
+          when (not _waitY) - do
+            _threadYRunning <- isEmptyMVar _threadYDone
+            when _threadYRunning - killThread yThreadID
+            puts - "killing thread Y: " <> _yID
 
-        puts - "waiting for second: " <> _yID
-        takeMVar _threadYDone
-        puts - "All done for " <> _hID
+          puts - "waiting for second: " <> _yID
+          takeMVar _threadYDone
+          puts - "All done for " <> _hID
 
   bracketOnError 
     _init
