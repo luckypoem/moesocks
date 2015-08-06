@@ -80,11 +80,9 @@ optionParser =
 
       parseForwarding :: String -> [LocalForwarding]
       parseForwarding x = 
-        let r = x ^. from _Text & parseOnly forwardingListParser 
-        in
-        case r of
-          Left _ -> []
-          Right xs -> xs
+        x ^. from _Text 
+          & parseOnly forwardingListParser 
+          & toListOf (traverse . traverse)
   in
         
 

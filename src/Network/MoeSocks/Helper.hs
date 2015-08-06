@@ -28,7 +28,7 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 
-import Data.Maybe
+-- import Data.Maybe
 
 -- BEGIN backports
 
