@@ -28,6 +28,8 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 
+import Data.Maybe
+
 -- BEGIN backports
 
 infixr 0 -
@@ -134,7 +136,22 @@ waitBoth :: IO () -> IO () -> IO ()
 waitBoth = runWait True True
 
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitBothDebug = runWaitDebug True True
+waitBothDebug x y = do
+  let _x = wrapIO x
+      _y = wrapIO y
+
+  _threadXDone <- newEmptyMVar
+
+  forkFinally _x - const - do
+    puts - "X done: " <> (x ^. _1 & fromMaybe "")
+    putMVar _threadXDone ()
+
+  _y
+
+  puts - "Y done: " <> (y ^. _1 & fromMaybe "")
+
+  takeMVar _threadXDone
+
 
 waitNone :: IO () -> IO () -> IO ()
 waitNone = runWait False False
@@ -162,10 +179,12 @@ runWaitDebug _waitX _waitY x y = do
 
         yThreadID <- 
           forkFinally _y - const - do
-            _threadXRunning <- isEmptyMVar _threadXDone
-            putMVar _threadYDone ()
             when (not _waitX) - do
+              _threadXRunning <- isEmptyMVar _threadXDone
               when _threadXRunning - killThread xThreadID 
+              puts - "killing thread X: " <> (x ^. _1 & fromMaybe "")
+            
+            putMVar _threadYDone ()
 
         return (xThreadID, yThreadID)
 
@@ -175,9 +194,11 @@ runWaitDebug _waitX _waitY x y = do
 
   let action (_, yThreadID) = do
         takeMVar _threadXDone 
+
         when (not _waitY) - do
           _threadYRunning <- isEmptyMVar _threadYDone
           when _threadYRunning - killThread yThreadID
+          puts - "killing thread Y: " <> (y ^. _1 & fromMaybe "")
 
         takeMVar _threadYDone
 
@@ -296,17 +317,20 @@ produceLoop aSocket aChan f = _produce
           f _r >>= writeChan aChan . Just
           _produce 
         else do
-          {-puts - "0 bytes from remote!"-}
+          puts - "writing Nothing"
           writeChan aChan Nothing
           close aSocket
 
 consumeLoop :: Socket -> Chan (Maybe ByteString) -> IO ()
-consumeLoop aSocket aChan = loop
-  where loop = do
-          _r <- readChan aChan 
-          case _r of
-            Nothing -> close aSocket
-            Just _data -> send_ aSocket _data >> loop
+consumeLoop aSocket aChan = _consume 
+  where 
+    _consume = do
+      _r <- readChan aChan 
+      case _r of
+        Nothing -> do
+                      puts - "get Nothing!"
+                      close aSocket
+        Just _data -> send_ aSocket _data >> _consume
 
 
 -- Copied and slightly modified from: 

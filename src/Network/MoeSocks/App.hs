@@ -153,7 +153,8 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   __remoteSocket 
                                   sendChannel
 
-                waitNone _produce _consume
+                waitBothDebug (Just "L send produce", _produce)
+                              (Just "L send consume", _consume)
 
 
           let receiveThread = do
@@ -166,9 +167,10 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   aSocket 
                                   receiveChannel
 
-                waitFirst _produce _consume
+                waitBothDebug (Just "L receive produce", _produce)
+                              (Just "L receive consume", _consume)
 
-          waitBothDebug
+          waitFirstDebug
             (Just "L -->", sendThread)
             (Just "L <--", receiveThread)
 
@@ -246,7 +248,8 @@ remoteRequestHandler aConfig aSocket = do
                                   __targetSocket
                                   sendChannel
 
-                waitFirst _produce _consume
+                waitBothDebug (Just "R send produce", _produce)
+                              (Just "R send consume", _consume)
 
 
           let receiveThread = do
@@ -259,9 +262,10 @@ remoteRequestHandler aConfig aSocket = do
                                   aSocket
                                   receiveChannel
 
-                waitFirst _produce _consume
+                waitBothDebug (Just "R receive produce", _produce)
+                              (Just "R receive consume", _consume)
 
-          waitBothDebug
+          waitFirstDebug
             (Just "R -->", sendThread)
             (Just "R <--", receiveThread)
           
