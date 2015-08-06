@@ -171,7 +171,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                 waitBothDebug (Just "L receive produce", _produce)
                               (Just "L receive consume", _consume)
 
-                {-shutdown __remoteSocket ShutdownReceive-}
+                shutdown aSocket ShutdownSend
 
           waitBothDebug
             (Just "L -->", sendThread)
@@ -269,7 +269,7 @@ remoteRequestHandler aConfig aSocket = do
                 waitBothDebug (Just "R receive produce", _produce)
                               (Just "R receive consume", _consume)
 
-                {-shutdown __targetSocket ShutdownReceive-}
+                shutdown aSocket ShutdownSend
 
           waitBothDebug
             (Just "R -->", sendThread)
