@@ -103,19 +103,19 @@ catchExceptAsyncLog :: String -> IO a -> IO ()
 catchExceptAsyncLog aID aIO = catches (() <$ aIO) 
                 [ 
                   Handler - \(e :: AsyncException) -> do
-                            pute - "ASyncException in " 
+                            puts - "ASyncException in " 
                                     <> aID
                                     <> " : " <> show e
                             throw e
                 , Handler - \(e :: SomeException) -> 
-                            pute - "CatcheAll in "
+                            puts - "CatcheAll in "
                                     <> aID
                                     <> " : " <> show e
                 ]
 
 catchIO:: String -> IO a -> IO ()
 catchIO aID aIO = catch (() <$ aIO) - \e ->
-                pute - "Catch IO in " <> aID <> ": " 
+                puts - "Catch IO in " <> aID <> ": " 
                   <> show (e :: IOException)
                 
 
