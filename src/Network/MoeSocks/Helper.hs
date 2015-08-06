@@ -179,22 +179,25 @@ runWaitDebug _waitX _waitY x y = do
 
   let handleError ((_, xThreadID), (_, yThreadID)) = do
         puts - "handleError for " <> _hID 
+        pure xThreadID
+        pure yThreadID
         pure ()
-        killThread yThreadID
-        killThread xThreadID
+        {-killThread yThreadID-}
+        {-killThread xThreadID-}
 
   let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
-        {-puts - "waiting for " <> _xID-}
-        takeMVar _threadXDone 
+        catchExceptAsyncLog _hID - do
+          {-puts - "waiting for " <> _xID-}
+          takeMVar _threadXDone 
 
-        when (not _waitY) - do
-          _threadYRunning <- isEmptyMVar _threadYDone
-          when _threadYRunning - killThread yThreadID
-          {-puts - "killing thread Y: " <> _yID-}
+          when (not _waitY) - do
+            _threadYRunning <- isEmptyMVar _threadYDone
+            when _threadYRunning - killThread yThreadID
+            {-puts - "killing thread Y: " <> _yID-}
 
-        {-puts - "waiting for " <> _yID-}
-        takeMVar _threadYDone
-        {-puts - "All done for " <> _hID-}
+          {-puts - "waiting for " <> _yID-}
+          takeMVar _threadYDone
+          {-puts - "All done for " <> _hID-}
 
   bracketOnError 
     _init
@@ -305,9 +308,11 @@ produceLoop :: Socket -> Chan (Maybe ByteString) ->
 produceLoop aSocket aChan f = _produce
   where
     _produce = do
-      _r <- recv_ aSocket `catch` \(_ :: IOException) -> do
-                                                            puts "recv fail"
-                                                            pure mempty
+      _r <- recv_ aSocket `catch` \(e :: IOException) -> 
+              do
+                puts - "ERROR in produceLoop: " <> show e
+                pure mempty
+
       if (_r & isn't _Empty) 
         then do
           f _r >>= writeChan aChan . Just
