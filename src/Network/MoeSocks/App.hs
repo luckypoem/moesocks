@@ -144,12 +144,12 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                   writeChan sendChannel . Just =<< 
                     _encrypt _partialBytesAfterClientRequest
 
-                let _produce = produceLoop 
+                let _produce = produceLoop "L send produceLoop"
                                   aSocket 
                                   sendChannel 
                                   _encrypt
 
-                let _consume = consumeLoop 
+                let _consume = consumeLoop "L send consumeLoop"
                                   __remoteSocket 
                                   sendChannel
 
@@ -159,12 +159,12 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                 shutdown __remoteSocket ShutdownSend
 
           let receiveThread = do
-                let _produce = produceLoop 
+                let _produce = produceLoop "L receive produceLoop"
                                   __remoteSocket 
                                   receiveChannel
                                   _decrypt
 
-                let _consume = consumeLoop 
+                let _consume = consumeLoop "L receive consumeLoop"
                                   aSocket 
                                   receiveChannel
 
@@ -242,12 +242,12 @@ remoteRequestHandler aConfig aSocket = do
                 when (_leftOverBytes & isn't _Empty) -
                   writeChan sendChannel - Just _leftOverBytes
 
-                let _produce = produceLoop
+                let _produce = produceLoop "R send produceLoop"
                                 aSocket
                                 sendChannel
                                 _decrypt
 
-                let _consume = consumeLoop 
+                let _consume = consumeLoop "R send consumeLoop"
                                   __targetSocket
                                   sendChannel
 
@@ -257,12 +257,12 @@ remoteRequestHandler aConfig aSocket = do
                 shutdown __targetSocket ShutdownSend
 
           let receiveThread = do
-                let _produce = produceLoop
+                let _produce = produceLoop "R send produceLoop"
                                   __targetSocket
                                   receiveChannel
                                   _encrypt
 
-                let _consume = consumeLoop
+                let _consume = consumeLoop "R send consumeLoop"
                                   aSocket
                                   receiveChannel
 
