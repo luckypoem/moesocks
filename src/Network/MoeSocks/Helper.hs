@@ -5,6 +5,7 @@
 module Network.MoeSocks.Helper where
 
 import Control.Concurrent
+import Control.Concurrent.STM
 import Control.Exception
 import Control.Lens
 import Control.Monad
@@ -13,6 +14,7 @@ import Data.Attoparsec.ByteString
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
+import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
@@ -27,8 +29,6 @@ import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
-
-import Data.Maybe
 
 -- BEGIN backports
 
@@ -78,7 +78,7 @@ showBytes = show . S.unpack
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
   pure aID
-  {-puts - "Closing socket " <> aID-}
+  puts - "Closing socket " <> aID
   close aSocket 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
@@ -139,11 +139,11 @@ waitBoth = runWait True True
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitBothDebug = runWaitDebug True True
 
-waitNone :: IO () -> IO () -> IO ()
-waitNone = runWait False False
+{-waitNone :: IO () -> IO () -> IO ()-}
+{-waitNone = runWait False False-}
 
-waitNoneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitNoneDebug = runWaitDebug False False
+{-waitNoneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
+{-waitNoneDebug = runWaitDebug False False-}
 
 runWait :: Bool -> Bool -> IO () -> IO () -> IO ()
 runWait _waitX _waitY x y = do
@@ -187,17 +187,17 @@ runWaitDebug _waitX _waitY x y = do
 
   let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
         catchExceptAsyncLog _hID - do
-          {-puts - "waiting for " <> _xID-}
+          puts - "waiting for first: " <> _xID
           takeMVar _threadXDone 
 
           when (not _waitY) - do
             _threadYRunning <- isEmptyMVar _threadYDone
             when _threadYRunning - killThread yThreadID
-            {-puts - "killing thread Y: " <> _yID-}
+            puts - "killing thread Y: " <> _yID
 
-          {-puts - "waiting for " <> _yID-}
+          puts - "waiting for second: " <> _yID
           takeMVar _threadYDone
-          {-puts - "All done for " <> _hID-}
+          puts - "All done for " <> _hID
 
   bracketOnError 
     _init
@@ -269,12 +269,14 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
-sendBuilder :: Chan (Maybe ByteString) -> B.Builder -> IO ()
-sendBuilder _chan = writeChan _chan . Just . builder_To_ByteString
+sendBuilder :: TQueue (Maybe ByteString) -> B.Builder -> IO ()
+sendBuilder _queue = 
+  atomically . writeTQueue _queue . Just . builder_To_ByteString
 
-sendBuilderEncrypted ::  Chan (Maybe ByteString) -> 
+sendBuilderEncrypted ::  TQueue (Maybe ByteString) -> 
                           (ByteString -> IO ByteString) -> B.Builder -> IO ()
-sendBuilderEncrypted _chan _encrypt x = writeChan _chan . Just =<< 
+sendBuilderEncrypted _queue _encrypt x = 
+  atomically . writeTQueue _queue . Just =<< 
                                       _encrypt (builder_To_ByteString x)
 
 -- | An exception raised when parsing fails.
@@ -303,35 +305,40 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
-produceLoop :: String -> Socket -> Chan (Maybe ByteString) -> 
+produceLoop :: String -> Socket -> TQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
-produceLoop aID aSocket aChan f = _produce
+produceLoop aID aSocket aTQueue f = 
+  onException _produce - do
+    atomically - writeTQueue aTQueue Nothing
+
   where
     _produce = do
       _r <- recv_ aSocket `catch` \(e :: IOException) -> 
               do
                 puts - aID <> ": " <> show e
-                pure mempty
+                throw e
 
       if (_r & isn't _Empty) 
         then do
-          f _r >>= writeChan aChan . Just
+          f _r >>= atomically . writeTQueue aTQueue . Just
           _produce 
         else do
-          writeChan aChan Nothing
+          atomically - writeTQueue aTQueue Nothing
 
-consumeLoop :: String -> Socket -> Chan (Maybe ByteString) -> IO ()
-consumeLoop aID aSocket aChan = _consume 
+consumeLoop :: String -> Socket -> TQueue (Maybe ByteString) -> IO ()
+consumeLoop aID aSocket aTQueue = _consume 
   where 
     _consume = do
-      _r <- readChan aChan 
+      _r <- atomically -readTQueue aTQueue 
       case _r of
         Nothing -> do
                       pure ()
         Just _data -> do
                       (send_ aSocket _data >> _consume) `catch`
-                        \(e :: IOException) ->
-                            (puts - aID <> ": " <> show e)
+                        \(e :: IOException) -> do
+                            puts - aID <> ": " <> show e
+                            throw e
+
 
 
 -- Copied and slightly modified from: 
