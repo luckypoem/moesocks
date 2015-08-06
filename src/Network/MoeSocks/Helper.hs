@@ -180,7 +180,7 @@ runWaitDebug _waitX _waitY x y = do
         xThreadID <- forkFinally 
             (onException _x - (do
                                   pute - "onException: " <> _xID
-                                  {-throwTo yThreadID - WaitException _xID-}
+                                  throwTo yThreadID - WaitException _xID
                               )) -
               const - putMVar _threadXDone ()
 
@@ -198,8 +198,9 @@ runWaitDebug _waitX _waitY x y = do
         pure xThreadID
         pure yThreadID
         pure ()
-        throwTo yThreadID - WaitException _yID
-        throwTo xThreadID - WaitException _xID
+        killThread xThreadID
+        {-throwTo yThreadID - WaitException _yID-}
+        {-throwTo xThreadID - WaitException _xID-}
         {-killThread xThreadID-}
 
   let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
@@ -338,7 +339,7 @@ produceLoop _ aSocket aTBQueue f =
           atomically - writeTBQueue aTBQueue Nothing
 
 consumeLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> IO ()
-consumeLoop aID aSocket aTBQueue = _consume 
+consumeLoop _ aSocket aTBQueue = _consume 
   where 
     _consume = do
       _r <- atomically - readTBQueue aTBQueue 
