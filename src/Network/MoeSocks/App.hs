@@ -265,7 +265,7 @@ remoteRequestHandler aConfig aSocket = do
                 waitBothDebug (Just "R receive produce", _produce)
                               (Just "R receive consume", _consume)
 
-          waitFirstDebug
+          waitNoneDebug
             (Just "R -->", sendThread)
             (Just "R <--", receiveThread)
           
