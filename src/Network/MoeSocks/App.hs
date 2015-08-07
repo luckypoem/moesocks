@@ -336,9 +336,9 @@ parseConfig aFilePath = do
                 over (mapped . _1) (T.cons '_')  & H.fromList
       fixConfig _ = Null
   
-      _maybeConfig = _v >>= decode . encode . fixConfig :: Maybe MoeConfig
 
 
+      
       formatConfig :: Value -> Value
       formatConfig (Object _obj) =
           Object -
@@ -346,7 +346,34 @@ parseConfig aFilePath = do
                 over (mapped . _1) T.tail & H.fromList
       formatConfig _ = Null
 
+      filterEssentialConfig :: Value -> Value
+      filterEssentialConfig (Object _obj) =
+          Object -
+            foldl (flip H.delete) _obj - 
+              [
+                "_remote"
+              , "_remotePort"
+              , "_local"
+              , "_localPort"
+              , "_password"
+              , "_method"
+              ]
+          
+      filterEssentialConfig _ = Null
 
+      mergeConfigObject :: Value -> Value -> Value
+      mergeConfigObject (Object _x) (Object _y) =
+          Object - _x `H.union` _y
+      mergeConfigObject _ _ = Null
+
+
+      optionalConfig = filterEssentialConfig - toJSON defaultMoeConfig
+      
+      _maybeConfig = _v 
+                      >>= decode 
+                          . encode 
+                          . flip mergeConfigObject (toJSON defaultMoeConfig)
+                          . fixConfig 
 
   case _maybeConfig of
     Nothing -> do
@@ -357,8 +384,11 @@ parseConfig aFilePath = do
               tell "Example: \n"
 
               let configBS :: ByteString  
-                  configBS = toStrict .encode . formatConfig . toJSON - 
-                                defaultMoeConfig
+                  configBS = toStrict 
+                                . encode 
+                                . formatConfig 
+                                . toJSON 
+                                - defaultMoeConfig
               
               tell - configBS ^. utf8 <> "\n"
 
@@ -366,7 +396,7 @@ parseConfig aFilePath = do
 
     Just _config -> do
       pure - _config 
-
+              
 
 initLogger :: Priority -> IO ()
 initLogger aLevel = do

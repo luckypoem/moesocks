@@ -53,6 +53,7 @@ data MoeConfig = MoeConfig
   , _localPort :: Int
   , _password :: Text
   , _method :: Text
+  , _timeout :: Int
   }
   deriving (Show, Eq, Generic)
 

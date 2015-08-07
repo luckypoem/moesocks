@@ -15,6 +15,7 @@ defaultMoeConfig = MoeConfig
   , _localPort = 1090
   , _password = "moesocks"
   , _method = _DefaultMethod
+  , _timeout = 600
   }
 
 
