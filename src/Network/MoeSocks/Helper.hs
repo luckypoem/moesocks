@@ -66,6 +66,9 @@ puts = sync . debugM "moe" . ("😽  " <>)
 pute :: String -> IO ()
 pute = sync . errorM "moe" . ("😾  " <>)
 
+putw :: String -> IO ()
+putw = sync . warningM "moe" . ("😾  " <>)
+
 _log :: String -> IO ()
 _log = sync . infoM "moe" . ("😺  " <>)
 
@@ -125,7 +128,7 @@ catchIO aID aIO = catch (() <$ aIO) - \e ->
 logException :: String -> IO a -> IO ()
 logException aID aIO = catch (() <$ aIO) - \e -> 
                         do
-                          pute - "Error in " <> aID <> ": " 
+                          putw - "Logged error " <> aID <> ": " 
                             <> show (e :: SomeException)
                           throw e
 
@@ -348,4 +351,4 @@ setSocketCloseOnExec aSocket =
 
 
 tryIO :: String -> IO a -> IO (Either IOException a)
-tryIO aID = try -- . logException aID
+tryIO _ = try -- . logException aID
