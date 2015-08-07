@@ -367,7 +367,6 @@ parseConfig aFilePath = do
               , "_local"
               , "_localPort"
               , "_password"
-              , "_method"
               ]
           
       filterEssentialConfig _ = Null
