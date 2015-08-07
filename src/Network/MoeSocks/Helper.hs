@@ -58,8 +58,9 @@ syncLock = unsafePerformIO - newEmptyMVar
 
 sync :: IO a -> IO a
 sync aIO = do
-  putMVar syncLock ()
-  aIO <* takeMVar syncLock
+  {-putMVar syncLock ()-}
+  {-aIO <* takeMVar syncLock-}
+  aIO
 
 puts :: String -> IO ()
 puts = sync . debugM "moe" . ("😽  " <>)
