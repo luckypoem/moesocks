@@ -1,12 +1,16 @@
 import Prelude ()
-import System.Nemesis.Env
+import System.Nemesis.Env hiding (run)
+import qualified System.Nemesis.Env as N
 import Air.Env
 import Control.Monad
 
-main = run nemesis
+main = N.run nemesis
 
 ping = do
         sh "curl -x socks5://localhost:1090 localhost:8080; exit 0"
+
+
+run x = sh - "cabal run -- +RTS -N " ++ x
 
 nemesis = do
 
@@ -36,19 +40,19 @@ nemesis = do
 
   desc "remote"
   task "remote" - do
-    sh "cabal run -- -m remote -c dev.json"
+    run "-m remote -c dev.json"
   
   desc "local"
   task "local" - do
-    sh "cabal run -- -m local -c dev.json"
+    run "-m local -c dev.json"
 
   desc "debug-remote"
   task "debug-remote" - do
-    sh "cabal run -- -m remote -c dev.json -v DEBUG"
+    run "-m remote -c dev.json -v DEBUG"
   
   desc "debug-local"
   task "debug-local" - do
-    sh "cabal run -- -m local -c dev.json -v DEBUG"
+    run "-m local -c dev.json -v DEBUG"
 
   desc "ssserver"
   task "ssserver" - do
@@ -68,11 +72,11 @@ nemesis = do
 
   desc "debug local clean"
   task "debug-local-clean" - do
-    sh "cabal run -- -m local -c dev-debug.json -v DEBUG -L 5300:8.8.8.8:53"
+    run "-m local -c dev-debug.json -v DEBUG -L 5300:8.8.8.8:53"
   
   desc "debug remote clean"
   task "debug-remote-clean" - do
-    sh "cabal run -- -m remote -c dev-debug.json -v DEBUG"
+    run "-m remote -c dev-debug.json -v DEBUG"
 
 
   desc "merge debug to master"
