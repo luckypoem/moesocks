@@ -181,7 +181,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                   ) -
                   pure ()
 
-          waitBothDebug
+          connectTunnel
             (Just - _logId "L -->", sendThread)
             (Just - _logId "L <--", receiveThread)
 
@@ -286,7 +286,7 @@ remoteRequestHandler aConfig aSocket = do
                   ) -
                   pure ()
 
-          waitBothDebug
+          connectTunnel
             (Just - _logId "R -->", sendThread)
             (Just - _logId "R <--", receiveThread)
           
