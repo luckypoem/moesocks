@@ -155,12 +155,13 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                     aSocket 
                                     sendChannel 
                                     _encrypt
-                                  close aSocket
 
                 let _consume = do
                                   consumeLoop (_logId "L --> -Loop")
                                     __remoteSocket 
                                     sendChannel
+
+                                  close sendChannel
                 finally
                   (
                     connectProduction (Just - _logId "L --> +", _produce)
@@ -178,7 +179,9 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   consumeLoop (_logId "L <-- -Loop")
                                     aSocket 
                                     receiveChannel
-                                  {-close aSocket-}
+                                  close aSocket
+
+                                close sendChannel
                 finally 
                   (
                     connectProduction (Just - _logId "L <-- +", _produce)
