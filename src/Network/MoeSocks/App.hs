@@ -343,8 +343,11 @@ parseConfig aFilePath = do
       fixConfig :: Value -> Value
       fixConfig (Object _obj) =
           Object - 
-            _obj & H.toList & fromSS & 
-                over (mapped . _1) (T.cons '_')  & H.fromList
+            _obj 
+                & H.toList 
+                & fromSS 
+                & over (mapped . _1) (T.cons '_')  
+                & H.fromList
       fixConfig _ = Null
   
 
@@ -353,8 +356,10 @@ parseConfig aFilePath = do
       formatConfig :: Value -> Value
       formatConfig (Object _obj) =
           Object -
-            _obj & H.toList &
-                over (mapped . _1) T.tail & H.fromList
+            _obj
+                & H.toList 
+                & over (mapped . _1) T.tail 
+                & H.fromList
       formatConfig _ = Null
 
       filterEssentialConfig :: Value -> Value
