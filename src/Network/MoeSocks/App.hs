@@ -372,7 +372,7 @@ parseConfig aFilePath = do
       _maybeConfig = _v 
                       >>= decode 
                           . encode 
-                          . flip mergeConfigObject (toJSON defaultMoeConfig)
+                          . flip mergeConfigObject optionalConfig
                           . fixConfig 
 
   case _maybeConfig of
