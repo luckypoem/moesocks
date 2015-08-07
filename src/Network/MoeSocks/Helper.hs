@@ -28,11 +28,10 @@ import Prelude hiding (take, (-))
 import System.IO.Unsafe (unsafePerformIO)
 import System.Log.Logger
 import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
+import System.Timeout (timeout)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
-
-import System.Timeout
 
 -- BEGIN backports
 
@@ -281,10 +280,10 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
 
 onlyIn :: String -> Int -> IO a -> IO a
 onlyIn aID aTime aIO = do
-  r <- timeout aTime aIO
-  case r of
+  _r <- timeout aTime aIO
+  case _r of
     Nothing -> throw - WaitException - "Timeout: " <> aID
-    Just r -> pure r
+    Just _r -> pure r
 
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
