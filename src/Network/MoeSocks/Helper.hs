@@ -311,30 +311,32 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
 
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
-produceLoop _ aSocket aTBQueue f = 
-  finally _produce - do
-    atomically - writeTBQueue aTBQueue Nothing
+produceLoop aID aSocket aTBQueue f = do
+  let _shutdown = tryIO aID - shutdown aSocket ShutdownReceive
+      _produce = do
+        _r <- recv_ aSocket 
+        if (_r & isn't _Empty) 
+          then do
+            f _r >>= atomically . writeTBQueue aTBQueue . Just
+            _produce 
+          else do
+            atomically - writeTBQueue aTBQueue Nothing
 
-  where
-    _produce = do
-      _r <- recv_ aSocket 
-      if (_r & isn't _Empty) 
-        then do
-          f _r >>= atomically . writeTBQueue aTBQueue . Just
-          _produce 
-        else do
-          atomically - writeTBQueue aTBQueue Nothing
+  _produce `onException` _shutdown
+  pure ()
 
 consumeLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> IO ()
-consumeLoop _ aSocket aTBQueue = _consume 
-  where 
-    _consume = do
-      _r <- atomically - readTBQueue aTBQueue 
-      case _r of
-        Nothing -> do
-                      pure ()
-        Just _data -> do
-                      send_ aSocket _data >> _consume
+consumeLoop aID aSocket aTBQueue = do
+  let _shutdown = tryIO aID - shutdown aSocket ShutdownSend
+      _consume = do
+        _r <- atomically - readTBQueue aTBQueue 
+        case _r of
+          Nothing -> _shutdown
+          Just _data -> do
+                          send_ aSocket _data >> _consume
+  
+  _consume `onException` _shutdown
+  pure ()
 
 
 
