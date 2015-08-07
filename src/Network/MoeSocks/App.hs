@@ -258,10 +258,13 @@ remoteRequestHandler aConfig aSocket = do
                 when (_leftOverBytes & isn't _Empty) -
                   atomically - writeTBQueue sendChannel - Just _leftOverBytes
 
-                let _produce = produceLoop (_logId "R --> +Loop")
-                                aSocket
-                                sendChannel
-                                _decrypt
+                let _produce = do
+                                  produceLoop (_logId "R --> +Loop")
+                                    aSocket
+                                    sendChannel
+                                    _decrypt
+
+                                  close aSocket
 
                 let _consume = consumeLoop (_logId "R --> -Loop")
                                   __targetSocket
@@ -275,10 +278,12 @@ remoteRequestHandler aConfig aSocket = do
                   pure ()
 
           let receiveThread = do
-                let _produce = produceLoop (_logId "R --> +Loop")
-                                  __targetSocket
-                                  receiveChannel
-                                  _encrypt
+                let _produce = do
+                                  produceLoop (_logId "R --> +Loop")
+                                    __targetSocket
+                                    receiveChannel
+                                    _encrypt
+
 
                 let _consume = do
                                   consumeLoop (_logId "R --> -Loop")
