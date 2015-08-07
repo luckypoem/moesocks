@@ -63,7 +63,7 @@ nemesis = do
     sh "cabal run -- -m local -c dev.json -v DEBUG -L 5300:8.8.8.8:53"
   
   desc "debug remote"
-  task "debug-remoter" - do
+  task "debug-remote" - do
     sh "cabal run -- -m remote -c dev.json -v DEBUG"
 
 
