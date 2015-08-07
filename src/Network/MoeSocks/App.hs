@@ -160,7 +160,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   sendChannel
                 finally
                   (
-                    waitBothDebug (Just - _logId "L --> +", _produce)
+                    connectProduction (Just - _logId "L --> +", _produce)
                                   (Just - _logId "L --> -", _consume)
                   ) -
                   pure ()
@@ -176,8 +176,8 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   receiveChannel
                 finally 
                   (
-                    waitBothDebug (Just - _logId "L <-- +", _produce)
-                                  (Just - _logId "L <-- -", _consume)
+                    connectProduction (Just - _logId "L <-- +", _produce)
+                                      (Just - _logId "L <-- -", _consume)
                   ) -
                   pure ()
 
@@ -264,8 +264,8 @@ remoteRequestHandler aConfig aSocket = do
 
                 finally
                   (
-                    waitBothDebug (Just - _logId "R --> +", _produce)
-                                  (Just - _logId "R --> -", _consume)
+                    connectProduction (Just - _logId "R --> +", _produce)
+                                      (Just - _logId "R --> -", _consume)
                   ) -
                   pure ()
 
@@ -281,8 +281,8 @@ remoteRequestHandler aConfig aSocket = do
 
                 finally 
                   (
-                    waitBothDebug (Just - _logId "R <-- +", _produce)
-                                  (Just - _logId "R <-- -", _consume)
+                    connectProduction (Just - _logId "R <-- +", _produce)
+                                      (Just - _logId "R <-- -", _consume)
                   ) -
                   pure ()
 
