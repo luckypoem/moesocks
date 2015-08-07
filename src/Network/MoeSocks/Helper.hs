@@ -32,6 +32,8 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 
+import System.Timeout
+
 -- BEGIN backports
 
 infixr 0 -
@@ -42,6 +44,10 @@ infixr 0 -
 
 _TBQueue_Size :: Int
 _TBQueue_Size = 32
+
+_TimeOut :: Int
+_TimeOut = 1 * 1000 * 1000 -- 1s
+
 
 io :: (MonadIO m) => IO a -> m a
 io = liftIO
@@ -273,6 +279,13 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
+onlyIn :: String -> Int -> IO a -> IO a
+onlyIn aID aTime aIO = do
+  r <- timeout aTime aIO
+  case r of
+    Nothing -> throw - WaitException - "Timeout: " <> aID
+    Just r -> pure r
+
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
 produceLoop aID aSocket aTBQueue f = do
@@ -281,7 +294,7 @@ produceLoop aID aSocket aTBQueue f = do
                     {-tryIO aID - close aSocket-}
                   
       _produce = do
-        _r <- recv_ aSocket 
+        _r <- onlyIn aID _TimeOut - recv_ aSocket
         if (_r & isn't _Empty) 
           then do
             f _r >>= atomically . writeTBQueue aTBQueue . Just
@@ -303,7 +316,8 @@ consumeLoop aID aSocket aTBQueue = do
         case _r of
           Nothing -> _shutdown
           Just _data -> do
-                          send_ aSocket _data >> _consume
+                          onlyIn aID _TimeOut -
+                            send_ aSocket _data >> _consume
   
   _consume `onException` _shutdown
   pure ()
