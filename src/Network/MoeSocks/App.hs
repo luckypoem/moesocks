@@ -155,9 +155,10 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   sendChannel 
                                   _encrypt
 
-                let _consume = consumeLoop (_logId "L --> -Loop")
-                                  __remoteSocket 
-                                  sendChannel
+                let _consume = do
+                                  consumeLoop (_logId "L --> -Loop")
+                                    __remoteSocket 
+                                    sendChannel
                 finally
                   (
                     connectProduction (Just - _logId "L --> +", _produce)
@@ -171,9 +172,11 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   receiveChannel
                                   _decrypt
 
-                let _consume = consumeLoop (_logId "L <-- -Loop")
-                                  aSocket 
-                                  receiveChannel
+                let _consume = do
+                                  consumeLoop (_logId "L <-- -Loop")
+                                    aSocket 
+                                    receiveChannel
+                                  close aSocket
                 finally 
                   (
                     connectProduction (Just - _logId "L <-- +", _produce)
@@ -275,9 +278,11 @@ remoteRequestHandler aConfig aSocket = do
                                   receiveChannel
                                   _encrypt
 
-                let _consume = consumeLoop (_logId "R --> -Loop")
-                                  aSocket
-                                  receiveChannel
+                let _consume = do
+                                  consumeLoop (_logId "R --> -Loop")
+                                    aSocket
+                                    receiveChannel
+                                  close aSocket
 
                 finally 
                   (
