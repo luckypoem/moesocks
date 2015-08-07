@@ -94,7 +94,7 @@ logSocketWithAddress :: String -> IO (Socket, SockAddr) ->
 logSocketWithAddress aID _init f = do
   catch (bracket _init (logClose aID . fst) f) - 
       \(e :: SomeException) -> do
-      pute - "logSocket: Exception in " <> aID <> ": " <> show e
+      puts - "logSocket: Exception in " <> aID <> ": " <> show e
       throw e
 
 logSA:: String -> IO (Socket, SockAddr) -> 
