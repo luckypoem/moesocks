@@ -103,9 +103,10 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
     \(_remoteSocket, _remoteAddress) -> do
     connect _remoteSocket _remoteAddress
 
+
     _localPeerAddr <- getPeerName aSocket
     _remoteSocketName <- getSocketName _remoteSocket
-
+    
     when shouldReplyClient - do
       let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
       send_ aSocket - builder_To_ByteString _connectionReplyBuilder
@@ -115,15 +116,16 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                            view _Text (showAddressType (_r ^. addressType))
                         <> ":"
                         <> show (_r ^. portNumber)
+
+    let _msg = 
+                concat - L.intersperse " -> " 
+                [ 
+                  show _localPeerAddr
+                , showRequest _clientRequest
+                ]
+    
     _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
-                <> ": " <>
-            (
-              concat - L.intersperse " -> " 
-              [ 
-                show _localPeerAddr
-              , showRequest _clientRequest
-              ]
-            )
+                <> ": " <> _msg
 
     let handleLocal __remoteSocket = do
           (_encrypt, _decrypt) <- getCipher
@@ -137,7 +139,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
           sendChannel <- newTBQueueIO _TBQueue_Size
           receiveChannel <- newTBQueueIO _TBQueue_Size
 
-          let _logId x = x <> " " <> show _localPeerAddr
+          let _logId x = x <> " " <> _msg
 
           let sendThread = do
                 sendBuilderEncrypted 
@@ -229,21 +231,22 @@ remoteRequestHandler aConfig aSocket = do
     _remotePeerAddr <- getPeerName aSocket
     _targetPeerAddr <- getPeerName _targetSocket
 
+    let _msg = 
+                concat - L.intersperse " -> " - map show
+                [ 
+                  _remotePeerAddr
+                , _targetPeerAddr
+                ]
+
     _log - "R " -- <> showConnectionType (_clientRequest ^. connectionType)
-                  <> ": " <>
-            (
-              concat - L.intersperse " -> " - map show
-              [ 
-                _remotePeerAddr
-              , _targetPeerAddr
-              ]
-            )
+                  <> ": " <> _msg
+
     let 
         handleTarget __leftOverBytes __targetSocket = do
           sendChannel <- newTBQueueIO _TBQueue_Size 
           receiveChannel <- newTBQueueIO _TBQueue_Size 
 
-          let _logId x = x <> " " <> show _remotePeerAddr
+          let _logId x = x <> " " <> _msg
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
