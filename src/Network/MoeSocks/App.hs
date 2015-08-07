@@ -141,6 +141,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
           receiveChannel <- newTBQueueIO _TBQueue_Size
 
           let _logId x = x <> " " <> _msg
+              _timeout = aConfig ^. timeout
 
           let sendThread = do
                 sendBuilderEncrypted 
@@ -150,14 +151,17 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                   atomically . writeTBQueue sendChannel . Just =<< 
                     _encrypt _partialBytesAfterClientRequest
 
+
                 let _produce = do
                                   produceLoop (_logId "L --> + Loop")
+                                    _timeout
                                     aSocket 
                                     sendChannel 
                                     _encrypt
 
                 let _consume = do
                                   consumeLoop (_logId "L --> - Loop")
+                                    _timeout
                                     __remoteSocket 
                                     sendChannel
                 finally
@@ -169,12 +173,14 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
 
           let receiveThread = do
                 let _produce = produceLoop (_logId "L <-- + Loop")
+                                  _timeout
                                   __remoteSocket 
                                   receiveChannel
                                   _decrypt
 
                 let _consume = do
                                   consumeLoop (_logId "L <-- - Loop")
+                                    _timeout
                                     aSocket 
                                     receiveChannel
                                   {-close aSocket-}
@@ -254,6 +260,7 @@ remoteRequestHandler aConfig aSocket = do
           receiveChannel <- newTBQueueIO _TBQueue_Size 
 
           let _logId x = x <> " " <> _msg
+              _timeout = aConfig ^. timeout
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
@@ -261,6 +268,7 @@ remoteRequestHandler aConfig aSocket = do
 
                 let _produce = do
                                   produceLoop (_logId "R --> + Loop")
+                                    _timeout
                                     aSocket
                                     sendChannel
                                     _decrypt
@@ -268,6 +276,7 @@ remoteRequestHandler aConfig aSocket = do
                                   {-close aSocket-}
 
                 let _consume = consumeLoop (_logId "R --> - Loop")
+                                  _timeout
                                   __targetSocket
                                   sendChannel
 
@@ -281,6 +290,7 @@ remoteRequestHandler aConfig aSocket = do
           let receiveThread = do
                 let _produce = do
                                   produceLoop (_logId "R --> + Loop")
+                                    _timeout
                                     __targetSocket
                                     receiveChannel
                                     _encrypt
@@ -288,6 +298,7 @@ remoteRequestHandler aConfig aSocket = do
 
                 let _consume = do
                                   consumeLoop (_logId "R --> - Loop")
+                                    _timeout
                                     aSocket
                                     receiveChannel
                                   {-close aSocket-}
