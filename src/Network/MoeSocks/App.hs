@@ -183,9 +183,6 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                     _timeout
                                     aSocket 
                                     receiveChannel
-                                  {-close aSocket-}
-
-                                  {-close aSocket-}
                 finally 
                   (
                     connectProduction (Just - _logId "L <-- +", _produce)
@@ -273,8 +270,6 @@ remoteRequestHandler aConfig aSocket = do
                                     sendChannel
                                     _decrypt
 
-                                  {-close aSocket-}
-
                 let _consume = consumeLoop (_logId "R --> - Loop")
                                   _timeout
                                   __targetSocket
@@ -301,7 +296,6 @@ remoteRequestHandler aConfig aSocket = do
                                     _timeout
                                     aSocket
                                     receiveChannel
-                                  {-close aSocket-}
 
                 finally 
                   (
