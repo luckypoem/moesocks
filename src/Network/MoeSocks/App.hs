@@ -137,6 +137,8 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
           sendChannel <- newTBQueueIO _TBQueue_Size
           receiveChannel <- newTBQueueIO _TBQueue_Size
 
+          let _logId x = x <> " " <> show _localPeerAddr
+
           let sendThread = do
                 sendBuilderEncrypted 
                   sendChannel _encrypt _header
@@ -145,40 +147,40 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                   atomically . writeTBQueue sendChannel . Just =<< 
                     _encrypt _partialBytesAfterClientRequest
 
-                let _produce = produceLoop "L --> +Loop"
+                let _produce = produceLoop (_logId "L --> +Loop")
                                   aSocket 
                                   sendChannel 
                                   _encrypt
 
-                let _consume = consumeLoop "L --> -Loop"
+                let _consume = consumeLoop (_logId "L --> -Loop")
                                   __remoteSocket 
                                   sendChannel
                 finally
                   (
-                    waitBothDebug (Just "L --> +", _produce)
-                              (Just "L --> -", _consume)
+                    waitBothDebug (Just - _logId "L --> +", _produce)
+                                  (Just - _logId "L --> -", _consume)
                   ) -
                   tryIO - shutdown __remoteSocket ShutdownSend
 
           let receiveThread = do
-                let _produce = produceLoop "L <-- +Loop"
+                let _produce = produceLoop (_logId "L <-- +Loop")
                                   __remoteSocket 
                                   receiveChannel
                                   _decrypt
 
-                let _consume = consumeLoop "L <-- -Loop"
+                let _consume = consumeLoop (_logId "L <-- -Loop")
                                   aSocket 
                                   receiveChannel
                 finally 
                   (
-                    waitBothDebug (Just "L <-- +", _produce)
-                                  (Just "L <-- -", _consume)
+                    waitBothDebug (Just - _logId "L <-- +", _produce)
+                                  (Just - _logId "L <-- -", _consume)
                   ) -
                   tryIO - shutdown aSocket ShutdownSend
 
           waitBothDebug
-            (Just "L -->", sendThread)
-            (Just "L <--", receiveThread)
+            (Just - _logId "L -->", sendThread)
+            (Just - _logId "L <--", receiveThread)
 
 
     handleLocal _remoteSocket
@@ -241,46 +243,48 @@ remoteRequestHandler aConfig aSocket = do
           sendChannel <- newTBQueueIO _TBQueue_Size 
           receiveChannel <- newTBQueueIO _TBQueue_Size 
 
+          let _logId x = x <> " " <> show _remotePeerAddr
+
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
                   atomically - writeTBQueue sendChannel - Just _leftOverBytes
 
-                let _produce = produceLoop "R --> +Loop"
+                let _produce = produceLoop (_logId "R --> +Loop")
                                 aSocket
                                 sendChannel
                                 _decrypt
 
-                let _consume = consumeLoop "R --> -Loop"
+                let _consume = consumeLoop (_logId "R --> -Loop")
                                   __targetSocket
                                   sendChannel
 
                 finally
                   (
-                    waitBothDebug (Just "R --> +", _produce)
-                                  (Just "R --> -", _consume)
+                    waitBothDebug (Just - _logId "R --> +", _produce)
+                                  (Just - _logId "R --> -", _consume)
                   ) -
                   tryIO - shutdown __targetSocket ShutdownSend
 
           let receiveThread = do
-                let _produce = produceLoop "R --> +Loop"
+                let _produce = produceLoop (_logId "R --> +Loop")
                                   __targetSocket
                                   receiveChannel
                                   _encrypt
 
-                let _consume = consumeLoop "R --> -Loop"
+                let _consume = consumeLoop (_logId "R --> -Loop")
                                   aSocket
                                   receiveChannel
 
                 finally 
                   (
-                    waitBothDebug (Just "R <-- +", _produce)
-                                  (Just "R <-- -", _consume)
+                    waitBothDebug (Just - _logId "R <-- +", _produce)
+                                  (Just - _logId "R <-- -", _consume)
                   ) -
                   tryIO - shutdown aSocket ShutdownSend
 
           waitBothDebug
-            (Just "R -->", sendThread)
-            (Just "R <--", receiveThread)
+            (Just - _logId "R -->", sendThread)
+            (Just - _logId "R <--", receiveThread)
           
     handleTarget _leftOverBytes _targetSocket
 
