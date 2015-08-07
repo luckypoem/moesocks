@@ -6,6 +6,7 @@
 module Network.MoeSocks.Helper where
 
 import Control.Concurrent
+import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Lens
@@ -211,10 +212,19 @@ waitBothDebug x y = do
     handleError
     action
 
+connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+connectTunnel x y = do
+  let _x = wrapIO x
+      _y = wrapIO y
+
+  concurrently _x _y
+  pure ()
+
+
 -- connectTunnel only wait for the former. An exception is raised to
 -- the latter after a coded time after the former has finished.
-connectTunnel:: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectTunnel x y = do
+connectTunnel' :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+connectTunnel' x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
@@ -285,12 +295,21 @@ connectTunnel x y = do
     _init
     handleError
     action
+
+connectProduction :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+connectProduction x y = do
+  let _x = wrapIO x
+      _y = wrapIO y
+
+  concurrently _x _y
+  pure ()
+
 -- connectionProduction do not raise an exception on the latter when
 -- an exception is raised on the former.
 -- The proper termination of the latter is ensured by the logic
 -- inside the former.
-connectProduction :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectProduction x y = do
+connectProduction' :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+connectProduction' x y = do
   let _x = wrapIO x
       _y = wrapIO y
 

@@ -4,6 +4,7 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
+import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Lens
