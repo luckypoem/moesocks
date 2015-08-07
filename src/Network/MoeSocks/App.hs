@@ -440,7 +440,7 @@ moeApp = do
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
 
-          let _maximum_number_of_queued_connection = 1
+          {-let _maximum_number_of_queued_connection = 1 :: Int-}
 
           listen _remoteSocket maxListenQueue
 
