@@ -155,12 +155,12 @@ waitBoth :: IO () -> IO () -> IO ()
 waitBoth x y = do
   waitBothDebug (Nothing, x) (Nothing, y)
 
-data WaitException = WaitException String
+data TimeoutException = TimeoutException String
 
-instance Show WaitException where
-    show (WaitException s) = "Wait exception: " ++ s
+instance Show TimeoutException where
+    show (TimeoutException s) = "Wait exception: " ++ s
 
-instance Exception WaitException
+instance Exception TimeoutException
 
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitBothDebug x y = do
@@ -278,11 +278,11 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
-onlyIn :: String -> Int -> IO a -> IO a
-onlyIn aID aTime aIO = do
+timeoutFor :: String -> Int -> IO a -> IO a
+timeoutFor aID aTime aIO = do
   _r <- timeout aTime aIO
   case _r of
-    Nothing -> throw - WaitException - "Timeout: " <> aID
+    Nothing -> throw - TimeoutException - "Timeout: " <> aID
     Just _r -> pure _r
 
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
@@ -293,7 +293,7 @@ produceLoop aID aSocket aTBQueue f = do
                     {-tryIO aID - close aSocket-}
                   
       _produce = do
-        _r <- onlyIn aID _TimeOut - recv_ aSocket
+        _r <- timeoutFor aID _TimeOut - recv_ aSocket
         if (_r & isn't _Empty) 
           then do
             f _r >>= atomically . writeTBQueue aTBQueue . Just
@@ -315,7 +315,7 @@ consumeLoop aID aSocket aTBQueue = do
         case _r of
           Nothing -> _shutdown
           Just _data -> do
-                          onlyIn aID _TimeOut -
+                          timeoutFor aID _TimeOut -
                             send_ aSocket _data >> _consume
   
   _consume `onException` _shutdown
