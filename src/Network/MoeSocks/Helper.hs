@@ -211,6 +211,70 @@ waitBothDebug x y = do
     handleError
     action
 
+-- connectionProduction do not raise an exception on the latter when
+-- an exception is raised on the former.
+-- The proper termination of the latter is ensured by the logic
+-- inside the former.
+connectProduction :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+connectProduction x y = do
+  let _x = wrapIO x
+      _y = wrapIO y
+
+      _xID = x ^. _1 & fromMaybe ""
+      _yID = y ^. _1 & fromMaybe ""
+      _hID = _xID <> " / " <> _yID
+
+  let _init = mdo
+        _threadXDone <- newEmptyMVar
+        _threadYDone <- newEmptyMVar
+        
+        xThreadID <- forkFinally 
+            (onException _x - (do
+                                  puts - "onException: " 
+                                          <> _xID
+                                          <> ", throwTo thread: "
+                                          <> _yID
+                              )) -
+              const - putMVar _threadXDone ()
+
+        yThreadID <- forkFinally
+            (onException _y - (do
+                                  puts - "onException: " 
+                                          <> _yID
+                                          <> ", throwTo thread: "
+                                          <> _xID
+                                  throwTo xThreadID - WaitException _yID
+                              )) -
+              const - putMVar _threadYDone ()
+
+        return ((_threadXDone, xThreadID), (_threadYDone, yThreadID))
+
+  let handleError ((_, xThreadID), (_, yThreadID)) = do
+        pute - "handleError for " 
+                <> _hID 
+                <> ", killing thread: "
+                <> _xID
+
+        pure xThreadID
+        pure yThreadID
+        
+        killThread xThreadID
+
+
+  let action ((_threadXDone, _), (_threadYDone, _)) = do
+        puts - "waiting for first: " <> _xID
+        takeMVar _threadXDone 
+
+        puts - "waiting for second: " <> _yID
+        takeMVar _threadYDone
+        puts - "All done for " <> _hID
+
+  bracketOnError 
+    _init
+    handleError
+    action
+
+
 getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket aHost aPort aSocketType = do
