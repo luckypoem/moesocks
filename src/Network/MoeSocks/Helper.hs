@@ -104,7 +104,7 @@ logSA = logSocketWithAddress
 logSocket :: String -> IO Socket -> (Socket -> IO a) -> IO a
 logSocket aID _init f =
   catch (bracket _init (logClose aID) f) - \e -> do
-      pute - "Exception in " <> aID <> ": " <> show (e :: SomeException)
+      puts - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       throw e
 
 catchExceptAsyncLog :: String -> IO a -> IO ()
