@@ -176,7 +176,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                   consumeLoop (_logId "L <-- -Loop")
                                     aSocket 
                                     receiveChannel
-                                  close aSocket
+                                  {-close aSocket-}
                 finally 
                   (
                     connectProduction (Just - _logId "L <-- +", _produce)
@@ -282,7 +282,7 @@ remoteRequestHandler aConfig aSocket = do
                                   consumeLoop (_logId "R --> -Loop")
                                     aSocket
                                     receiveChannel
-                                  close aSocket
+                                  {-close aSocket-}
 
                 finally 
                   (
