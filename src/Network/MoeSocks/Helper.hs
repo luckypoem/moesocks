@@ -129,7 +129,7 @@ catchIO aID aIO = catch (() <$ aIO) - \e ->
 logException :: String -> IO a -> IO ()
 logException aID aIO = catch (() <$ aIO) - \e -> 
                         do
-                          putw - "Error in " <> aID <> ": " 
+                          puts - "Error in " <> aID <> ": " 
                             <> show (e :: SomeException)
                           throw e
 
