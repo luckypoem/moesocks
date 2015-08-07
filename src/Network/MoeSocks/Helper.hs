@@ -42,7 +42,7 @@ infixr 0 -
 -- END backports
 
 _TBQueue_Size :: Int
-_TBQueue_Size = 32
+_TBQueue_Size = 1
 
 _TimeOut :: Int
 _TimeOut = 600 * 1000 * 1000 -- 1s
