@@ -384,6 +384,15 @@ parseConfig aFilePath = do
                           . flip mergeConfigObject optionalConfig
                           . fixConfig 
 
+  let 
+      showConfig :: MoeConfig -> ByteString
+      showConfig = 
+                      toStrict 
+                    . encode 
+                    . formatConfig 
+                    . toJSON 
+
+
   case _maybeConfig of
     Nothing -> do
       let _r = 
@@ -393,17 +402,15 @@ parseConfig aFilePath = do
               tell "Example: \n"
 
               let configBS :: ByteString  
-                  configBS = toStrict 
-                                . encode 
-                                . formatConfig 
-                                . toJSON 
-                                - defaultMoeConfig
+                  configBS = showConfig defaultMoeConfig
               
               tell - configBS ^. utf8 <> "\n"
 
       throwError - _r ^. _Text 
 
     Just _config -> do
+      let configStr = showConfig _config ^. utf8 . _Text :: String
+      io - puts - "Using config: " <> configStr
       pure - _config 
               
 
