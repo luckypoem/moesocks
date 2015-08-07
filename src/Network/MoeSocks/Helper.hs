@@ -345,5 +345,5 @@ setSocketCloseOnExec aSocket =
     setFdOption (fromIntegral $ fdSocket aSocket) CloseOnExec True
 
 
-tryIO :: IO a -> IO (Either IOException a)
-tryIO = try
+tryIO :: String -> IO a -> IO (Either IOException ())
+tryIO aID = try . logException aID
