@@ -153,7 +153,17 @@ waitBothDebug x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
-  concurrently _x _y
+      _xID = x ^. _1 & fromMaybe ""
+      _yID = y ^. _1 & fromMaybe ""
+      _hID = _xID <> " / " <> _yID
+
+  withAsync _x - \syncX -> do
+    withAsync _y - \syncY -> do
+      puts - "waiting for first: " <> _xID
+      wait syncX 
+      puts - "waiting for second: " <> _xID
+      wait syncY
+  
   pure ()
 
 waitBothDebug' :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
@@ -225,7 +235,17 @@ connectTunnel x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
-  concurrently _x _y
+      _xID = x ^. _1 & fromMaybe ""
+      _yID = y ^. _1 & fromMaybe ""
+      _hID = _xID <> " / " <> _yID
+
+  withAsync _x - \syncX -> do
+    withAsync _y - \syncY -> do
+      puts - "waiting for first: " <> _xID
+      wait syncX 
+      puts - "waiting for second: " <> _xID
+      wait syncY
+  
   pure ()
 
 
@@ -309,7 +329,17 @@ connectProduction x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
-  concurrently _x _y
+      _xID = x ^. _1 & fromMaybe ""
+      _yID = y ^. _1 & fromMaybe ""
+      _hID = _xID <> " / " <> _yID
+
+  withAsync _x - \syncX -> do
+    withAsync _y - \syncY -> do
+      puts - "waiting for first: " <> _xID
+      wait syncX 
+      puts - "waiting for first: " <> _xID
+      wait syncY
+  
   pure ()
 
 -- connectionProduction do not raise an exception on the latter when
