@@ -151,13 +151,13 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                     _encrypt _partialBytesAfterClientRequest
 
                 let _produce = do
-                                  produceLoop (_logId "L --> +Loop")
+                                  produceLoop (_logId "L --> + Loop")
                                     aSocket 
                                     sendChannel 
                                     _encrypt
 
                 let _consume = do
-                                  consumeLoop (_logId "L --> -Loop")
+                                  consumeLoop (_logId "L --> - Loop")
                                     __remoteSocket 
                                     sendChannel
                 finally
@@ -168,13 +168,13 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                   pure ()
 
           let receiveThread = do
-                let _produce = produceLoop (_logId "L <-- +Loop")
+                let _produce = produceLoop (_logId "L <-- + Loop")
                                   __remoteSocket 
                                   receiveChannel
                                   _decrypt
 
                 let _consume = do
-                                  consumeLoop (_logId "L <-- -Loop")
+                                  consumeLoop (_logId "L <-- - Loop")
                                     aSocket 
                                     receiveChannel
                                   {-close aSocket-}
@@ -260,14 +260,14 @@ remoteRequestHandler aConfig aSocket = do
                   atomically - writeTBQueue sendChannel - Just _leftOverBytes
 
                 let _produce = do
-                                  produceLoop (_logId "R --> +Loop")
+                                  produceLoop (_logId "R --> + Loop")
                                     aSocket
                                     sendChannel
                                     _decrypt
 
                                   {-close aSocket-}
 
-                let _consume = consumeLoop (_logId "R --> -Loop")
+                let _consume = consumeLoop (_logId "R --> - Loop")
                                   __targetSocket
                                   sendChannel
 
@@ -280,14 +280,14 @@ remoteRequestHandler aConfig aSocket = do
 
           let receiveThread = do
                 let _produce = do
-                                  produceLoop (_logId "R --> +Loop")
+                                  produceLoop (_logId "R --> + Loop")
                                     __targetSocket
                                     receiveChannel
                                     _encrypt
 
 
                 let _consume = do
-                                  consumeLoop (_logId "R --> -Loop")
+                                  consumeLoop (_logId "R --> - Loop")
                                     aSocket
                                     receiveChannel
                                   {-close aSocket-}
