@@ -150,10 +150,12 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                   atomically . writeTBQueue sendChannel . Just =<< 
                     _encrypt _partialBytesAfterClientRequest
 
-                let _produce = produceLoop (_logId "L --> +Loop")
-                                  aSocket 
-                                  sendChannel 
-                                  _encrypt
+                let _produce = do
+                                  produceLoop (_logId "L --> +Loop")
+                                    aSocket 
+                                    sendChannel 
+                                    _encrypt
+                                  close aSocket
 
                 let _consume = do
                                   consumeLoop (_logId "L --> -Loop")
