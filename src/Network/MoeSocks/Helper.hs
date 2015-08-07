@@ -340,18 +340,18 @@ readAll aTBQueue = do
 
   where 
     readMore :: ByteString -> TBQueue (Maybe ByteString) -> STM ByteString
-    readMore _acc aTBQueue = do
-      _empty <- isEmptyTBQueue aTBQueue
+    readMore _acc _q = do
+      _empty <- isEmptyTBQueue _q 
       if _empty
         then pure - _acc
         else 
           do
-            _more <- readTBQueue aTBQueue
+            _more <- readTBQueue _q 
             case _more of
               Nothing -> do
-                            unGetTBQueue aTBQueue Nothing
+                            unGetTBQueue _q Nothing
                             pure - _acc
-              Just _r -> readMore (_acc <> _r) aTBQueue
+              Just _r -> readMore (_acc <> _r) _q
               
 
 
