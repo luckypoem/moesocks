@@ -133,6 +133,14 @@ logException aID aIO = catch (() <$ aIO) - \e ->
                             <> show (e :: SomeException)
                           throw e
 
+logWaitIO :: (Maybe String, IO a) -> IO ()
+logWaitIO x = do
+  let _io = wrapIO x
+      aID = x ^. _1 & fromMaybe ""
+
+  puts - "waiting for : " <> aID
+  _io
+  
 wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
   logException (fromMaybe "" s) _io 
@@ -150,20 +158,11 @@ instance Exception WaitException
 
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitBothDebug x y = do
-  let _x = wrapIO x
-      _y = wrapIO y
-
-      _xID = x ^. _1 & fromMaybe ""
+  concurrently (logWaitIO x) (logWaitIO y)
+  let _xID = x ^. _1 & fromMaybe ""
       _yID = y ^. _1 & fromMaybe ""
       _hID = _xID <> " / " <> _yID
-
-  withAsync _x - \syncX -> do
-    withAsync _y - \syncY -> do
-      puts - "waiting for first: " <> _xID
-      wait syncX 
-      puts - "waiting for second: " <> _xID
-      wait syncY
-  
+  puts - "All done for " <> _hID
   pure ()
 
 waitBothDebug' :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
@@ -231,22 +230,7 @@ waitBothDebug' x y = do
     action
 
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectTunnel x y = do
-  let _x = wrapIO x
-      _y = wrapIO y
-
-      _xID = x ^. _1 & fromMaybe ""
-      _yID = y ^. _1 & fromMaybe ""
-      _hID = _xID <> " / " <> _yID
-
-  withAsync _x - \syncX -> do
-    withAsync _y - \syncY -> do
-      puts - "waiting for first: " <> _xID
-      wait syncX 
-      puts - "waiting for second: " <> _xID
-      wait syncY
-  
-  pure ()
+connectTunnel = waitBothDebug
 
 
 -- connectTunnel only wait for the former. An exception is raised to
@@ -324,23 +308,9 @@ connectTunnel' x y = do
     handleError
     action
 
+
 connectProduction :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectProduction x y = do
-  let _x = wrapIO x
-      _y = wrapIO y
-
-      _xID = x ^. _1 & fromMaybe ""
-      _yID = y ^. _1 & fromMaybe ""
-      _hID = _xID <> " / " <> _yID
-
-  withAsync _x - \syncX -> do
-    withAsync _y - \syncY -> do
-      puts - "waiting for first: " <> _xID
-      wait syncX 
-      puts - "waiting for first: " <> _xID
-      wait syncY
-  
-  pure ()
+connectProduction = waitBothDebug
 
 -- connectionProduction do not raise an exception on the latter when
 -- an exception is raised on the former.
