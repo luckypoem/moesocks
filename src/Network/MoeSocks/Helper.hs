@@ -211,6 +211,80 @@ waitBothDebug x y = do
     handleError
     action
 
+-- connectTunnel only wait for the former. An exception is raised to
+-- the latter after a coded time after the former has finished.
+connectTunnel:: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+connectTunnel x y = do
+  let _x = wrapIO x
+      _y = wrapIO y
+
+      _xID = x ^. _1 & fromMaybe ""
+      _yID = y ^. _1 & fromMaybe ""
+      _hID = _xID <> " / " <> _yID
+
+  let _init = mdo
+        _threadXDone <- newEmptyMVar
+        _threadYDone <- newEmptyMVar
+
+        
+        xThreadID <- forkFinally 
+            (onException _x - (do
+                                  puts - "onException: " 
+                                          <> _xID
+                                          <> ", throwTo thread: "
+                                          <> _yID
+                                  throwTo yThreadID - WaitException _xID
+                              )) -
+              const - putMVar _threadXDone ()
+
+        yThreadID <- forkFinally
+            (onException _y - (do
+                                  puts - "onException: " 
+                                          <> _yID
+                                          <> ", throwTo thread: "
+                                          <> _xID
+                                  throwTo xThreadID - WaitException _yID
+                              )) -
+              const - putMVar _threadYDone ()
+
+        return ((_threadXDone, xThreadID), (_threadYDone, yThreadID))
+
+  let handleError ((_, xThreadID), (_, yThreadID)) = do
+        pute - "handleError for " 
+                <> _hID 
+                <> ", killing thread: "
+                <> _xID
+
+        pure xThreadID
+        pure yThreadID
+        
+        killThread xThreadID
+
+        {-throwTo yThreadID - WaitException _yID-}
+        {-throwTo xThreadID - WaitException _xID-}
+        {-killThread xThreadID-}
+
+  let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
+        puts - "waiting for first: " <> _xID
+        takeMVar _threadXDone 
+
+        puts - "waiting for second: " <> _yID
+        isEmptyMVar _threadYDone >>=
+          flip when ( do
+                          let oneSec = 1000000
+                          threadDelay oneSec
+                          isEmptyMVar _threadYDone >>=
+                            flip when (throwTo yThreadID - 
+                                        WaitException _yID
+                                      )
+                   )
+
+        puts - "All done for " <> _hID
+
+  bracketOnError 
+    _init
+    handleError
+    action
 -- connectionProduction do not raise an exception on the latter when
 -- an exception is raised on the former.
 -- The proper termination of the latter is ensured by the logic
