@@ -158,7 +158,7 @@ waitBoth x y = do
 data TimeoutException = TimeoutException String
 
 instance Show TimeoutException where
-    show (TimeoutException s) = "Wait exception: " ++ s
+    show (TimeoutException s) = "Timeout exception: " ++ s
 
 instance Exception TimeoutException
 
@@ -282,7 +282,7 @@ timeoutFor :: String -> Int -> IO a -> IO a
 timeoutFor aID aTime aIO = do
   _r <- timeout aTime aIO
   case _r of
-    Nothing -> throw - TimeoutException - "Timeout: " <> aID
+    Nothing -> throw - TimeoutException aID
     Just _r -> pure _r
 
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
