@@ -46,7 +46,7 @@ _TBQueue_Size :: Int
 _TBQueue_Size = 32
 
 _TimeOut :: Int
-_TimeOut = 1 * 1000 * 1000 -- 1s
+_TimeOut = 600 * 1000 * 1000 -- 1s
 
 
 io :: (MonadIO m) => IO a -> m a
