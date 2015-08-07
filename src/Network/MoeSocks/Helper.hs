@@ -276,7 +276,10 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
 produceLoop aID aSocket aTBQueue f = do
-  let _shutdown = tryIO aID - shutdown aSocket ShutdownReceive
+  let _shutdown = do
+                    tryIO aID - shutdown aSocket ShutdownReceive
+                    tryIO aID - close aSocket
+                  
       _produce = do
         _r <- recv_ aSocket 
         if (_r & isn't _Empty) 
@@ -291,7 +294,9 @@ produceLoop aID aSocket aTBQueue f = do
 
 consumeLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> IO ()
 consumeLoop aID aSocket aTBQueue = do
-  let _shutdown = tryIO aID - shutdown aSocket ShutdownSend
+  let _shutdown = do
+                    tryIO aID - shutdown aSocket ShutdownSend
+                    {-tryIO aID - close aSocket-}
       _consume = do
         _r <- atomically - readTBQueue aTBQueue 
         case _r of
