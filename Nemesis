@@ -40,7 +40,7 @@ nemesis = do
   
   desc "local"
   task "local" - do
-    sh "cabal run -- -m local -c dev.json -L 5300:8.8.8.8:53"
+    sh "cabal run -- -m local -c dev.json"
 
   desc "ssserver"
   task "ssserver" - do
