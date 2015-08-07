@@ -278,7 +278,7 @@ produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) ->
 produceLoop aID aSocket aTBQueue f = do
   let _shutdown = do
                     tryIO aID - shutdown aSocket ShutdownReceive
-                    tryIO aID - close aSocket
+                    {-tryIO aID - close aSocket-}
                   
       _produce = do
         _r <- recv_ aSocket 
