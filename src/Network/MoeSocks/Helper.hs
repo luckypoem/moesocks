@@ -287,6 +287,7 @@ produceLoop aID aSocket aTBQueue f = do
             f _r >>= atomically . writeTBQueue aTBQueue . Just
             _produce 
           else do
+            puts -  "Half closed: " <> aID 
             atomically - writeTBQueue aTBQueue Nothing
 
   _produce `onException` _shutdown
