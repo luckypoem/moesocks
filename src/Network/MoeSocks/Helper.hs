@@ -131,36 +131,11 @@ logException aID aIO = catch (() <$ aIO) - \e ->
 
 wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
-  pure s
-  {-forM_ s - puts . ("+ " <>)-}
-  {-catchExceptAsyncLog (fromMaybe "" s) _io -}
-  {-catchIO (fromMaybe "" s) _io -}
-  {-() <$ _io -}
   logException (fromMaybe "" s) _io 
-  {-catch  (() <$ _io) - \(e :: IOException) -> pure ()-}
-    {-<* (forM_ s - puts . ("- " <>))-}
-                
-{-waitFirst :: IO () -> IO () -> IO ()-}
-{-waitFirst = runWait True False-}
-
-{-waitFirstDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
-{-waitFirstDebug = runWaitDebug True False-}
 
 waitBoth :: IO () -> IO () -> IO ()
-waitBoth = runWait True True
-
-waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-waitBothDebug = runWaitDebug True True
-
-{-waitNone :: IO () -> IO () -> IO ()-}
-{-waitNone = runWait False False-}
-
-{-waitNoneDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
-{-waitNoneDebug = runWaitDebug False False-}
-
-runWait :: Bool -> Bool -> IO () -> IO () -> IO ()
-runWait _waitX _waitY x y = do
-  runWaitDebug _waitX _waitY (Nothing, x) (Nothing, y)
+waitBoth x y = do
+  waitBothDebug (Nothing, x) (Nothing, y)
 
 data WaitException = WaitException String
 
@@ -169,9 +144,8 @@ instance Show WaitException where
 
 instance Exception WaitException
 
-runWaitDebug :: Bool -> Bool -> (Maybe String, IO ()) -> 
-                          (Maybe String, IO ()) -> IO ()
-runWaitDebug _waitX _waitY x y = do
+waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+waitBothDebug x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
@@ -188,7 +162,7 @@ runWaitDebug _waitX _waitY x y = do
             (onException _x - (do
                                   puts - "onException: " 
                                           <> _xID
-                                          <> ", ending thread: "
+                                          <> ", throwTo thread: "
                                           <> _yID
                                   throwTo yThreadID - WaitException _xID
                               )) -
@@ -198,7 +172,7 @@ runWaitDebug _waitX _waitY x y = do
             (onException _y - (do
                                   puts - "onException: " 
                                           <> _yID
-                                          <> ", ending thread: "
+                                          <> ", throwTo thread: "
                                           <> _xID
                                   throwTo xThreadID - WaitException _yID
                               )) -
@@ -207,23 +181,23 @@ runWaitDebug _waitX _waitY x y = do
         return ((_threadXDone, xThreadID), (_threadYDone, yThreadID))
 
   let handleError ((_, xThreadID), (_, yThreadID)) = do
-        pute - "handleError for " <> _hID 
+        pute - "handleError for " 
+                <> _hID 
+                <> ", killing thread: "
+                <> _xID
+
         pure xThreadID
         pure yThreadID
-        pure ()
+        
         killThread xThreadID
+
         {-throwTo yThreadID - WaitException _yID-}
         {-throwTo xThreadID - WaitException _xID-}
         {-killThread xThreadID-}
 
-  let action ((_threadXDone, _), (_threadYDone, yThreadID)) = do
+  let action ((_threadXDone, _), (_threadYDone, _)) = do
         puts - "waiting for first: " <> _xID
         takeMVar _threadXDone 
-
-        when (not _waitY) - do
-          _threadYRunning <- isEmptyMVar _threadYDone
-          when _threadYRunning - killThread yThreadID
-          puts - "killing thread Y: " <> _yID
 
         puts - "waiting for second: " <> _yID
         takeMVar _threadYDone
@@ -338,7 +312,7 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
 produceLoop _ aSocket aTBQueue f = 
-   finally _produce - do
+  finally _produce - do
     atomically - writeTBQueue aTBQueue Nothing
 
   where
