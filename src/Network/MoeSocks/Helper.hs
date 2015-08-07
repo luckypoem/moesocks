@@ -311,12 +311,12 @@ consumeLoop aID aSocket aTBQueue = do
                     tryIO aID - shutdown aSocket ShutdownSend
                     {-tryIO aID - close aSocket-}
       _consume = do
-        _r <- atomically - readAll aTBQueue 
+        _r <- fmap (fmap reverse) - atomically - readAll aTBQueue 
         case _r of
           Nothing -> _shutdown
           Just _data -> do
                           timeoutFor aID _TimeOut -
-                            send_ aSocket _data >> _consume
+                            sendMany aSocket _data >> _consume
   
   _consume `onException` _shutdown
   pure ()
@@ -330,16 +330,16 @@ setSocketCloseOnExec aSocket =
     setFdOption (fromIntegral $ fdSocket aSocket) CloseOnExec True
 
 
-readAll :: TBQueue (Maybe ByteString) -> STM (Maybe ByteString)
+readAll :: TBQueue (Maybe ByteString) -> STM (Maybe [ByteString])
 readAll aTBQueue = do
   _r <- readTBQueue aTBQueue
   case _r of
     Nothing -> pure Nothing
     Just _b -> do
-                fmap Just - readMore _b aTBQueue
+                fmap Just - readMore [_b] aTBQueue
 
   where 
-    readMore :: ByteString -> TBQueue (Maybe ByteString) -> STM ByteString
+    readMore :: [ByteString] -> TBQueue (Maybe ByteString) -> STM [ByteString]
     readMore _acc _q = do
       _empty <- isEmptyTBQueue _q 
       if _empty
@@ -351,7 +351,7 @@ readAll aTBQueue = do
               Nothing -> do
                             unGetTBQueue _q Nothing
                             pure - _acc
-              Just _r -> readMore (_acc <> _r) _q
+              Just _r -> readMore (_r : _acc) _q
               
 
 
