@@ -141,7 +141,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
           receiveChannel <- newTBQueueIO _TBQueue_Size
 
           let _logId x = x <> " " <> _msg
-              _timeout = aConfig ^. timeout
+              _timeout = aConfig ^. timeout * 1000 * 1000
 
           let sendThread = do
                 sendBuilderEncrypted 
@@ -260,7 +260,7 @@ remoteRequestHandler aConfig aSocket = do
           receiveChannel <- newTBQueueIO _TBQueue_Size 
 
           let _logId x = x <> " " <> _msg
-              _timeout = aConfig ^. timeout
+              _timeout = aConfig ^. timeout * 1000 * 1000
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
