@@ -163,7 +163,11 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                     waitBothDebug (Just - _logId "L --> +", _produce)
                                   (Just - _logId "L --> -", _consume)
                   ) -
-                  tryIO - shutdown __remoteSocket ShutdownSend
+                  do
+                    tryIO "L remote Send" - 
+                              shutdown __remoteSocket ShutdownSend
+                    tryIO "L client Recv" - 
+                              shutdown aSocket ShutdownReceive
 
           let receiveThread = do
                 let _produce = produceLoop (_logId "L <-- +Loop")
@@ -179,7 +183,11 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                     waitBothDebug (Just - _logId "L <-- +", _produce)
                                   (Just - _logId "L <-- -", _consume)
                   ) -
-                  tryIO - shutdown aSocket ShutdownSend
+                  do
+                    tryIO "L client Send" -
+                              shutdown aSocket ShutdownSend
+                    {-tryIO "L remote Recv" --}
+                              {-shutdown __remoteSocket ShutdownReceive-}
 
           waitBothDebug
             (Just - _logId "L -->", sendThread)
@@ -267,7 +275,11 @@ remoteRequestHandler aConfig aSocket = do
                     waitBothDebug (Just - _logId "R --> +", _produce)
                                   (Just - _logId "R --> -", _consume)
                   ) -
-                  tryIO - shutdown __targetSocket ShutdownSend
+                  do
+                    tryIO "R target Send" - 
+                            shutdown __targetSocket ShutdownSend
+                    tryIO "R remote Recv" - 
+                            shutdown aSocket ShutdownReceive
 
           let receiveThread = do
                 let _produce = produceLoop (_logId "R --> +Loop")
@@ -284,7 +296,11 @@ remoteRequestHandler aConfig aSocket = do
                     waitBothDebug (Just - _logId "R <-- +", _produce)
                                   (Just - _logId "R <-- -", _consume)
                   ) -
-                  tryIO - shutdown aSocket ShutdownSend
+                  do 
+                    tryIO "R remote Send" - 
+                            shutdown aSocket ShutdownSend
+                    {-tryIO "R target Recv" --}
+                            {-shutdown __targetSocket ShutdownReceive-}
 
           waitBothDebug
             (Just - _logId "R -->", sendThread)
