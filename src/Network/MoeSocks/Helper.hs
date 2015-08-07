@@ -42,7 +42,7 @@ infixr 0 -
 -- END backports
 
 _TBQueue_Size :: Int
-_TBQueue_Size = 8192
+_TBQueue_Size = 32
 
 
 io :: (MonadIO m) => IO a -> m a
