@@ -442,7 +442,7 @@ moeApp = do
 
           let _maximum_number_of_queued_connection = 1
 
-          listen _remoteSocket _maximum_number_of_queued_connection 
+          listen _remoteSocket maxListenQueue
 
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
