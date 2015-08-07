@@ -50,6 +50,12 @@ showConnectionType TCP_IP_stream_connection = "TCP_Stream"
 showConnectionType TCP_IP_port_binding      = "TCP_Bind  "
 showConnectionType UDP_port                 = "UDP       "
 
+showRequest :: ClientRequest -> String
+showRequest _r =  
+                   view _Text (showAddressType (_r ^. addressType))
+                <> ":"
+                <> show (_r ^. portNumber)
+
 processLocalSocks5Request :: Socket -> IO (ClientRequest, ByteString)
 processLocalSocks5Request aSocket = do
   (_partialBytesAfterGreeting, r) <- 
@@ -111,11 +117,6 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
       let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
       send_ aSocket - builder_To_ByteString _connectionReplyBuilder
     
-    let showRequest :: ClientRequest -> String
-        showRequest _r =  
-                           view _Text (showAddressType (_r ^. addressType))
-                        <> ":"
-                        <> show (_r ^. portNumber)
 
     let _msg = 
                 concat - L.intersperse " -> " 
@@ -202,7 +203,7 @@ remoteRequestHandler aConfig aSocket = do
                                           aSocket
                                           
 
-  puts - "Remote get: " <> show _clientRequest
+  {-puts - "Remote get: " <> show _clientRequest-}
   
   let
       initTarget :: ClientRequest -> IO (Socket, SockAddr)
@@ -232,10 +233,10 @@ remoteRequestHandler aConfig aSocket = do
     _targetPeerAddr <- getPeerName _targetSocket
 
     let _msg = 
-                concat - L.intersperse " -> " - map show
+                concat - L.intersperse " -> " - 
                 [ 
-                  _remotePeerAddr
-                , _targetPeerAddr
+                  show _remotePeerAddr
+                , showRequest _clientRequest
                 ]
 
     _log - "R " -- <> showConnectionType (_clientRequest ^. connectionType)
