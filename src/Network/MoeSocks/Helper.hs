@@ -41,7 +41,7 @@ infixr 0 -
 -- END backports
 
 _TBQueue_Size :: Int
-_TBQueue_Size = 32
+_TBQueue_Size = 128
 
 io :: (MonadIO m) => IO a -> m a
 io = liftIO
