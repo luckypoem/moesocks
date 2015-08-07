@@ -10,7 +10,7 @@ ping = do
         sh "curl -x socks5://localhost:1090 localhost:8080; exit 0"
 
 
-run x = sh - "cabal run -- +RTS -N " ++ x
+run x = sh - "cabal run -- " ++ x
 
 nemesis = do
 
