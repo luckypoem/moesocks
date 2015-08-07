@@ -44,9 +44,6 @@ infixr 0 -
 _TBQueue_Size :: Int
 _TBQueue_Size = 32
 
-_TimeOut :: Int
-_TimeOut = 600 * 1000 * 1000 -- 1s
-
 
 io :: (MonadIO m) => IO a -> m a
 io = liftIO
@@ -278,22 +275,24 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
-timeoutFor :: String -> Int -> IO a -> IO a
-timeoutFor aID aTime aIO = do
-  _r <- timeout aTime aIO
+type Timeout = Int
+
+timeoutFor :: String -> Timeout -> IO a -> IO a
+timeoutFor aID aTimeout aIO = do
+  _r <- timeout aTimeout aIO
   case _r of
     Nothing -> throw - TimeoutException aID
     Just _r -> pure _r
 
-produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
+produceLoop :: String -> Timeout -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
-produceLoop aID aSocket aTBQueue f = do
+produceLoop aID aTimeout aSocket aTBQueue f = do
   let _shutdown = do
                     tryIO aID - shutdown aSocket ShutdownReceive
                     {-tryIO aID - close aSocket-}
                   
       _produce = do
-        _r <- timeoutFor aID _TimeOut - recv_ aSocket
+        _r <- timeoutFor aID aTimeout - recv_ aSocket
         if (_r & isn't _Empty) 
           then do
             f _r >>= atomically . writeTBQueue aTBQueue . Just
@@ -305,8 +304,8 @@ produceLoop aID aSocket aTBQueue f = do
   _produce `onException` _shutdown
   pure ()
 
-consumeLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> IO ()
-consumeLoop aID aSocket aTBQueue = do
+consumeLoop :: String -> Timeout -> Socket -> TBQueue (Maybe ByteString) -> IO ()
+consumeLoop aID aTimeout aSocket aTBQueue = do
   let _shutdown = do
                     tryIO aID - shutdown aSocket ShutdownSend
                     {-tryIO aID - close aSocket-}
@@ -315,7 +314,7 @@ consumeLoop aID aSocket aTBQueue = do
         case _r of
           Nothing -> _shutdown
           Just _data -> do
-                          timeoutFor aID _TimeOut -
+                          timeoutFor aID aTimeout -
                             sendMany aSocket _data >> _consume
   
   _consume `onException` _shutdown

@@ -44,7 +44,8 @@ data ClientRequest = ClientRequest
   deriving (Show, Eq)
 
 makeLenses ''ClientRequest
- 
+
+
 data MoeConfig = MoeConfig
   {
     _remote :: Text
