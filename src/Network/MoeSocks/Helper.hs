@@ -153,6 +153,14 @@ waitBothDebug x y = do
   let _x = wrapIO x
       _y = wrapIO y
 
+  concurrently _x _y
+  pure ()
+
+waitBothDebug' :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+waitBothDebug' x y = do
+  let _x = wrapIO x
+      _y = wrapIO y
+
       _xID = x ^. _1 & fromMaybe ""
       _yID = y ^. _1 & fromMaybe ""
       _hID = _xID <> " / " <> _yID
