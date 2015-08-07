@@ -283,7 +283,7 @@ onlyIn aID aTime aIO = do
   _r <- timeout aTime aIO
   case _r of
     Nothing -> throw - WaitException - "Timeout: " <> aID
-    Just _r -> pure r
+    Just _r -> pure _r
 
 produceLoop :: String -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
