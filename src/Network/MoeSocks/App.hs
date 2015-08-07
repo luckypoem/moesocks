@@ -410,7 +410,7 @@ moeApp = do
           setSocketOption _localSocket ReuseAddr 1
           bindSocket _localSocket _localAddr
 
-          listen _localSocket 1
+          listen _localSocket maxListenQueue
 
           let handleLocal _socket = do
                 (_newSocket, _) <- accept _socket
