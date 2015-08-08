@@ -4,6 +4,6 @@
   "local_address":"localhost",
   "local_port":1090,
   "password":"birthday!",
-  "method":"aes-256-cfb"
+  "method":"none"
 }
 

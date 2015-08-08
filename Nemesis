@@ -18,9 +18,9 @@ nemesis = do
   task "h" - do
     sh "halive src/HaliveMain.hs src"
 
-  desc "run"
-  task "run" - do
-    sh "cabal run -- -m debug -c config.json"
+  desc "bench"
+  task "bench" - do
+    sh "cabal run -- -m debug -c bench.json"
 
 
   desc "test port forwarding with a tcp dns request"
