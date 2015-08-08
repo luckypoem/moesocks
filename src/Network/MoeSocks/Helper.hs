@@ -310,7 +310,7 @@ consumeLoop aID aTimeout aSocket aTBQueue = do
                     tryIO aID - shutdown aSocket ShutdownSend
                     {-tryIO aID - close aSocket-}
       _consume = do
-        _r <- fmap (fmap reverse) - atomically - readAll aTBQueue 
+        _r <- atomically - readAll aTBQueue 
         case _r of
           Nothing -> _shutdown
           Just _data -> do
@@ -335,7 +335,7 @@ readAll aTBQueue = do
   case _r of
     Nothing -> pure Nothing
     Just _b -> do
-                fmap Just - readMore [_b] aTBQueue
+                fmap (Just . reverse) - readMore [_b] aTBQueue
 
   where 
     readMore :: [ByteString] -> TBQueue (Maybe ByteString) -> STM [ByteString]
