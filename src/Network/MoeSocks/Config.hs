@@ -18,7 +18,7 @@ defaultMoeConfig = MoeConfig
   , _timeout = 300
   , _tcpBufferSizeInPacket = 16
   , _throttle = True
-  , _throttleSpeed = 8000
+  , _throttleSpeed = 2000
   }
 
 
