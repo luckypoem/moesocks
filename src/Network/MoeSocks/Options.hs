@@ -19,7 +19,7 @@ optionParser =
                     short 'm'
                 <>  long "mode"
                 <>  metavar "MODE"
-                <>  help "Tells moesocks to runs in local or remote mode"
+                <>  help "Tell moesocks to runs in local or remote mode"
               ) <|> pure "local" 
   
       parseMode :: String -> RunningMode
@@ -35,7 +35,7 @@ optionParser =
                       short 'c'
                   <>  long "config"
                   <>  metavar "CONFIG"
-                  <>  help "Points to the path to the configuration file"
+                  <>  help "Point to the path to the configuration file"
                 ) <|> pure "config.json"
                  
   in
@@ -44,7 +44,7 @@ optionParser =
       __verbosity = flag INFO DEBUG -
                           short 'v'
                       <>  long "verbose"
-                      <>  help "Turns on logging"
+                      <>  help "Turn on logging"
   in
 
 
@@ -53,7 +53,7 @@ optionParser =
                           short 'L'
                       <>  metavar "port:host:hostport"
                       <>  help (""
-                                <> "Specifies that the given port on the local"
+                                <> "Specify that the given port on the local"
                                 <> "(client) host is to be forwarded to the "
                                 <> "given host and port on the remote side."
                                 )
