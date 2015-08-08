@@ -56,6 +56,8 @@ data MoeConfig = MoeConfig
   , _method :: Text
   , _timeout :: Int
   , _tcpBufferSizeInPacket :: Int
+  , _throttle :: Bool
+  , _throttleSpeed :: Double
   }
   deriving (Show, Eq, Generic)
 

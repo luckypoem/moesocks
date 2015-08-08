@@ -142,6 +142,10 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
 
           let _logId x = x <> " " <> _msg
               _timeout = aConfig ^. timeout * 1000 * 1000
+              _throttle = 
+                if aConfig ^. throttle
+                  then Just - aConfig ^. throttleSpeed
+                  else Nothing
 
           let sendThread = do
                 sendBuilderEncrypted 
@@ -155,6 +159,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                 let _produce = do
                                   produceLoop (_logId "L --> + Loop")
                                     _timeout
+                                    _throttle
                                     aSocket 
                                     sendChannel 
                                     _encrypt
@@ -162,6 +167,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                 let _consume = do
                                   consumeLoop (_logId "L --> - Loop")
                                     _timeout
+                                    _throttle
                                     __remoteSocket 
                                     sendChannel
                 finally
@@ -174,6 +180,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
           let receiveThread = do
                 let _produce = produceLoop (_logId "L <-- + Loop")
                                   _timeout
+                                  _throttle
                                   __remoteSocket 
                                   receiveChannel
                                   _decrypt
@@ -181,6 +188,7 @@ localRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                 let _consume = do
                                   consumeLoop (_logId "L <-- - Loop")
                                     _timeout
+                                    _throttle
                                     aSocket 
                                     receiveChannel
                 finally 
@@ -258,6 +266,11 @@ remoteRequestHandler aConfig aSocket = do
 
           let _logId x = x <> " " <> _msg
               _timeout = aConfig ^. timeout * 1000 * 1000
+              
+              _throttle = 
+                if aConfig ^. throttle
+                  then Just - aConfig ^. throttleSpeed
+                  else Nothing
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
@@ -266,12 +279,14 @@ remoteRequestHandler aConfig aSocket = do
                 let _produce = do
                                   produceLoop (_logId "R --> + Loop")
                                     _timeout
+                                    _throttle
                                     aSocket
                                     sendChannel
                                     _decrypt
 
                 let _consume = consumeLoop (_logId "R --> - Loop")
                                   _timeout
+                                  _throttle
                                   __targetSocket
                                   sendChannel
 
@@ -286,6 +301,7 @@ remoteRequestHandler aConfig aSocket = do
                 let _produce = do
                                   produceLoop (_logId "R --> + Loop")
                                     _timeout
+                                    _throttle
                                     __targetSocket
                                     receiveChannel
                                     _encrypt
@@ -294,6 +310,7 @@ remoteRequestHandler aConfig aSocket = do
                 let _consume = do
                                   consumeLoop (_logId "R --> - Loop")
                                     _timeout
+                                    _throttle
                                     aSocket
                                     receiveChannel
 
