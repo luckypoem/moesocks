@@ -372,7 +372,12 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
         case _r of
           Nothing -> () <$ _shutdown
           Just _data -> do
-                          timeoutFor aID aTimeout - send_ aSocket _data 
+                          _len <- timeoutFor aID aTimeout - send aSocket _data 
+
+                          when (_len < S.length _data) - do
+                            atomically - unGetTBQueue aTBQueue -
+                                            Just - S.drop _len _data
+                            
                           yield
                           _consume - 
                             _bytesSent + S.length _data
