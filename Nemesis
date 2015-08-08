@@ -21,7 +21,7 @@ nemesis = do
 
   desc "bench"
   task "bench" - do
-    sh "cabal run -- -m debug -c bench.json"
+    sh "cabal run -- -m debug -c bench/bench.json -v"
 
   desc "bench-load"
   task "bench-load" - do  
