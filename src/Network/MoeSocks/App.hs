@@ -438,14 +438,15 @@ moeApp = do
 
   let _method = _config ^. method . _Text
 
-  _cipher <- io - withOpenSSL - getCipherByName _method
+  when (_method /= "none") - do
+    _cipher <- io - withOpenSSL - getCipherByName _method
 
-  case _cipher of
-    Nothing -> throwError - "Invalid method '" 
-                            <> _method
-                            <> "' in "
-                            <> _options ^. configFile . _Text
-    Just _ -> pure ()
+    case _cipher of
+      Nothing -> throwError - "Invalid method '" 
+                              <> _method
+                              <> "' in "
+                              <> _options ^. configFile . _Text
+      Just _ -> pure ()
 
   let localAppBuilder :: String -> (Socket -> IO ()) -> (Socket, SockAddr) -> 
                             IO ()

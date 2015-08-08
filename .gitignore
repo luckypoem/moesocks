@@ -18,3 +18,7 @@ cabal.sandbox.config
 dev.json
 dev-shadowsocks.json
 dev*.json
+
+*.mp4
+
+vendor
