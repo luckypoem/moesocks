@@ -19,15 +19,34 @@ nemesis = do
   task "h" - do
     sh "halive src/HaliveMain.hs src"
 
-  desc "bench"
-  task "bench" - do
-    sh "cabal run -- -m debug -c bench/bench.json -v"
+  namespace "bench" - do
+    desc "run"
+    task "run" - do
+      sh "cabal run -- -m debug -c bench/bench.json -v"
+    
+    let url = "http://192.168.1.102:8080/test.mp4"
+        cmd = "parallel --no-notice curl -x socks5://localhost:1091 -o /dev/null" 
+        args = concatMap (<> " ") - replicate 4 url
 
-  desc "bench-load"
-  task "bench-load" - do  
-    forever -
-      sh - "curl -x socks5://localhost:1091 -o /dev/null "
-            <> "http://192.168.1.102:8080/test.mp4"
+    desc "load"
+    task "load" - do  
+        forever-
+          sh - "curl -x socks5://localhost:1091 -o /dev/null"
+              <> " "
+              <> url
+    
+    desc "parallel-one"
+    task "parallel-one" - do  
+      sh - cmd
+            <> " ::: "
+            <> args
+
+    desc "parallel"
+    task "parallel" - do  
+      forever - 
+        sh - cmd
+              <> " ::: "
+              <> args
 
 
   desc "test port forwarding with a tcp dns request"
