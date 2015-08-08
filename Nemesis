@@ -48,11 +48,11 @@ nemesis = do
 
   desc "debug-remote"
   task "debug-remote" - do
-    run "-m remote -c dev.json -v DEBUG"
+    run "-m remote -c dev.json -v"
   
   desc "debug-local"
   task "debug-local" - do
-    run "-m local -c dev.json -v DEBUG"
+    run "-m local -c dev.json -v"
 
   desc "ssserver"
   task "ssserver" - do
@@ -72,11 +72,11 @@ nemesis = do
 
   desc "debug local clean"
   task "debug-local-clean" - do
-    run "-m local -c dev-debug.json -v DEBUG -L 5300:8.8.8.8:53"
+    run "-m local -c dev-debug.json -v -L 5300:8.8.8.8:53"
   
   desc "debug remote clean"
   task "debug-remote-clean" - do
-    run "-m remote -c dev-debug.json -v DEBUG"
+    run "-m remote -c dev-debug.json -v"
 
 
   desc "merge debug to master"

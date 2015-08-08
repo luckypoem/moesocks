@@ -19,7 +19,7 @@ optionParser =
                     short 'm'
                 <>  long "mode"
                 <>  metavar "MODE"
-                <>  help "local | remote"
+                <>  help "Tells moesocks to runs in local or remote mode"
               ) <|> pure "local" 
   
       parseMode :: String -> RunningMode
@@ -35,18 +35,16 @@ optionParser =
                       short 'c'
                   <>  long "config"
                   <>  metavar "CONFIG"
-                  <>  help "path to the configuration file"
+                  <>  help "Points to the path to the configuration file"
                 ) <|> pure "config.json"
                  
   in
 
   let __verbosity :: O.Parser Priority 
-      __verbosity = ( option auto - 
+      __verbosity = flag INFO DEBUG -
                           short 'v'
                       <>  long "verbose"
-                      <>  metavar "PRIORITY"
-                      <>  help "DEBUG|INFO|NOTICE"
-                    ) <|> pure INFO 
+                      <>  help "Turns on logging"
   in
 
 
