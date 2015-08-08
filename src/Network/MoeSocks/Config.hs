@@ -16,6 +16,7 @@ defaultMoeConfig = MoeConfig
   , _password = "moesocks"
   , _method = _DefaultMethod
   , _timeout = 300
+  , _tcpBufferSizeInPacket = 128
   }
 
 

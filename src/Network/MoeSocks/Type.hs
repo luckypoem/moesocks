@@ -55,6 +55,7 @@ data MoeConfig = MoeConfig
   , _password :: Text
   , _method :: Text
   , _timeout :: Int
+  , _tcpBufferSizeInPacket :: Int
   }
   deriving (Show, Eq, Generic)
 
