@@ -22,6 +22,12 @@ nemesis = do
   task "bench" - do
     sh "cabal run -- -m debug -c bench.json"
 
+  desc "bench-load"
+  task "bench-load" - do  
+    forever -
+      sh - "curl -x socks5://localhost:1091 -o /dev/null "
+            ++ "http://192.168.1.102:8080/test.mp4"
+
 
   desc "test port forwarding with a tcp dns request"
   task "dig" - do
