@@ -20,3 +20,5 @@ dev-shadowsocks.json
 dev*.json
 
 *.mp4
+
+vendor
