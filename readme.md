@@ -40,7 +40,7 @@ There is an earlier implementation of [shadowsocks in Haskell] by rnons that
 makes MoeSocks possible. 
 
 The original goal of MoeSocks is to provide extra configurability to standard
-shadowsocks, but it has since been discarded. 
+shadowsocks, but it has been discarded since the remote is too flaky. 
 
 [shadowsocks]:https://github.com/shadowsocks/shadowsocks 
 [shadowsocks in Haskell]:https://github.com/rnons/shadowsocks-haskell
