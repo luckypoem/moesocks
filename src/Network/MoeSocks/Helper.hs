@@ -368,14 +368,14 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
                     <> " miliseconds."
             threadDelay - floor - _sleepTime
 
-        _r <- atomically - readAll aTBQueue 
+        _r <- atomically - readTBQueue aTBQueue 
         case _r of
           Nothing -> () <$ _shutdown
           Just _data -> do
-                          timeoutFor aID aTimeout - sendMany aSocket _data 
+                          timeoutFor aID aTimeout - send_ aSocket _data 
                           yield
                           _consume - 
-                            _bytesSent + sumOf each (map S.length _data)
+                            _bytesSent + S.length _data
   
   _consume 0 `onException` _shutdown
   pure ()
