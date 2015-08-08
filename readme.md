@@ -14,6 +14,8 @@ type `moesocks --help` for help.
 Features
 --------
 * TCP port forwarding 
+* Per connection throttling (as a side effect of trying to find a bug in the
+remote)
 
 Planning features
 ------------------
