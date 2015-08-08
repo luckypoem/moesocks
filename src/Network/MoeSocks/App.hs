@@ -522,7 +522,7 @@ moeApp = do
 
   let 
       remoteRun :: IO ()
-      remoteRun = forever - catchExceptAsyncLog "R main app" - do
+      remoteRun = foreverRun - catchExceptAsyncLog "R main app" - do
         let _c = _config
         getSocket (_c ^. remote) (_c ^. remotePort) Stream
           >>= catchExceptAsyncLog "R app" . remoteApp 
@@ -534,13 +534,13 @@ moeApp = do
 
         let _forwardingApps = do
               forM_ _forwardings - \forwarding -> forkIO - do
-                forever - catchExceptAsyncLog "L Forwarding app" - do
-                  getSocket (_c ^. local) 
-                    (forwarding ^. localForwardingPort) 
-                    Stream
-                  >>= localForwardingApp forwarding
+                  foreverRun - catchExceptAsyncLog "L Forwarding app" - do
+                    getSocket (_c ^. local) 
+                      (forwarding ^. localForwardingPort) 
+                      Stream
+                    >>= localForwardingApp forwarding
           
-        let _socks5App = forever - catchExceptAsyncLog "L socks5 app" - do
+        let _socks5App = foreverRun - catchExceptAsyncLog "L socks5 app" - do
               getSocket (_c ^. local) (_c ^. localPort) Stream
                 >>= localSocks5App 
 
@@ -549,7 +549,7 @@ moeApp = do
 
       debugRun :: IO ()
       debugRun = do
-        forever - catchExceptAsyncLog "Debug app" - do
+        catchExceptAsyncLog "Debug app" - do
           waitBothDebug
             (Just "localRun", localRun)
             (Just "remoteRun", remoteRun)

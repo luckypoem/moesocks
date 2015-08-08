@@ -84,7 +84,16 @@ puteT = pute . view _Text
 showBytes :: ByteString -> String
 showBytes = show . S.unpack
 
-      
+sleep :: Int -> IO ()
+sleep x = threadDelay - x * 1000 * 1000
+
+foreverRun :: IO a -> IO ()
+foreverRun _io = do
+  forever - do
+    _io
+    puts "foreverRun delay 1 second"
+    sleep 1
+
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
   pure aID
