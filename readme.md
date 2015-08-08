@@ -19,6 +19,7 @@ remote)
 
 Not working
 -----------
+* Remote is buggy (at least tested from inside the GFW)
 * IPv6
 * Socks4 / Socks4a
 * UDP over Socks5
