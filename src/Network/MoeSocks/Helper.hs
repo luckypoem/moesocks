@@ -290,22 +290,43 @@ _Throttle = 4000
 produceLoop :: String -> Timeout -> Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
 produceLoop aID aTimeout aSocket aTBQueue f = do
+  _startTime <- getCurrentTime
+
   let _shutdown = do
                     tryIO aID - shutdown aSocket ShutdownReceive
                     {-tryIO aID - close aSocket-}
                   
-      _produce = do
+      _produce :: Int -> IO ()
+      _produce _bytesReceived = do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
         if (_r & isn't _Empty) 
           then do
+            _currentTime <- getCurrentTime
+            let _timeDiff = realToFrac (diffUTCTime _currentTime 
+                                                    _startTime) :: Double
+
+                _bytesK = fromIntegral _bytesReceived / 1000 :: Double
+
+            let _speed = _bytesK / _timeDiff
+
+            puts - "Produce speed is: " <> show (floor _speed) <> " K"
+
+            when (_speed > _Throttle) - do
+              let _sleepTime = ((_bytesK + (-_timeDiff * _Throttle))
+                                    / _Throttle ) * 1000 * 1000
+
+              puts - "Produce sleeping for: " <> show _sleepTime 
+                      <> " miliseconds."
+              threadDelay - floor - _sleepTime
+              
             f _r >>= atomically . writeTBQueue aTBQueue . Just
             yield
-            _produce
+            _produce (_bytesReceived + S.length _r)
           else do
             puts -  "Half closed: " <> aID 
             atomically - writeTBQueue aTBQueue Nothing
 
-  _produce `onException` _shutdown
+  _produce 0 `onException` _shutdown
   pure ()
 
 consumeLoop :: String -> Timeout -> Socket -> TBQueue (Maybe ByteString) -> IO ()
