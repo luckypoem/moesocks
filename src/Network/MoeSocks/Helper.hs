@@ -293,6 +293,7 @@ produceLoop aID aTimeout aSocket aTBQueue f = do
         if (_r & isn't _Empty) 
           then do
             f _r >>= atomically . writeTBQueue aTBQueue . Just
+            yield
             _produce 
           else do
             puts -  "Half closed: " <> aID 
@@ -311,8 +312,9 @@ consumeLoop aID aTimeout aSocket aTBQueue = do
         case _r of
           Nothing -> _shutdown
           Just _data -> do
-                          timeoutFor aID aTimeout -
-                            sendMany aSocket _data >> _consume
+                          timeoutFor aID aTimeout - sendMany aSocket _data 
+                          yield
+                          _consume
   
   _consume `onException` _shutdown
   pure ()
