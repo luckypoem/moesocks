@@ -284,12 +284,10 @@ timeoutFor aID aTimeout aIO = do
     Just _r -> pure _r
 
 -- throttle speed in kilobytes per second
-_Throttle :: Double
-_Throttle = 4000
-
-produceLoop :: String -> Timeout -> Socket -> TBQueue (Maybe ByteString) -> 
+produceLoop :: String -> Timeout -> Maybe Double ->
+              Socket -> TBQueue (Maybe ByteString) -> 
               (ByteString -> IO ByteString) -> IO ()
-produceLoop aID aTimeout aSocket aTBQueue f = do
+produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
   _startTime <- getCurrentTime
 
   let _shutdown = do
@@ -301,23 +299,24 @@ produceLoop aID aTimeout aSocket aTBQueue f = do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
         if (_r & isn't _Empty) 
           then do
-            _currentTime <- getCurrentTime
-            let _timeDiff = realToFrac (diffUTCTime _currentTime 
-                                                    _startTime) :: Double
+            forM_ aThrottle - \_throttle -> do
+              _currentTime <- getCurrentTime
+              let _timeDiff = realToFrac (diffUTCTime _currentTime 
+                                                      _startTime) :: Double
 
-                _bytesK = fromIntegral _bytesReceived / 1000 :: Double
+                  _bytesK = fromIntegral _bytesReceived / 1000 :: Double
 
-            let _speed = _bytesK / _timeDiff
+              let _speed = _bytesK / _timeDiff
 
-            puts - "Produce speed is: " <> show (floor _speed :: Int) <> " K"
+              puts - "Produce speed is: " <> show (floor _speed :: Int) <> " K"
 
-            when (_speed > _Throttle) - do
-              let _sleepTime = ((_bytesK + (-_timeDiff * _Throttle))
-                                    / _Throttle ) * 1000 * 1000
+              when (_speed > _throttle) - do
+                let _sleepTime = ((_bytesK + (-_timeDiff * _throttle))
+                                      / _throttle ) * 1000 * 1000
 
-              puts - "Produce sleeping for: " <> show _sleepTime 
-                      <> " miliseconds."
-              threadDelay - floor - _sleepTime
+                puts - "Produce sleeping for: " <> show _sleepTime 
+                        <> " miliseconds."
+                threadDelay - floor - _sleepTime
               
             f _r >>= atomically . writeTBQueue aTBQueue . Just
             yield
@@ -329,8 +328,9 @@ produceLoop aID aTimeout aSocket aTBQueue f = do
   _produce 0 `onException` _shutdown
   pure ()
 
-consumeLoop :: String -> Timeout -> Socket -> TBQueue (Maybe ByteString) -> IO ()
-consumeLoop aID aTimeout aSocket aTBQueue = do
+consumeLoop :: String -> Timeout -> Maybe Double ->
+                Socket -> TBQueue (Maybe ByteString) -> IO ()
+consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
   _startTime <- getCurrentTime
   
   
@@ -340,23 +340,24 @@ consumeLoop aID aTimeout aSocket aTBQueue = do
 
       _consume :: Int -> IO ()
       _consume _bytesSent = do
-        _currentTime <- getCurrentTime
-        let _timeDiff = realToFrac (diffUTCTime _currentTime 
-                                                _startTime) :: Double
+        forM_ aThrottle - \_throttle -> do
+          _currentTime <- getCurrentTime
+          let _timeDiff = realToFrac (diffUTCTime _currentTime 
+                                                  _startTime) :: Double
 
-            _bytesK = fromIntegral _bytesSent / 1000 :: Double
+              _bytesK = fromIntegral _bytesSent / 1000 :: Double
 
-        let _speed = _bytesK / _timeDiff
+          let _speed = _bytesK / _timeDiff
 
-        puts - "Consume speed is: " <> show (floor _speed :: Int) <> " K"
+          puts - "Consume speed is: " <> show (floor _speed :: Int) <> " K"
 
-        when (_speed > _Throttle) - do
-          let _sleepTime = ((_bytesK + (-_timeDiff * _Throttle))
-                                / _Throttle ) * 1000 * 1000
+          when (_speed > _throttle) - do
+            let _sleepTime = ((_bytesK + (-_timeDiff * _throttle))
+                                  / _throttle ) * 1000 * 1000
 
-          puts - "Consume sleeping for: " <> show _sleepTime 
-                  <> " miliseconds."
-          threadDelay - floor - _sleepTime
+            puts - "Consume sleeping for: " <> show _sleepTime 
+                    <> " miliseconds."
+            threadDelay - floor - _sleepTime
 
         _r <- atomically - readAll aTBQueue 
         case _r of
