@@ -13,30 +13,25 @@ type `moesocks --help` for help.
 
 Features
 --------
-* GFW compatibility
-* Can be used as a drop in replacement for shadowsocks (only client mode)
 * TCP port forwarding 
 
 Planning features
 ------------------
-* UDP socks5 proxy
-* UDP port forwarding 
-* Web based monitoring and profiling
+* None
 
 Note
 ------
 
+There's a bug that prevents remote from working correctly.
+
 You should use the python implementation of [shadowsocks] on the remote
-server, since the remote mode of MoeSocks is still buggy :(
+server.
 
 There is an earlier implementation of [shadowsocks in Haskell] by rnons that
 makes MoeSocks possible. 
 
-The goal of MoeSocks is to provide extra configurability to standard
-shadowsocks, for example:
-
-* load balancing (region based multi-server configuration) IP level request
-* filters (like iptables)
+The original goal of MoeSocks is to provide extra configurability to standard
+shadowsocks, but it since been discarded. 
 
 [shadowsocks]:https://github.com/shadowsocks/shadowsocks 
 [shadowsocks in Haskell]:https://github.com/rnons/shadowsocks-haskell
