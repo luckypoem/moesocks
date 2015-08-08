@@ -27,12 +27,12 @@ Note
 ------
 
 You should use the python implementation of [shadowsocks] on the remote
-server, since the remote mode of moesocks is still buggy :(
+server, since the remote mode of MoeSocks is still buggy :(
 
 There is an earlier implementation of [shadowsocks in Haskell] by rnons that
 makes MoeSocks possible. 
 
-The goal of moesocks is to provide extra configurability to standard
+The goal of MoeSocks is to provide extra configurability to standard
 shadowsocks, for example:
 
 * load balancing (region based multi-server configuration) IP level request
