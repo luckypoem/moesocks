@@ -380,7 +380,7 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
                             
                           yield
                           _consume - 
-                            _bytesSent + S.length _data
+                            _bytesSent + _len
   
   _consume 0 `onException` _shutdown
   pure ()
