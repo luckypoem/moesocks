@@ -35,7 +35,7 @@ optionParser =
                       short 'c'
                   <>  long "config"
                   <>  metavar "CONFIG"
-                  <>  help "Point to the path to the configuration file"
+                  <>  help "Point to the path of the configuration file"
                 ) <|> pure "config.json"
                  
   in
