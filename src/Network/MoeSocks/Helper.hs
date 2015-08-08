@@ -309,7 +309,7 @@ produceLoop aID aTimeout aSocket aTBQueue f = do
 
             let _speed = _bytesK / _timeDiff
 
-            puts - "Produce speed is: " <> show (floor _speed) <> " K"
+            puts - "Produce speed is: " <> show (floor _speed :: Int) <> " K"
 
             when (_speed > _Throttle) - do
               let _sleepTime = ((_bytesK + (-_timeDiff * _Throttle))
@@ -348,7 +348,7 @@ consumeLoop aID aTimeout aSocket aTBQueue = do
 
         let _speed = _bytesK / _timeDiff
 
-        puts - "Consume speed is: " <> show (floor _speed) <> " K"
+        puts - "Consume speed is: " <> show (floor _speed :: Int) <> " K"
 
         when (_speed > _Throttle) - do
           let _sleepTime = ((_bytesK + (-_timeDiff * _Throttle))
