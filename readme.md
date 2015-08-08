@@ -19,7 +19,7 @@ remote)
 
 Not working
 -----------
-* IP6
+* IPv6
 * Socks4 / Socks4a
 * UDP over Socks5
 
