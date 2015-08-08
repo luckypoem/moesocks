@@ -3,6 +3,7 @@ import System.Nemesis.Env hiding (run)
 import qualified System.Nemesis.Env as N
 import Air.Env
 import Control.Monad
+import Data.Monoid
 
 main = N.run nemesis
 
@@ -10,7 +11,7 @@ ping = do
         sh "curl -x socks5://localhost:1090 localhost:8080; exit 0"
 
 
-run x = sh - "cabal run -- " ++ x
+run x = sh - "cabal run -- " <> x
 
 nemesis = do
 
@@ -26,7 +27,7 @@ nemesis = do
   task "bench-load" - do  
     forever -
       sh - "curl -x socks5://localhost:1091 -o /dev/null "
-            ++ "http://192.168.1.102:8080/test.mp4"
+            <> "http://192.168.1.102:8080/test.mp4"
 
 
   desc "test port forwarding with a tcp dns request"
