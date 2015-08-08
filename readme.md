@@ -26,10 +26,8 @@ Planning features
 Note
 ------
 
-You might want to use the python implementation of [shadowsocks] on the remote
-server. 
-
-The remote mode of moesocks is still buggy :(
+You should use the python implementation of [shadowsocks] on the remote
+server, since the remote mode of moesocks is still buggy :(
 
 There is an earlier implementation of [shadowsocks in Haskell] by rnons. 
 
