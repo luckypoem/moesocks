@@ -23,8 +23,7 @@ Not working
 * IPv6
 * Socks4 / Socks4a
 * UDP over Socks5
-* This implementation is four times slower then Python's. I know, but don't
-blame Haskell, blame me.
+* Four times slower then original Python's implementation
 
 Planning features
 ------------------
