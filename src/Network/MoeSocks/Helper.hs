@@ -374,15 +374,6 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
         case _r of
           Nothing -> () <$ _shutdown
           Just _data -> do
-                          let sendAll_ :: ByteString -> IO ()
-                              sendAll_ _x = do
-                                _len <- timeoutFor aID aTimeout - 
-                                          send aSocket _x
-
-                                when (_len < S.length _data) - do
-                                  yield
-                                  sendAll_ - S.drop _len _data
-                           
                           sendAll aSocket _data
                           yield
                           _consume - 
@@ -398,32 +389,6 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
 setSocketCloseOnExec :: Socket -> IO ()
 setSocketCloseOnExec aSocket =
     setFdOption (fromIntegral $ fdSocket aSocket) CloseOnExec True
-
-
-readAll :: TBQueue (Maybe ByteString) -> STM (Maybe [ByteString])
-readAll aTBQueue = do
-  _r <- readTBQueue aTBQueue
-  case _r of
-    Nothing -> pure Nothing
-    Just _b -> do
-                fmap (Just . reverse) - readMore [_b] aTBQueue
-
-  where 
-    readMore :: [ByteString] -> TBQueue (Maybe ByteString) -> STM [ByteString]
-    readMore _acc _q = do
-      _empty <- isEmptyTBQueue _q 
-      if _empty
-        then pure - _acc
-        else 
-          do
-            _more <- readTBQueue _q 
-            case _more of
-              Nothing -> do
-                            unGetTBQueue _q Nothing
-                            pure - _acc
-              Just _r -> readMore (_r : _acc) _q
-              
-
 
 
 tryIO :: String -> IO a -> IO (Either IOException a)
