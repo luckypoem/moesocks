@@ -374,7 +374,7 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
         case _r of
           Nothing -> () <$ _shutdown
           Just _data -> do
-                          sendAll aSocket _data
+                          timeoutFor aID aTimeout - sendAll aSocket _data
                           yield
                           _consume - 
                             _bytesSent + S.length _data
