@@ -337,6 +337,8 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
   _produce 0 `onException` _shutdown
   pure ()
 
+  
+
 consumeLoop :: String -> Timeout -> Maybe Double ->
                 Socket -> TBQueue (Maybe ByteString) -> IO ()
 consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
@@ -372,15 +374,19 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
         case _r of
           Nothing -> () <$ _shutdown
           Just _data -> do
-                          _len <- timeoutFor aID aTimeout - send aSocket _data 
+                          let sendAll_ :: ByteString -> IO ()
+                              sendAll_ _x = do
+                                _len <- timeoutFor aID aTimeout - 
+                                          send aSocket _x
 
-                          when (_len < S.length _data) - do
-                            atomically - unGetTBQueue aTBQueue -
-                                            Just - S.drop _len _data
-                            
+                                when (_len < S.length _data) - do
+                                  yield
+                                  sendAll_ - S.drop _len _data
+                           
+                          sendAll_ _data
                           yield
                           _consume - 
-                            _bytesSent + _len
+                            _bytesSent + S.length _data
   
   _consume 0 `onException` _shutdown
   pure ()
