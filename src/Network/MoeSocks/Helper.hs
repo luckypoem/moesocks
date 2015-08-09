@@ -383,7 +383,7 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
                                   yield
                                   sendAll_ - S.drop _len _data
                            
-                          sendAll _data
+                          sendAll aSocket _data
                           yield
                           _consume - 
                             _bytesSent + S.length _data
