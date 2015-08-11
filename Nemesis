@@ -8,8 +8,7 @@ import Data.Monoid
 main = N.run nemesis
 
 ping = do
-        sh "curl -x socks5://localhost:1090 localhost:8080; exit 0"
-
+        sh "curl -x socks5://localhost:1090 'http://[::1]:8080'; exit 0"
 
 run x = sh - "cabal run -- " <> x
 
@@ -72,7 +71,7 @@ nemesis = do
 
   desc "ping"
   task "ping" - ping
-
+  
   desc "remote"
   task "remote" - do
     run "-m remote -c dev.json"

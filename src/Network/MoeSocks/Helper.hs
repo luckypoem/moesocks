@@ -185,6 +185,8 @@ connectProduction = waitBothDebug
 getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket aHost aPort aSocketType = do
+    {-puts - "getSocket: " <> show aHost <> ":" <> show aPort-}
+
     maybeAddrInfo <- firstOf folded <$>
                   getAddrInfo (Just hints) 
                               (Just - aHost ^. _Text) (Just - show aPort)
@@ -212,7 +214,7 @@ getSocket aHost aPort aSocketType = do
     hints = defaultHints {
               addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]
             , addrSocketType = aSocketType
-            , addrFamily = AF_INET
+            {-, addrFamily = AF_INET-}
             }
 
 builder_To_ByteString :: B.Builder -> ByteString

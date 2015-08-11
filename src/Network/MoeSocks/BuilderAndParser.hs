@@ -20,6 +20,8 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Prelude as P
 
+import Debug.Trace
+
 socksVersion :: Word8
 socksVersion = 5
 
@@ -89,12 +91,13 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
 
   SockAddrInet6 _port _ _host _ ->
                                     let 
-                                        _r@(_a, _b, _c, _d) = 
+                                        _r@(_a, _b, _c, _d, _e, _f, _g, _h) = 
                                           decode . runPut . put - _host
-                                          :: (Word32, Word32, Word32, Word32)
+                                          :: (Word16, Word16, Word16, Word16
+                                              , Word16, Word16, Word16, Word16)
                                     in
 
-                                    ( IPv6_address - flip4 _r
+                                    ( IPv6_address - _r ^.. each
                                     , fromIntegral _port
                                     )
 
@@ -138,7 +141,7 @@ addressTypeBuilder aAddressType =
 
     IPv6_address _address ->  
                           B.word8 4
-                       <> foldMapOf each B.word32BE _address
+                       <> foldMapOf each B.word16BE _address
 
 
 
@@ -161,11 +164,6 @@ shadowSocksRequestBuilder aClientRequest =
       addressTypeBuilder (aClientRequest ^. addressType)
   <>  portBuilder (aClientRequest ^. portNumber)
 
-anyWord32be :: Parser Word32
-anyWord32be = do
-  _b <- count 4 anyWord8
-  pure - decode - runPut - put _b
-
 addressTypeParser :: Parser AddressType
 addressTypeParser = choice
   [
@@ -182,15 +180,16 @@ addressTypeParser = choice
                         _nameLength <- anyWord8
                         view utf8 <$> (take - fromIntegral _nameLength)
 
-  {-, IPv6_address <$>  do-}
-                        {-word8 4 -}
-                        {-_a <- anyWord32be-}
-                        {-_b <- anyWord32be-}
-                        {-_c <- anyWord32be-}
-                        {-_d <- anyWord32be -}
-                        {-pure - (_a, _b, _c, _d)-}
+  , IPv6_address <$>  do
+                        word8 4 
+                        _r <- count 8 anyWord16
+                        pure - trace ("parsed IPv6: " <> show _r) _r
   ]
 
+anyWord16 :: Parser Word16
+anyWord16 = do
+  _b <- (,) <$> anyWord8 <*> anyWord8
+  pure - decode - runPut - put _b
 
 shadowSocksRequestParser :: Parser ClientRequest
 shadowSocksRequestParser = do
