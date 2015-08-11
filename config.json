@@ -1,5 +1,5 @@
 {
-  "server":"127.0.0.1",
+  "server":"::1",
   "server_port":1190,
   "local_address":"localhost",
   "local_port":1090,
