@@ -20,7 +20,6 @@ remote)
 Not working
 -----------
 * Remote is flaky 
-* IPv6
 * Socks4 / Socks4a
 * UDP over Socks5
 * Four times slower then original Python's implementation
