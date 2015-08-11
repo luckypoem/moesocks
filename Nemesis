@@ -106,7 +106,8 @@ nemesis = do
 
   desc "local-debug-clean"
   task "local-debug-clean" - do
-    run "-m local -c dev-debug.json -v -L 2090:localhost:2090"
+    run - "-m local -c dev-debug.json -v -L "
+        <> " 5300:[2001:4860:4860::8888]:53"
   
   desc "remote-debug-clean"
   task "remote-debug-clean" - do
