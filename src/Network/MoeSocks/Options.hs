@@ -11,7 +11,7 @@ import Prelude hiding ((-), takeWhile)
 import System.Log.Logger
 import qualified Options.Applicative as O
 import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace, 
-                              parseOnly, many')
+                              parseOnly, many', choice)
 
 optionParser :: O.Parser MoeOptions
 optionParser = 
@@ -65,7 +65,16 @@ optionParser =
         skipSpace
         _localForwardingPort <- decimal
         char ':'
-        _localForwardingRemoteHost <- takeWhile (/= ':')
+        _localForwardingRemoteHost <- 
+          choice
+            [
+              do 
+                char '['
+                _h <- takeWhile (/= ']')
+                char ']'
+                return _h
+            , takeWhile (/= ':')
+            ]
         char ':'
         _localForwardingRemotePort <- decimal
 
