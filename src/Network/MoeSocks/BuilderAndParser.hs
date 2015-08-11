@@ -20,7 +20,7 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Prelude as P
 
-import Debug.Trace
+{-import Debug.Trace-}
 
 socksVersion :: Word8
 socksVersion = 5
@@ -183,7 +183,8 @@ addressTypeParser = choice
   , IPv6_address <$>  do
                         word8 4 
                         _r <- count 8 anyWord16
-                        pure - trace ("parsed IPv6: " <> show _r) _r
+                        {-pure - trace ("parsed IPv6: " <> show _r) _r-}
+                        pure _r
   ]
 
 anyWord16 :: Parser Word16

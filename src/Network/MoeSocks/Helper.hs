@@ -185,7 +185,7 @@ connectProduction = waitBothDebug
 getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket aHost aPort aSocketType = do
-    puts - "getSocket: " <> show aHost <> ":" <> show aPort
+    {-puts - "getSocket: " <> show aHost <> ":" <> show aPort-}
 
     maybeAddrInfo <- firstOf folded <$>
                   getAddrInfo (Just hints) 
@@ -207,6 +207,7 @@ getSocket aHost aPort aSocketType = do
           setSocketOption _socket NoDelay 1 
 
           {-puts - "Getting socket: " <> show address-}
+          {-puts - "Socket family: " <> show family-}
 
           pure (_socket, address)
           
