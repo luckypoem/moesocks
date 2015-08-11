@@ -14,7 +14,8 @@ copyright:          Copyright (C) 2015 Jinjing Wang
 tested-with:        GHC == 7.10.1
 
 extra-source-files:     config.json
-                      , readme.md
+                      , README.md
+                      , CHANGELOG.md
 
 source-repository head
   type: git
