@@ -30,7 +30,7 @@ data ConnectionType =
 data AddressType = 
     IPv4_address (Word8, Word8, Word8, Word8)
   | Domain_name Text
-  | IPv6_address (Word32, Word32, Word32, Word32)
+  | IPv6_address [Word16]
   deriving (Show, Eq)
 
 type Port = Int

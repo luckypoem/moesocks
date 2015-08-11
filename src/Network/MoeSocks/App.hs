@@ -36,14 +36,16 @@ import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
+
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 
                                       concat - L.intersperse "." - 
                                       map show - xs ^.. each
 showAddressType (Domain_name x)   = x 
-showAddressType x                 = error -
-                                            "IPv6 target not supported:"
-                                            <> show x
+showAddressType (IPv6_address xs) = view (from _Text) -
+                                      concat - L.intersperse ":" - 
+                                      map show -
+                                        xs ^.. each
 
 showConnectionType :: ConnectionType -> String
 showConnectionType TCP_IP_stream_connection = "TCP_Stream"
