@@ -185,7 +185,7 @@ connectProduction = waitBothDebug
 getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket aHost aPort aSocketType = do
-    {-puts - "getSocket: " <> show aHost <> ":" <> show aPort-}
+    puts - "getSocket: " <> show aHost <> ":" <> show aPort
 
     maybeAddrInfo <- firstOf folded <$>
                   getAddrInfo (Just hints) 
