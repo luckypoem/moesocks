@@ -45,8 +45,7 @@ showAddressType (IPv4_address xs) = view (from _Text) -
 showAddressType (Domain_name x)   = x 
 showAddressType (IPv6_address xs) = view (from _Text) -
                                       concat - L.intersperse ":" - 
-                                      map show -
-                                        xs ^.. each
+                                      map show - xs ^.. each
 
 showConnectionType :: ConnectionType -> String
 showConnectionType TCP_IP_stream_connection = "TCP_Stream"
@@ -518,13 +517,13 @@ moeApp = do
 
                     _sa <- getSocket (_c ^. remote) (_c ^. remotePort) Datagram
 
-                    logSA "L UDP ->:" (pure _sa) - 
+                    logSA "L UDP -->:" (pure _sa) - 
                       \(_remoteSocket, _remoteAddr) -> do
                         connect _remoteSocket _remoteAddr
                         send_ _remoteSocket _msg 
                         _msg <- recv_ _remoteSocket
 
-                        puts - "L UDP <-: " <> show _msg
+                        puts - "L UDP <--: " <> show _msg
                         when (_msg & isn't _Empty) - do
                           sendAllTo _localSocket _msg _sockAddr
 
@@ -586,13 +585,13 @@ moeApp = do
 
                 _sa <- getSocket "localhost" 53 Datagram
 
-                logSA "R UDP ->:" (pure _sa) - 
+                logSA "R UDP -->:" (pure _sa) - 
                   \(_clientSocket, _clientAddr) -> do
                     connect _clientSocket _clientAddr
                     send_ _clientSocket _msg 
                     _r <- recv_ _clientSocket
 
-                    puts - "R UDP <-: " <> show _r
+                    puts - "R UDP <--: " <> show _r
 
                     when (_r & isn't _Empty) - do
                       sendAllTo _remoteSocket _r _sockAddr
@@ -604,14 +603,14 @@ moeApp = do
 
   let 
       remoteRun :: IO ()
-      remoteRun = foreverRun - catchExceptAsyncLog "R main app" - do
-        let _TCPApp = do
+      remoteRun = do
+        let _TCPApp = foreverRun - catchExceptAsyncLog "R TCP app" - do
               getSocket (_c ^. remote) (_c ^. remotePort) Stream
-                >>= catchExceptAsyncLog "R TCP app" . remoteTCPApp 
+                >>= remoteTCPApp 
 
-        let _UDPApp = do
+        let _UDPApp = foreverRun - catchExceptAsyncLog "R UDP app" - do
               getSocket (_c ^. remote) (_c ^. remotePort) Datagram
-                >>= catchExceptAsyncLog "R UDP app" . remoteUDPApp 
+                >>= remoteUDPApp 
 
         waitBoth _TCPApp _UDPApp
 
