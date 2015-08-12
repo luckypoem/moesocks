@@ -60,12 +60,12 @@ optionParser =
                     ) <|> pure ""
                       
 
-      forwardingParser :: Parser LocalForwarding
+      forwardingParser :: Parser LocalTCPForwarding
       forwardingParser = do
         skipSpace
-        _localForwardingPort <- decimal
+        _localTCPForwardingPort <- decimal
         char ':'
-        _localForwardingRemoteHost <- 
+        _localTCPForwardingRemoteHost <- 
           choice
             [
               do 
@@ -76,17 +76,17 @@ optionParser =
             , takeWhile (/= ':')
             ]
         char ':'
-        _localForwardingRemotePort <- decimal
+        _localTCPForwardingRemotePort <- decimal
 
-        pure - LocalForwarding  _localForwardingPort
-                                _localForwardingRemoteHost
-                                _localForwardingRemotePort
+        pure - LocalTCPForwarding  _localTCPForwardingPort
+                                _localTCPForwardingRemoteHost
+                                _localTCPForwardingRemotePort
 
-      forwardingListParser :: Parser [LocalForwarding]
+      forwardingListParser :: Parser [LocalTCPForwarding]
       forwardingListParser = many' forwardingParser
 
-      parseForwarding :: String -> [LocalForwarding]
-      parseForwarding x = 
+      parseTCPForwarding :: String -> [LocalTCPForwarding]
+      parseTCPForwarding x = 
         x ^. from _Text 
           & parseOnly forwardingListParser 
           & toListOf (traverse . traverse)
@@ -97,7 +97,7 @@ optionParser =
               <$> fmap parseMode _mode 
               <*> fmap (view packed) _config
               <*> __verbosity
-              <*> fmap parseForwarding _forwarding
+              <*> fmap parseTCPForwarding _forwarding
 
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 
