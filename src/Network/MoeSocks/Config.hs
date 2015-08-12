@@ -29,4 +29,5 @@ defaultMoeOptions = MoeOptions
   , _configFile = ""
   , _verbosity = DEBUG
   , _forwardTCP = []
+  , _forwardUDP = []
   } 

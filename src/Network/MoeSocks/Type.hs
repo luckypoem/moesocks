@@ -72,22 +72,24 @@ data RunningMode = RemoteMode | LocalMode | DebugMode
 data Verbosity = Normal | Verbose
       deriving (Show, Eq)
 
-data ForwardTCP = ForwardTCP
+data Forward = Forward
   {
-    _forwardTCPPort :: Port
-  , _forwardTCPRemoteHost :: Text
-  , _forwardTCPRemotePort :: Port
+    _forwardLocalPort :: Port
+  , _forwardRemoteHost :: Text
+  , _forwardRemotePort :: Port
   }
   deriving (Show, Eq)
 
-makeLenses ''ForwardTCP
+
+makeLenses ''Forward
 
 data MoeOptions = MoeOptions
   {
     _runningMode :: RunningMode
   , _configFile :: Text
   , _verbosity :: Priority
-  , _forwardTCP :: [ForwardTCP]
+  , _forwardTCP :: [Forward]
+  , _forwardUDP :: [Forward]
   }
   deriving (Show, Eq)
 

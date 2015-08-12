@@ -48,24 +48,41 @@ optionParser =
   in
 
 
-  let _forwarding :: O.Parser String
-      _forwarding = ( strOption -
+  let _forwardTCP :: O.Parser String
+      _forwardTCP = ( strOption -
                           short 'L'
                       <>  metavar "port:host:hostport"
                       <>  help (""
-                                <> "Specify that the given port on the local"
+                                <> "Specify that the given TCP port on the "
+                                <> "local"
                                 <> "(client) host is to be forwarded to the "
                                 <> "given host and port on the remote side."
                                 )
                     ) <|> pure ""
                       
+  
 
-      forwardingParser :: Parser ForwardTCP
-      forwardingParser = do
+
+      _forwardUDP :: O.Parser String
+      _forwardUDP = ( strOption -
+                          short 'U'
+                      <>  long "LUDP"
+                      <>  metavar "port:host:hostport"
+                      <>  help (""
+                                <> "Specify that the given UDP port on the "
+                                <> "local"
+                                <> "(client) host is to be forwarded to the "
+                                <> "given host and port on the remote side."
+                                )
+                    ) <|> pure ""
+
+  
+      forwardParser ::  Parser Forward
+      forwardParser = do
         skipSpace
-        _forwardTCPPort <- decimal
+        _forwardPort <- decimal
         char ':'
-        _forwardTCPRemoteHost <- 
+        _forwardRemoteHost <- 
           choice
             [
               do 
@@ -76,19 +93,20 @@ optionParser =
             , takeWhile (/= ':')
             ]
         char ':'
-        _forwardTCPRemotePort <- decimal
+        _forwardRemotePort <- decimal
 
-        pure - ForwardTCP  _forwardTCPPort
-                                _forwardTCPRemoteHost
-                                _forwardTCPRemotePort
+        pure - Forward  
+                        _forwardPort
+                        _forwardRemoteHost
+                        _forwardRemotePort
 
-      forwardingListParser :: Parser [ForwardTCP]
-      forwardingListParser = many' forwardingParser
+      forwardListParser :: Parser [Forward]
+      forwardListParser = many' forwardParser
 
-      parseTCPForwarding :: String -> [ForwardTCP]
-      parseTCPForwarding x = 
+      parseForwarding :: String -> [Forward]
+      parseForwarding x = 
         x ^. from _Text 
-          & parseOnly forwardingListParser 
+          & parseOnly forwardListParser 
           & toListOf (traverse . traverse)
   in
         
@@ -97,7 +115,8 @@ optionParser =
               <$> fmap parseMode _mode 
               <*> fmap (view packed) _config
               <*> __verbosity
-              <*> fmap parseTCPForwarding _forwarding
+              <*> fmap parseForwarding _forwardTCP
+              <*> fmap parseForwarding _forwardUDP
 
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 
