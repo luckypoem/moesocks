@@ -204,10 +204,12 @@ getSocket aHost aPort aSocketType = do
           setSocketCloseOnExec _socket
 
           -- send immediately!
-          setSocketOption _socket NoDelay 1 
+          when (aSocketType == Stream) -
+            setSocketOption _socket NoDelay 1 
 
-          {-puts - "Getting socket: " <> show address-}
+          puts - "Getting socket: " <> show addrInfo
           {-puts - "Socket family: " <> show family-}
+          {-puts - "Socket protocol: " <> show protocol -}
 
           pure (_socket, address)
           

@@ -21,3 +21,6 @@ _SpaceCode = 32
 _DefaultMethod :: Text
 _DefaultMethod = "aes-256-cfb"
 
+
+_ReceiveLength :: Int
+_ReceiveLength = 4096

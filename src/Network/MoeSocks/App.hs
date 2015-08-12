@@ -22,7 +22,8 @@ import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.Socket hiding (send, recv)
+import Network.Socket hiding (send, recv, recvFrom, sendTo)
+import Network.Socket.ByteString
 import OpenSSL (withOpenSSL)
 import OpenSSL.EVP.Cipher (getCipherByName)
 import Prelude hiding ((-), take)
@@ -84,9 +85,9 @@ localSocks5RequestHandler aConfig aSocket = do
   _r <- processLocalSocks5Request aSocket 
   localRequestHandler aConfig _r True aSocket
 
-forwardRequestHandler :: MoeConfig -> Forward -> 
+forwardTCPRequestHandler :: MoeConfig -> Forward -> 
                                   Socket -> IO ()
-forwardRequestHandler aConfig aTCPForwarding aSocket = do
+forwardTCPRequestHandler aConfig aTCPForwarding aSocket = do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
                           (Domain_name - aTCPForwarding ^. 
@@ -95,6 +96,16 @@ forwardRequestHandler aConfig aTCPForwarding aSocket = do
               
   localRequestHandler aConfig (_clientRequest, mempty) False aSocket
 
+forwardUDPRequestHandler :: MoeConfig -> Forward -> 
+                                  Socket -> IO ()
+forwardUDPRequestHandler aConfig aTCPForwarding aSocket = do
+  let _clientRequest = ClientRequest
+                          UDP_port
+                          (Domain_name - aTCPForwarding ^. 
+                            forwardRemoteHost)
+                          (aTCPForwarding ^. forwardRemotePort)
+  
+  puts - show _clientRequest
 
 localRequestHandler :: MoeConfig -> (ClientRequest, ByteString) -> 
                         Bool -> Socket -> IO ()
@@ -446,6 +457,9 @@ initLogger aLevel = do
   updateGlobalLogger "moe" - addHandler formattedHandler
   updateGlobalLogger "moe" - setLevel aLevel
 
+data AppType = TCPApp | UDPApp 
+  deriving (Show, Eq)
+
 moeApp:: MoeMonadT ()
 moeApp = do
   _options <- ask 
@@ -454,6 +468,7 @@ moeApp = do
   io - puts - show _options
   
   _config <- parseConfig - _options ^. configFile
+  let _c = _config
 
   let _method = _config ^. method . _Text
 
@@ -467,45 +482,75 @@ moeApp = do
                               <> _options ^. configFile . _Text
       Just _ -> pure ()
 
-  let localAppBuilder :: String -> (Socket -> IO ()) -> (Socket, SockAddr) -> 
-                            IO ()
-      localAppBuilder aID aHandler s = logSA "L loop" (pure s) - 
-        \(_localSocket, _localAddr) -> do
+  let localAppBuilder :: AppType -> String -> 
+                          (Socket -> IO ()) -> (Socket, SockAddr) -> IO ()
+      localAppBuilder aAppType aID aHandler s = 
+        logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
           _say - "L " <> aID <> ": nyaa!"
             
-          setSocketOption _localSocket ReuseAddr 1
-          bindSocket _localSocket _localAddr
 
-          listen _localSocket maxListenQueue
+          case aAppType of
+            TCPApp -> do
+              setSocketOption _localSocket ReuseAddr 1
+              bindSocket _localSocket _localAddr
+              
+              listen _localSocket maxListenQueue
 
-          let handleLocal _socket = do
-                (_newSocket, _) <- accept _socket
-                setSocketCloseOnExec _newSocket
-                -- send immediately!
-                setSocketOption _socket NoDelay 1 
-                
-                forkIO - catchExceptAsyncLog "L thread" - 
-                          logSocket "L client socket" (pure _newSocket) -
-                            aHandler
+              let handleLocal _socket = do
+                    (_newSocket, _) <- accept _socket
+                    setSocketCloseOnExec _newSocket
+                    -- send immediately!
+                    setSocketOption _socket NoDelay 1 
+                    
+                    forkIO - catchExceptAsyncLog "L thread" - 
+                              logSocket "L client socket" (pure _newSocket) -
+                                aHandler
 
-          forever - handleLocal _localSocket
+              forever - handleLocal _localSocket
+
+            UDPApp -> do
+              setSocketOption _localSocket ReuseAddr 1
+              bindSocket _localSocket _localAddr
+
+              let _loop = do
+                    (_msg, _sockAddr) <- recvFrom _localSocket _ReceiveLength
+                    puts - "L UDP: " <> show _msg
+
+                    _sa <- getSocket (_c ^. remote) (_c ^. remotePort) Datagram
+
+                    logSA "L UDP ->:" (pure _sa) - 
+                      \(_remoteSocket, _remoteAddr) -> do
+                        connect _remoteSocket _remoteAddr
+                        send_ _remoteSocket _msg 
+                        _msg <- recv_ _remoteSocket
+
+                        puts - "L UDP <-: " <> show _msg
+                        when (_msg & isn't _Empty) - do
+                          sendAllTo _localSocket _msg _sockAddr
+
+                    _loop
+
+              _loop
+
+              
 
   let localSocks5App :: (Socket, SockAddr) -> IO ()
-      localSocks5App = localAppBuilder "socks5" - 
+      localSocks5App = localAppBuilder TCPApp "socks5" - 
                             localSocks5RequestHandler _config
 
-      forwardApp :: Forward -> (Socket, SockAddr) 
+      forwardTCPApp :: Forward -> (Socket, SockAddr) 
                                 -> IO ()
-      forwardApp _f = localAppBuilder "TCP forwarding" - 
-                                forwardRequestHandler _config _f
+      forwardTCPApp _f = localAppBuilder TCPApp "TCP forwarding" - 
+                                forwardTCPRequestHandler _config _f
 
       forwardUDPApp :: Forward -> (Socket, SockAddr) -> IO ()
-      forwardUDPApp _f = error "not implemented"
+      forwardUDPApp _f = localAppBuilder UDPApp "UDP forwarding" - 
+                                forwardUDPRequestHandler _config _f
       
-  let remoteApp :: (Socket, SockAddr) -> IO ()
-      remoteApp s = logSA "R loop" (pure s) -
+  let remoteTCPApp :: (Socket, SockAddr) -> IO ()
+      remoteTCPApp s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say "R : nyaa!"
+          _say "R TCP: nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
@@ -526,38 +571,76 @@ moeApp = do
 
           forever - handleRemote _remoteSocket
 
+  let remoteUDPApp :: (Socket, SockAddr) -> IO ()
+      remoteUDPApp s = logSA "R loop" (pure s) -
+        \(_remoteSocket, _remoteAddr) -> do
+          _say "R UDP: nyaa!"
+
+          setSocketOption _remoteSocket ReuseAddr 1
+          bindSocket _remoteSocket _remoteAddr
+
+          let _loop = do
+                (_msg, _sockAddr) <- recvFrom _remoteSocket _ReceiveLength
+
+                puts - "R UDP: " <> show _msg
+
+                _sa <- getSocket "localhost" 53 Datagram
+
+                logSA "R UDP ->:" (pure _sa) - 
+                  \(_clientSocket, _clientAddr) -> do
+                    connect _clientSocket _clientAddr
+                    send_ _clientSocket _msg 
+                    _r <- recv_ _clientSocket
+
+                    puts - "R UDP <-: " <> show _r
+
+                    when (_r & isn't _Empty) - do
+                      sendAllTo _remoteSocket _r _sockAddr
+                
+                _loop
+
+          _loop
+
+
   let 
       remoteRun :: IO ()
       remoteRun = foreverRun - catchExceptAsyncLog "R main app" - do
-        let _c = _config
-        getSocket (_c ^. remote) (_c ^. remotePort) Stream
-          >>= catchExceptAsyncLog "R app" . remoteApp 
+        let _TCPApp = do
+              getSocket (_c ^. remote) (_c ^. remotePort) Stream
+                >>= catchExceptAsyncLog "R TCP app" . remoteTCPApp 
+
+        let _UDPApp = do
+              getSocket (_c ^. remote) (_c ^. remotePort) Datagram
+                >>= catchExceptAsyncLog "R UDP app" . remoteUDPApp 
+
+        waitBoth _TCPApp _UDPApp
+
+          
         
       localRun :: IO ()
       localRun = do
-        let _c = _config
-
         let _forwardTCPApps = do
               forM_ (_options ^. forwardTCP) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L TCPForwarding app" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
                       Stream
-                    >>= forwardApp forwarding
+                    >>= forwardTCPApp forwarding
           
         let _forwardUDPApps = do
               forM_ (_options ^. forwardUDP) - \forwarding -> forkIO - do
-                  foreverRun - catchExceptAsyncLog "L TCPForwarding app" - do
+                  foreverRun - catchExceptAsyncLog "L UDPForwarding app" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
-                      Stream
-                    >>= forwardApp forwarding
+                      Datagram
+                    >>= forwardUDPApp forwarding
         
         let _socks5App = foreverRun - catchExceptAsyncLog "L socks5 app" - do
               getSocket (_c ^. local) (_c ^. localPort) Stream
                 >>= localSocks5App 
 
         _forwardTCPApps
+        _forwardUDPApps
         _socks5App
 
       debugRun :: IO ()

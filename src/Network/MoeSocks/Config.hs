@@ -29,5 +29,5 @@ defaultMoeOptions = MoeOptions
   , _configFile = ""
   , _verbosity = DEBUG
   , _forwardTCP = []
-  , _forwardUDP = []
+  , _forwardUDP = pure (Forward 5300 "localhost" 53)
   } 
