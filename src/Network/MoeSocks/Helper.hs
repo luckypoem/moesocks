@@ -179,8 +179,8 @@ waitBothDebug x y = do
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 connectTunnel = waitBothDebug
 
-connectProduction :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectProduction = waitBothDebug
+connectMarket :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+connectMarket = waitBothDebug
 
 getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)

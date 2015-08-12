@@ -130,8 +130,8 @@ localTCPRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                     sendChannel
                 finally
                   (
-                    connectProduction (Just - _logId "L --> +", _produce)
-                                  (Just - _logId "L --> -", _consume)
+                    connectMarket (Just - _logId "L --> +", _produce)
+                                      (Just - _logId "L --> -", _consume)
                   ) -
                   pure ()
 
@@ -151,7 +151,7 @@ localTCPRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest)
                                     receiveChannel
                 finally 
                   (
-                    connectProduction (Just - _logId "L <-- +", _produce)
+                    connectMarket (Just - _logId "L <-- +", _produce)
                                       (Just - _logId "L <-- -", _consume)
                   ) -
                   pure ()
@@ -250,7 +250,7 @@ remoteTCPRequestHandler aConfig aSocket = do
 
                 finally
                   (
-                    connectProduction (Just - _logId "R --> +", _produce)
+                    connectMarket (Just - _logId "R --> +", _produce)
                                       (Just - _logId "R --> -", _consume)
                   ) -
                   pure ()
@@ -274,7 +274,7 @@ remoteTCPRequestHandler aConfig aSocket = do
 
                 finally 
                   (
-                    connectProduction (Just - _logId "R <-- +", _produce)
+                    connectMarket (Just - _logId "R <-- +", _produce)
                                       (Just - _logId "R <-- -", _consume)
                   ) -
                   pure ()
