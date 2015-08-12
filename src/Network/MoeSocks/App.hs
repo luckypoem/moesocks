@@ -84,14 +84,14 @@ localSocks5RequestHandler aConfig aSocket = do
   _r <- processLocalSocks5Request aSocket 
   localRequestHandler aConfig _r True aSocket
 
-localTCPForwardingRequestHandler :: MoeConfig -> LocalTCPForwarding -> 
+forwardTCPRequestHandler :: MoeConfig -> ForwardTCP -> 
                                   Socket -> IO ()
-localTCPForwardingRequestHandler aConfig aTCPForwarding aSocket = do
+forwardTCPRequestHandler aConfig aTCPForwarding aSocket = do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
                           (Domain_name - aTCPForwarding ^. 
-                            localTCPForwardingRemoteHost)
-                          (aTCPForwarding ^. localTCPForwardingRemotePort)
+                            forwardTCPRemoteHost)
+                          (aTCPForwarding ^. forwardTCPRemotePort)
               
   localRequestHandler aConfig (_clientRequest, mempty) False aSocket
 
@@ -494,10 +494,15 @@ moeApp = do
       localSocks5App = localAppBuilder "socks5" - 
                             localSocks5RequestHandler _config
 
-      localTCPForwardingApp :: LocalTCPForwarding -> (Socket, SockAddr) -> IO ()
-      localTCPForwardingApp _f = localAppBuilder "forwarding" - 
-                                localTCPForwardingRequestHandler _config _f
+      forwardTCPApp :: ForwardTCP -> (Socket, SockAddr) 
+                                -> IO ()
+      forwardTCPApp _f = localAppBuilder "forwarding" - 
+                                forwardTCPRequestHandler _config _f
 
+      localUDPForwardingApp :: ForwardTCP -> (Socket, SockAddr) 
+                                -> IO ()
+      localUDPForwardingApp _f = localAppBuilder "forwarding" - 
+                                forwardTCPRequestHandler _config _f
       
   let remoteApp :: (Socket, SockAddr) -> IO ()
       remoteApp s = logSA "R loop" (pure s) -
@@ -533,15 +538,15 @@ moeApp = do
       localRun :: IO ()
       localRun = do
         let _c = _config
-            _forwardings = _options ^. localTCPForwarding
+            _forwardings = _options ^. forwardTCP
 
         let _forwardingApps = do
               forM_ _forwardings - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L TCPForwarding app" - do
                     getSocket (_c ^. local) 
-                      (forwarding ^. localTCPForwardingPort) 
+                      (forwarding ^. forwardTCPPort) 
                       Stream
-                    >>= localTCPForwardingApp forwarding
+                    >>= forwardTCPApp forwarding
           
         let _socks5App = foreverRun - catchExceptAsyncLog "L socks5 app" - do
               getSocket (_c ^. local) (_c ^. localPort) Stream

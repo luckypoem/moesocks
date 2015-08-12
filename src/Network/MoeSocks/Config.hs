@@ -28,5 +28,5 @@ defaultMoeOptions = MoeOptions
     _runningMode = DebugMode
   , _configFile = ""
   , _verbosity = DEBUG
-  , _localTCPForwarding = []
+  , _forwardTCP = []
   } 

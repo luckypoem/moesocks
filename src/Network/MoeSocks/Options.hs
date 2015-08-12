@@ -60,12 +60,12 @@ optionParser =
                     ) <|> pure ""
                       
 
-      forwardingParser :: Parser LocalTCPForwarding
+      forwardingParser :: Parser ForwardTCP
       forwardingParser = do
         skipSpace
-        _localTCPForwardingPort <- decimal
+        _forwardTCPPort <- decimal
         char ':'
-        _localTCPForwardingRemoteHost <- 
+        _forwardTCPRemoteHost <- 
           choice
             [
               do 
@@ -76,16 +76,16 @@ optionParser =
             , takeWhile (/= ':')
             ]
         char ':'
-        _localTCPForwardingRemotePort <- decimal
+        _forwardTCPRemotePort <- decimal
 
-        pure - LocalTCPForwarding  _localTCPForwardingPort
-                                _localTCPForwardingRemoteHost
-                                _localTCPForwardingRemotePort
+        pure - ForwardTCP  _forwardTCPPort
+                                _forwardTCPRemoteHost
+                                _forwardTCPRemotePort
 
-      forwardingListParser :: Parser [LocalTCPForwarding]
+      forwardingListParser :: Parser [ForwardTCP]
       forwardingListParser = many' forwardingParser
 
-      parseTCPForwarding :: String -> [LocalTCPForwarding]
+      parseTCPForwarding :: String -> [ForwardTCP]
       parseTCPForwarding x = 
         x ^. from _Text 
           & parseOnly forwardingListParser 
