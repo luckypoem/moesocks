@@ -66,7 +66,6 @@ optionParser =
       _forwardUDP :: O.Parser String
       _forwardUDP = ( strOption -
                           short 'U'
-                      <>  long "LUDP"
                       <>  metavar "port:host:hostport"
                       <>  help (""
                                 <> "Specify that the given UDP port on the "
