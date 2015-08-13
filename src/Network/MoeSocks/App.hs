@@ -185,12 +185,11 @@ moeApp = do
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
           _say - "L " <> aID <> ": nyaa!"
             
-
+          setSocketOption _localSocket ReuseAddr 1
+          bindSocket _localSocket _localAddr
+          
           case aAppType of
             TCPApp -> do
-              setSocketOption _localSocket ReuseAddr 1
-              bindSocket _localSocket _localAddr
-              
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -206,9 +205,6 @@ moeApp = do
               forever - handleLocal _localSocket
 
             UDPApp -> do
-              setSocketOption _localSocket ReuseAddr 1
-              bindSocket _localSocket _localAddr
-
               let handleLocal = do
                     (_msg, _sockAddr) <- 
                         recvFrom _localSocket _ReceiveLength
