@@ -215,7 +215,7 @@ getSocket aHost aPort aSocketType = do
     hints = defaultHints {
               addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]
             , addrSocketType = aSocketType
-            {-, addrFamily = AF_INET-}
+            , addrFamily = AF_INET
             }
 
 builder_To_ByteString :: B.Builder -> ByteString
