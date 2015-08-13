@@ -23,7 +23,7 @@ main = do
   let _options = defaultMoeOptions 
                                     & configFile .~ "config.json"
                                     & forwardUDP .~ 
-                                                [Forward 5300 "localhost" 53]
+                                                [Forward 5301 "localhost" 53]
   r <- runExceptT - runReaderT moeApp _options
   case r of
     Left e -> pute e >> exitFailure
