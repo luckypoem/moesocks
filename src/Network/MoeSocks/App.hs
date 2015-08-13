@@ -216,9 +216,6 @@ moeApp = do
                     forkIO - catchExceptAsyncLog "L UDP thread" - 
                                 aHandler _msg _s
 
-
-
-
               forever handleLocal
               
 
