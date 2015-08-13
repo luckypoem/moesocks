@@ -20,7 +20,6 @@ import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
-import Data.Text.Strict.Lens (utf8)
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 

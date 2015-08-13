@@ -9,8 +9,6 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
-import Data.Text (Text)
-import Data.Text.Lens
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Common
@@ -155,7 +153,8 @@ remoteTCPRequestHandler aConfig aSocket = do
                                           "clientRequest"
                                           mempty
                                           _decrypt
-                                          shadowSocksRequestParser 
+                                          (shadowSocksRequestParser 
+                                            TCP_IP_stream_connection)
                                           aSocket
                                           
 

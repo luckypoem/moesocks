@@ -59,3 +59,7 @@ executable moesocks
                       Network.MoeSocks.Internal.ShadowSocks.Encrypt
                       Network.MoeSocks.Options
                       Network.MoeSocks.Type
+                      Network.MoeSocks.Common
+                      Network.MoeSocks.TCP
+                      Network.MoeSocks.UDP
+

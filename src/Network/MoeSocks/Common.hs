@@ -3,16 +3,11 @@
 
 module Network.MoeSocks.Common where
 
-import Control.Concurrent.STM
-import Control.Exception
 import Control.Lens
-import Control.Monad
 import Control.Monad.Writer hiding (listen)
-import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Text.Strict.Lens (utf8)
 import Data.Text.Lens
-import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
@@ -21,8 +16,8 @@ import qualified Data.List as L
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 
 getCipher :: Text -> Text -> IO (Cipher, Cipher)
-getCipher method password =
-  getEncDec method (review utf8 password)
+getCipher aMethod aPassword =
+  getEncDec aMethod (review utf8 aPassword)
 
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 

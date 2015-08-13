@@ -76,7 +76,7 @@ remoteUDPRequestHandler aConfig aMessage (aSocket, aSockAddr) = do
   _msg <- _decrypt aMessage
 
   (_decryptedMessage, _clientRequest) <-
-    case parse shadowSocksRequestParser _msg of
+    case parse (shadowSocksRequestParser UDP_port) _msg of
       Done _i _r -> pure (_i, _r)
       _ -> throwIO - ParseException -
             "R Failed to parse UDP request"
@@ -84,9 +84,7 @@ remoteUDPRequestHandler aConfig aMessage (aSocket, aSockAddr) = do
   puts - "R UDP: " <> show _clientRequest
   puts - "R UDP: " <> show _decryptedMessage
   
-  logSA "R UDP -->:" (initTarget - _clientRequest
-                                      & connectionType .~ 
-                                            UDP_port) - \_r -> do
+  logSA "R UDP -->:" (initTarget _clientRequest) - \_r -> do
     let (_clientSocket, _clientAddr) = _r
 
     puts - "R UDP clientSocket: " <> show _r

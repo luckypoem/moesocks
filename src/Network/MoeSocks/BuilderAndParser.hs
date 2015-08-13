@@ -211,13 +211,13 @@ addressTypeParser = choice
   ]
 
 
-shadowSocksRequestParser :: Parser ClientRequest
-shadowSocksRequestParser = do
-  __addressType <- addressTypeParser
-  __portNumber <- portParser
+shadowSocksRequestParser :: ConnectionType -> Parser ClientRequest
+shadowSocksRequestParser _connectionType = do
+  _addressType <- addressTypeParser
+  _portNumber <- portParser
 
   pure - 
           ClientRequest
-            TCP_IP_stream_connection
-            __addressType 
-            __portNumber
+            _connectionType 
+            _addressType 
+            _portNumber
