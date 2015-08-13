@@ -20,7 +20,10 @@ import qualified Prelude as P
 
 main :: IO ()
 main = do
-  let _options = defaultMoeOptions & configFile .~ "config.json"
+  let _options = defaultMoeOptions 
+                                    & configFile .~ "config.json"
+                                    & forwardUDP .~ 
+                                                [Forward 5300 "localhost" 53]
   r <- runExceptT - runReaderT moeApp _options
   case r of
     Left e -> pute e >> exitFailure

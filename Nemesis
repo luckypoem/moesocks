@@ -56,11 +56,16 @@ nemesis = do
   task "dig-tcp" - do
     sh "dig @localhost -p 5300 +tcp twitter.com"
 
-  desc "test port forwarding with a udp dns request"
+  desc "test port forwarding with a loop of udp dns request"
   task "dig" - do
     forever - do
       sh "dig @localhost -p 5300 twitter.com; exit 0;"
       sleep 1
+  
+  desc "test port forwarding with a udp dns request"
+  task "dig-one" - do
+    sh "dig @localhost -p 5300 twitter.com; exit 0;"
+    sleep 1
   
   desc "dist"
   task "dist" - do

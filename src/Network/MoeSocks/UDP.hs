@@ -47,21 +47,30 @@ forwardUDPRequestHandler aConfig aForwarding aMessage
 
       {-let (_encrypt, _decrypt) = (pure, pure)-}
 
-      let 
-          _header = shadowSocksRequestBuilder _clientRequest
-      
-      
-      let _msg = builder_To_ByteString _header <> aMessage
+      let _msg = buildShadowSocksRequest _clientRequest aMessage
 
       puts - "L UDP: " <> show _msg
       
       send_ _remoteSocket =<< _encrypt _msg
 
-      _r <- recv_ _remoteSocket >>= _decrypt
+      (_r, _) <- recv_ _remoteSocket >>= _decrypt >>= parseShadowSocksRequest
 
       puts - "L UDP <--: " <> show _r
       when (_r & isn't _Empty) - do
         sendAllTo aSocket _r aSockAddr
+
+buildShadowSocksRequest :: ClientRequest -> ByteString -> ByteString
+buildShadowSocksRequest aClientRequest aMessage =
+  let _header = shadowSocksRequestBuilder aClientRequest
+  in  
+  builder_To_ByteString _header <> aMessage
+
+parseShadowSocksRequest :: ByteString -> IO (ByteString, ClientRequest)
+parseShadowSocksRequest aMessage =
+  case parse (shadowSocksRequestParser UDP_port) aMessage of
+    Done _i _r -> pure (_i, _r)
+    _ -> throwIO - ParseException -
+            "R Failed to parse UDP request"
 
 remoteUDPRequestHandler:: MoeConfig -> ByteString -> (Socket, SockAddr) 
                                                                       -> IO ()
@@ -75,11 +84,7 @@ remoteUDPRequestHandler aConfig aMessage (aSocket, aSockAddr) = do
   
   _msg <- _decrypt aMessage
 
-  (_decryptedMessage, _clientRequest) <-
-    case parse (shadowSocksRequestParser UDP_port) _msg of
-      Done _i _r -> pure (_i, _r)
-      _ -> throwIO - ParseException -
-            "R Failed to parse UDP request"
+  (_decryptedMessage, _clientRequest) <- parseShadowSocksRequest _msg
   
   puts - "R UDP: " <> show _clientRequest
   puts - "R UDP: " <> show _decryptedMessage
@@ -93,7 +98,7 @@ remoteUDPRequestHandler aConfig aMessage (aSocket, aSockAddr) = do
     
     send_ _clientSocket _decryptedMessage
 
-    _r <- recv_ _clientSocket
+    _r <- buildShadowSocksRequest _clientRequest <$> recv_ _clientSocket
 
     puts - "R UDP <--: " <> show _r
 
