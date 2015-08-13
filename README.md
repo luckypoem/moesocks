@@ -15,7 +15,7 @@ Features
 --------
 * TCP port forwarding 
 * UDP port forwarding
-* Per connection throttling (as a side effect of trying to find a bug in the
+* TCP per connection throttling (as a side effect of trying to find a bug in the
 remote)
 
 Not working
