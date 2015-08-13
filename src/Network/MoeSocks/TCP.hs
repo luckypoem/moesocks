@@ -19,32 +19,26 @@ import Prelude hiding ((-), take)
 import qualified Data.List as L
 
 
-processLocalSocks5Request :: Socket -> IO (ClientRequest, ByteString)
-processLocalSocks5Request aSocket = do
-  (_partialBytesAfterGreeting, r) <- 
+localSocks5RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
+                                                                    -> IO ()
+localSocks5RequestHandler aConfig _ (aSocket,_) = do
+  (_partialBytesAfterGreeting, _r) <- 
       parseSocket "clientGreeting" mempty pure greetingParser aSocket
 
-  when (not - _No_authentication `elem` (r ^. authenticationMethods)) - 
+  when (not - _No_authentication `elem` (_r ^. authenticationMethods)) - 
     throwIO - ParseException
                "Client does not support no authentication method"
 
   send_ aSocket - builder_To_ByteString greetingReplyBuilder 
 
-  (_partialBytesAfterClientRequest, _clientRequest) <- parseSocket 
+  _parsedRequest <- parseSocket 
                                 "clientRequest" 
                                 _partialBytesAfterGreeting
                                 pure
                                 connectionParser
                                 aSocket
 
-
-  pure - (_clientRequest, _partialBytesAfterClientRequest)
-
-localSocks5RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
-                                                                    -> IO ()
-localSocks5RequestHandler aConfig _ (aSocket,_) = do
-  _r <- processLocalSocks5Request aSocket 
-  localTCPRequestHandler aConfig _r True aSocket
+  localTCPRequestHandler aConfig _parsedRequest True aSocket
 
 
 
@@ -57,13 +51,13 @@ forwardTCPRequestHandler aConfig aForwarding _ (aSocket,_) = do
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
               
-  localTCPRequestHandler aConfig (_clientRequest, mempty) False aSocket
+  localTCPRequestHandler aConfig (mempty, _clientRequest) False aSocket
 
 
 
-localTCPRequestHandler :: MoeConfig -> (ClientRequest, ByteString) -> 
+localTCPRequestHandler :: MoeConfig -> (ByteString, ClientRequest) -> 
                         Bool -> Socket -> IO ()
-localTCPRequestHandler aConfig (_clientRequest, _partialBytesAfterClientRequest) 
+localTCPRequestHandler aConfig (_partialBytesAfterClientRequest, _clientRequest) 
                     shouldReplyClient aSocket = do
   let 
       _c = aConfig 
