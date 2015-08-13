@@ -135,7 +135,7 @@ local_TCP_RequestHandler aConfig
                 finally
                   (
                     connectMarket (Just - _logId "L --> +", _produce)
-                                      (Just - _logId "L --> -", _consume)
+                                  (Just - _logId "L --> -", _consume)
                   ) -
                   pure ()
 
@@ -156,7 +156,7 @@ local_TCP_RequestHandler aConfig
                 finally 
                   (
                     connectMarket (Just - _logId "L <-- +", _produce)
-                                      (Just - _logId "L <-- -", _consume)
+                                  (Just - _logId "L <-- -", _consume)
                   ) -
                   pure ()
 
@@ -237,7 +237,7 @@ remote_TCP_RequestHandler aConfig aSocket = do
                 finally
                   (
                     connectMarket (Just - _logId "R --> +", _produce)
-                                      (Just - _logId "R --> -", _consume)
+                                  (Just - _logId "R --> -", _consume)
                   ) -
                   pure ()
 
@@ -261,7 +261,7 @@ remote_TCP_RequestHandler aConfig aSocket = do
                 finally 
                   (
                     connectMarket (Just - _logId "R <-- +", _produce)
-                                      (Just - _logId "R <-- -", _consume)
+                                  (Just - _logId "R <-- -", _consume)
                   ) -
                   pure ()
 
