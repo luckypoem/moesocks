@@ -189,7 +189,7 @@ moeApp = do
           bindSocket _localSocket _localAddr
           
           case aAppType of
-            _TCP_App -> do
+            TCP_App -> do
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -204,7 +204,7 @@ moeApp = do
 
               forever - handleLocal _localSocket
 
-            _UDP_App -> do
+            UDP_App -> do
               let handleLocal = do
                     (_msg, _sockAddr) <- 
                         recvFrom _localSocket _ReceiveLength
