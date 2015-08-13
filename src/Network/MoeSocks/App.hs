@@ -4,7 +4,6 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
-import Control.Exception
 import Control.Lens
 import Control.Monad
 import Control.Monad.Except
@@ -16,7 +15,6 @@ import Data.ByteString.Lazy (toStrict)
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
-import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
@@ -36,38 +34,6 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
-
-processLocalSocks5Request :: Socket -> IO (ClientRequest, ByteString)
-processLocalSocks5Request aSocket = do
-  (_partialBytesAfterGreeting, r) <- 
-      parseSocket "clientGreeting" mempty pure greetingParser aSocket
-
-  when (not - _No_authentication `elem` (r ^. authenticationMethods)) - 
-    throwIO - ParseException
-               "Client does not support no authentication method"
-
-  send_ aSocket - builder_To_ByteString greetingReplyBuilder 
-
-  (_partialBytesAfterClientRequest, _clientRequest) <- parseSocket 
-                                "clientRequest" 
-                                _partialBytesAfterGreeting
-                                pure
-                                connectionParser
-                                aSocket
-
-
-  pure - (_clientRequest, _partialBytesAfterClientRequest)
-
-localSocks5RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
-                                                                    -> IO ()
-localSocks5RequestHandler aConfig _ (aSocket,_) = do
-  _r <- processLocalSocks5Request aSocket 
-  localTCPRequestHandler aConfig _r True aSocket
-
-
-
-
-
 
 
 parseConfig :: Text -> MoeMonadT MoeConfig

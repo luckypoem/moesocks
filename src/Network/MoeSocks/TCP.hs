@@ -10,12 +10,42 @@ import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
 import Network.MoeSocks.BuilderAndParser
-import Network.MoeSocks.Helper
 import Network.MoeSocks.Common
+import Network.MoeSocks.Constant
+import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 import qualified Data.List as L
+
+
+processLocalSocks5Request :: Socket -> IO (ClientRequest, ByteString)
+processLocalSocks5Request aSocket = do
+  (_partialBytesAfterGreeting, r) <- 
+      parseSocket "clientGreeting" mempty pure greetingParser aSocket
+
+  when (not - _No_authentication `elem` (r ^. authenticationMethods)) - 
+    throwIO - ParseException
+               "Client does not support no authentication method"
+
+  send_ aSocket - builder_To_ByteString greetingReplyBuilder 
+
+  (_partialBytesAfterClientRequest, _clientRequest) <- parseSocket 
+                                "clientRequest" 
+                                _partialBytesAfterGreeting
+                                pure
+                                connectionParser
+                                aSocket
+
+
+  pure - (_clientRequest, _partialBytesAfterClientRequest)
+
+localSocks5RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
+                                                                    -> IO ()
+localSocks5RequestHandler aConfig _ (aSocket,_) = do
+  _r <- processLocalSocks5Request aSocket 
+  localTCPRequestHandler aConfig _r True aSocket
+
 
 
 forwardTCPRequestHandler :: MoeConfig -> Forward -> 
