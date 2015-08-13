@@ -153,7 +153,7 @@ initLogger aLevel = do
   updateGlobalLogger "moe" - addHandler formattedHandler
   updateGlobalLogger "moe" - setLevel aLevel
 
-data AppType = TCPApp | UDPApp 
+data AppType = TCP_App | UDP_App 
   deriving (Show, Eq)
 
 moeApp:: MoeMonadT ()
@@ -189,7 +189,7 @@ moeApp = do
           bindSocket _localSocket _localAddr
           
           case aAppType of
-            TCPApp -> do
+            _TCP_App -> do
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -204,7 +204,7 @@ moeApp = do
 
               forever - handleLocal _localSocket
 
-            UDPApp -> do
+            _UDP_App -> do
               let handleLocal = do
                     (_msg, _sockAddr) <- 
                         recvFrom _localSocket _ReceiveLength
@@ -220,7 +220,7 @@ moeApp = do
               
 
   let localSocks5App :: (Socket, SockAddr) -> IO ()
-      localSocks5App = localAppBuilder TCPApp "socks5" - 
+      localSocks5App = localAppBuilder TCP_App "socks5" - 
                             local_Socks5_RequestHandler _config
 
       showForwarding :: Forward -> String
@@ -233,23 +233,23 @@ moeApp = do
                       <> show _remotePort
                       <> "]"
 
-      forwardTCPApp :: Forward -> (Socket, SockAddr) 
+      forward_TCP_App :: Forward -> (Socket, SockAddr) 
                                 -> IO ()
-      forwardTCPApp _f _s = do
+      forward_TCP_App _f _s = do
         let _m = showForwarding _f
-        localAppBuilder TCPApp  ("TCP forwarding " <> _m)
+        localAppBuilder TCP_App  ("TCP forwarding " <> _m)
                                 (local_TCP_ForwardRequestHandler _config _f) 
                                 _s
 
-      forwardUDPApp :: Forward -> (Socket, SockAddr) -> IO ()
-      forwardUDPApp _f _s = do
+      forward_UDP_App :: Forward -> (Socket, SockAddr) -> IO ()
+      forward_UDP_App _f _s = do
         let _m = showForwarding _f 
-        localAppBuilder UDPApp  ("UDP forwarding " <> _m)
+        localAppBuilder UDP_App  ("UDP forwarding " <> _m)
                                 (local_UDP_ForwardRequestHandler _config _f) 
                                 _s
       
-  let remoteTCPApp :: (Socket, SockAddr) -> IO ()
-      remoteTCPApp s = logSA "R loop" (pure s) -
+  let remote_TCP_App :: (Socket, SockAddr) -> IO ()
+      remote_TCP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
           _say "R TCP: nyaa!"
 
@@ -272,8 +272,8 @@ moeApp = do
 
           forever - handleRemote _remoteSocket
 
-  let remoteUDPApp :: (Socket, SockAddr) -> IO ()
-      remoteUDPApp s = logSA "R loop" (pure s) -
+  let remote_UDP_App :: (Socket, SockAddr) -> IO ()
+      remote_UDP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
           _say "R UDP: nyaa!"
 
@@ -299,42 +299,42 @@ moeApp = do
   let 
       remoteRun :: IO ()
       remoteRun = do
-        let _TCPApp = foreverRun - catchExceptAsyncLog "R TCP app" - do
+        let __TCP_App = foreverRun - catchExceptAsyncLog "R TCP app" - do
               getSocket (_c ^. remote) (_c ^. remotePort) Stream
-                >>= remoteTCPApp 
+                >>= remote_TCP_App 
 
-        let _UDPApp = foreverRun - catchExceptAsyncLog "R UDP app" - do
+        let __UDP_App = foreverRun - catchExceptAsyncLog "R UDP app" - do
               getSocket (_c ^. remote) (_c ^. remotePort) Datagram
-                >>= remoteUDPApp 
+                >>= remote_UDP_App 
 
-        waitBoth _TCPApp _UDPApp
+        waitBoth __TCP_App __UDP_App
 
           
         
       localRun :: IO ()
       localRun = do
-        let _forwardTCPApps = do
+        let _forward_TCP_Apps = do
               forM_ (_options ^. forwardTCP) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L TCPForwarding app" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
                       Stream
-                    >>= forwardTCPApp forwarding
+                    >>= forward_TCP_App forwarding
           
-        let _forwardUDPApps = do
+        let _forward_UDP_Apps = do
               forM_ (_options ^. forwardUDP) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L UDPForwarding app" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
                       Datagram
-                    >>= forwardUDPApp forwarding
+                    >>= forward_UDP_App forwarding
         
         let _socks5App = foreverRun - catchExceptAsyncLog "L socks5 app" - do
               getSocket (_c ^. local) (_c ^. localPort) Stream
                 >>= localSocks5App 
 
-        _forwardTCPApps
-        _forwardUDPApps
+        _forward_TCP_Apps
+        _forward_UDP_Apps
         _socks5App
 
       debugRun :: IO ()
