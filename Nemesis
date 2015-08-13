@@ -25,7 +25,7 @@ nemesis = do
     
     desc "http"
     task "http" - do
-      sh "cabal run -- -m debug -c bench/bench.json -L 8081:localhost:8080"
+      sh "cabal run -- -m debug -c bench/bench.json -T 8081:localhost:8080"
     
     let url = "http://192.168.1.102:8080/test.mp4"
         cmd = "parallel --no-notice curl -x socks5://localhost:1091 -o /dev/null" 
@@ -117,7 +117,7 @@ nemesis = do
 
   desc "local-debug-clean"
   task "local-debug-clean" - do
-    run - "-m local -c dev-debug.json -v -L "
+    run - "-m local -c dev-debug.json -v -T "
         <> " 5300:[2001:4860:4860::8888]:53"
   
   desc "remote-debug-clean"

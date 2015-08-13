@@ -50,7 +50,7 @@ optionParser =
 
   let _forwardTCP :: O.Parser String
       _forwardTCP = ( strOption -
-                          short 'L'
+                          short 'T'
                       <>  metavar "port:host:hostport"
                       <>  help (""
                                 <> "Specify that the given TCP port on the "
