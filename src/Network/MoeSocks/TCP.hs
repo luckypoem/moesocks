@@ -19,9 +19,9 @@ import Prelude hiding ((-), take)
 import qualified Data.List as L
 
 
-localSocks5RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
+local_Socks5_RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
                                                                     -> IO ()
-localSocks5RequestHandler aConfig _ (aSocket,_) = do
+local_Socks5_RequestHandler aConfig _ (aSocket,_) = do
   (_partialBytesAfterGreeting, _r) <- 
       parseSocket "clientGreeting" mempty pure greetingParser aSocket
 
@@ -38,27 +38,28 @@ localSocks5RequestHandler aConfig _ (aSocket,_) = do
                                 connectionParser
                                 aSocket
 
-  localTCPRequestHandler aConfig _parsedRequest True aSocket
+  local_TCP_RequestHandler aConfig _parsedRequest True aSocket
 
 
 
-forwardTCPRequestHandler :: MoeConfig -> Forward -> 
+local_TCP_ForwardRequestHandler :: MoeConfig -> Forward -> 
                                   ByteString -> (Socket, SockAddr) -> IO ()
-forwardTCPRequestHandler aConfig aForwarding _ (aSocket,_) = do
+local_TCP_ForwardRequestHandler aConfig aForwarding _ (aSocket,_) = do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
                           (Domain_name - aForwarding ^. 
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
               
-  localTCPRequestHandler aConfig (mempty, _clientRequest) False aSocket
+  local_TCP_RequestHandler aConfig (mempty, _clientRequest) False aSocket
 
 
 
-localTCPRequestHandler :: MoeConfig -> (ByteString, ClientRequest) -> 
+local_TCP_RequestHandler :: MoeConfig -> (ByteString, ClientRequest) -> 
                         Bool -> Socket -> IO ()
-localTCPRequestHandler aConfig (_partialBytesAfterClientRequest, _clientRequest) 
-                    shouldReplyClient aSocket = do
+local_TCP_RequestHandler aConfig 
+                        (_partialBytesAfterClientRequest, _clientRequest) 
+                        shouldReplyClient aSocket = do
   let 
       _c = aConfig 
       _initSocket = 
@@ -167,8 +168,8 @@ localTCPRequestHandler aConfig (_partialBytesAfterClientRequest, _clientRequest)
     handleLocal _remoteSocket
 
 
-remoteTCPRequestHandler:: MoeConfig -> Socket -> IO ()
-remoteTCPRequestHandler aConfig aSocket = do
+remote_TCP_RequestHandler:: MoeConfig -> Socket -> IO ()
+remote_TCP_RequestHandler aConfig aSocket = do
   (_encrypt, _decrypt) <- getCipher
                             (aConfig ^. method)
                             (aConfig ^. password)

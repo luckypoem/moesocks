@@ -228,7 +228,7 @@ moeApp = do
 
   let localSocks5App :: (Socket, SockAddr) -> IO ()
       localSocks5App = localAppBuilder TCPApp "socks5" - 
-                            localSocks5RequestHandler _config
+                            local_Socks5_RequestHandler _config
 
       showForwarding :: Forward -> String
       showForwarding (Forward _localPort _remoteHost _remotePort) =
@@ -245,13 +245,15 @@ moeApp = do
       forwardTCPApp _f _s = do
         let _m = showForwarding _f
         localAppBuilder TCPApp  ("TCP forwarding " <> _m)
-                                (forwardTCPRequestHandler _config _f) _s
+                                (local_TCP_ForwardRequestHandler _config _f) 
+                                _s
 
       forwardUDPApp :: Forward -> (Socket, SockAddr) -> IO ()
       forwardUDPApp _f _s = do
         let _m = showForwarding _f 
         localAppBuilder UDPApp  ("UDP forwarding " <> _m)
-                                (forwardUDPRequestHandler _config _f) _s
+                                (local_UDP_ForwardRequestHandler _config _f) 
+                                _s
       
   let remoteTCPApp :: (Socket, SockAddr) -> IO ()
       remoteTCPApp s = logSA "R loop" (pure s) -
@@ -273,7 +275,7 @@ moeApp = do
                 
                 forkIO - catchExceptAsyncLog "R thread" - 
                             logSocket "R remote socket" (pure _newSocket) -
-                              remoteTCPRequestHandler _config 
+                              remote_TCP_RequestHandler _config 
 
           forever - handleRemote _remoteSocket
 
@@ -294,7 +296,7 @@ moeApp = do
 
 
                 forkIO - catchExceptAsyncLog "R thread" - 
-                            remoteUDPRequestHandler _config _msg _s
+                            remote_UDP_RequestHandler _config _msg _s
 
                 
 

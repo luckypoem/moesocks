@@ -32,9 +32,9 @@ parseShadowSocksRequest aMessage =
             "R Failed to parse UDP request"
 
 
-forwardUDPRequestHandler :: MoeConfig -> Forward -> 
+local_UDP_ForwardRequestHandler :: MoeConfig -> Forward -> 
                                   ByteString -> (Socket,SockAddr) -> IO ()
-forwardUDPRequestHandler aConfig aForwarding aMessage 
+local_UDP_ForwardRequestHandler aConfig aForwarding aMessage 
                                                     (aSocket, aSockAddr) = do
 
   let _c = aConfig
@@ -72,9 +72,9 @@ forwardUDPRequestHandler aConfig aForwarding aMessage
         sendAllTo aSocket _r aSockAddr
 
 
-remoteUDPRequestHandler:: MoeConfig -> ByteString -> (Socket, SockAddr) 
+remote_UDP_RequestHandler:: MoeConfig -> ByteString -> (Socket, SockAddr) 
                                                                       -> IO ()
-remoteUDPRequestHandler aConfig aMessage (aSocket, aSockAddr) = do
+remote_UDP_RequestHandler aConfig aMessage (aSocket, aSockAddr) = do
   (_encrypt, _decrypt) <- getCipher
                             (aConfig ^. method)
                             (aConfig ^. password)
