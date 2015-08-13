@@ -51,6 +51,7 @@ optionParser =
   let _forwardTCP :: O.Parser String
       _forwardTCP = ( strOption -
                           short 'T'
+                      <>  long "tcp"
                       <>  metavar "port:host:hostport"
                       <>  help (""
                                 <> "Specify that the given TCP port on the "
@@ -66,6 +67,7 @@ optionParser =
       _forwardUDP :: O.Parser String
       _forwardUDP = ( strOption -
                           short 'U'
+                      <>  long "udp"
                       <>  metavar "port:host:hostport"
                       <>  help (""
                                 <> "Specify that the given UDP port on the "
