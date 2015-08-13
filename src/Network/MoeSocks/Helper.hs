@@ -20,6 +20,7 @@ import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
+import Data.Time.Clock
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
@@ -30,8 +31,6 @@ import System.Timeout (timeout)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
-
-import Data.Time.Clock
 
 -- BEGIN backports
 

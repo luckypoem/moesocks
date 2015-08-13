@@ -18,6 +18,18 @@ import Network.Socket.ByteString
 import Prelude hiding ((-), take)
 
 
+buildShadowSocksRequest :: ClientRequest -> ByteString -> ByteString
+buildShadowSocksRequest aClientRequest aMessage =
+  let _header = shadowSocksRequestBuilder aClientRequest
+  in  
+  builder_To_ByteString _header <> aMessage
+
+parseShadowSocksRequest :: ByteString -> IO (ByteString, ClientRequest)
+parseShadowSocksRequest aMessage =
+  case parse (shadowSocksRequestParser UDP_port) aMessage of
+    Done _i _r -> pure (_i, _r)
+    _ -> throwIO - ParseException -
+            "R Failed to parse UDP request"
 
 
 forwardUDPRequestHandler :: MoeConfig -> Forward -> 
@@ -59,18 +71,6 @@ forwardUDPRequestHandler aConfig aForwarding aMessage
       when (_r & isn't _Empty) - do
         sendAllTo aSocket _r aSockAddr
 
-buildShadowSocksRequest :: ClientRequest -> ByteString -> ByteString
-buildShadowSocksRequest aClientRequest aMessage =
-  let _header = shadowSocksRequestBuilder aClientRequest
-  in  
-  builder_To_ByteString _header <> aMessage
-
-parseShadowSocksRequest :: ByteString -> IO (ByteString, ClientRequest)
-parseShadowSocksRequest aMessage =
-  case parse (shadowSocksRequestParser UDP_port) aMessage of
-    Done _i _r -> pure (_i, _r)
-    _ -> throwIO - ParseException -
-            "R Failed to parse UDP request"
 
 remoteUDPRequestHandler:: MoeConfig -> ByteString -> (Socket, SockAddr) 
                                                                       -> IO ()
