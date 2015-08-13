@@ -13,30 +13,11 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Helper
+import Network.MoeSocks.Common
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 import qualified Data.List as L
-
-showAddressType :: AddressType -> Text
-showAddressType (IPv4_address xs) = view (from _Text) - 
-                                      concat - L.intersperse "." - 
-                                      map show - xs ^.. each
-showAddressType (Domain_name x)   = x 
-showAddressType (IPv6_address xs) = view (from _Text) -
-                                      concat - L.intersperse ":" - 
-                                      map show - xs ^.. each
-
-showConnectionType :: ConnectionType -> String
-showConnectionType TCP_IP_stream_connection = "TCP_Stream"
-showConnectionType TCP_IP_port_binding      = "TCP_Bind  "
-showConnectionType UDP_port                 = "UDP       "
-
-showRequest :: ClientRequest -> String
-showRequest _r =  
-                   view _Text (showAddressType (_r ^. addressType))
-                <> ":"
-                <> show (_r ^. portNumber)
 
 
 forwardTCPRequestHandler :: MoeConfig -> Forward -> 
@@ -180,25 +161,6 @@ remoteTCPRequestHandler aConfig aSocket = do
 
   {-puts - "Remote get: " <> show _clientRequest-}
   
-  let
-      initTarget :: ClientRequest -> IO (Socket, SockAddr)
-      initTarget _clientRequest = do
-        let 
-            connectionType_To_SocketType :: ConnectionType -> SocketType
-            connectionType_To_SocketType TCP_IP_stream_connection = Stream
-            connectionType_To_SocketType TCP_IP_port_binding = NoSocketType
-            connectionType_To_SocketType UDP_port = Datagram
-               
-            _socketType = connectionType_To_SocketType -
-                            _clientRequest ^. connectionType
-
-
-            _hostName = _clientRequest ^. addressType . to showAddressType
-            _port = _clientRequest ^. portNumber
-
-        
-        getSocket _hostName _port _socketType
-
   logSA "R target socket" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetSocketAddress) = _r 
 

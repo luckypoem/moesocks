@@ -21,7 +21,6 @@ import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
-import Network.MoeSocks.Internal.ShadowSocks.Encrypt
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
@@ -223,11 +222,6 @@ getSocket aHost aPort aSocketType = do
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
 
-type Cipher = ByteString -> IO ByteString 
-
-getCipher :: Text -> Text -> IO (Cipher, Cipher)
-getCipher method password =
-  getEncDec method (review utf8 password)
 
 
 fromWord8 :: forall t. Binary t => [Word8] -> t

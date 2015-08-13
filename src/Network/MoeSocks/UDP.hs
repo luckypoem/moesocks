@@ -5,9 +5,13 @@ module Network.MoeSocks.UDP where
 
 import Control.Lens
 import Control.Monad
+import Data.Attoparsec.ByteString
 import Control.Monad.Writer hiding (listen)
+import Control.Exception
 import Data.ByteString (ByteString)
 import Network.MoeSocks.Helper
+import Network.MoeSocks.BuilderAndParser
+import Network.MoeSocks.Common
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
@@ -29,15 +33,31 @@ forwardUDPRequestHandler aConfig aTCPForwarding aMessage
                             forwardRemoteHost)
                           (aTCPForwarding ^. forwardRemotePort)
   
-  puts - show _clientRequest
+  puts - "L UDP: " <> show _clientRequest
+
   _sa <- getSocket (_c ^. remote) (_c ^. remotePort) Datagram
 
   logSA "L UDP -->:" (pure _sa) - 
     \(_remoteSocket, _remoteAddr) -> do
       connect _remoteSocket _remoteAddr
-      send_ _remoteSocket aMessage
 
-      _r <- recv_ _remoteSocket
+      (_encrypt, _decrypt) <- getCipher
+                                (aConfig ^. method)
+                                (aConfig ^. password)
+
+      {-let (_encrypt, _decrypt) = (pure, pure)-}
+
+      let 
+          _header = shadowSocksRequestBuilder _clientRequest
+      
+      
+      let _msg = builder_To_ByteString _header <> aMessage
+
+      puts - "L UDP: " <> show _msg
+      
+      send_ _remoteSocket =<< _encrypt _msg
+
+      _r <- recv_ _remoteSocket >>= _decrypt
 
       puts - "L UDP <--: " <> show _r
       when (_r & isn't _Empty) - do
@@ -45,16 +65,40 @@ forwardUDPRequestHandler aConfig aTCPForwarding aMessage
 
 remoteUDPRequestHandler:: MoeConfig -> ByteString -> (Socket, SockAddr) 
                                                                       -> IO ()
-remoteUDPRequestHandler _ aMessage (aSocket, aSockAddr) = do
-  _sa <- getSocket "localhost" (53 :: Int) Datagram
-  logSA "R UDP -->:" (pure _sa) -
-    \(_clientSocket, _clientAddr) -> do
-      connect _clientSocket _clientAddr
-      send_ _clientSocket aMessage
+remoteUDPRequestHandler aConfig aMessage (aSocket, aSockAddr) = do
+  (_encrypt, _decrypt) <- getCipher
+                            (aConfig ^. method)
+                            (aConfig ^. password)
+  
 
-      _r <- recv_ _clientSocket
+  {-let (_encrypt, _decrypt) = (pure, pure)-}
+  
+  _msg <- _decrypt aMessage
 
-      puts - "R UDP <--: " <> show _r
+  (_decryptedMessage, _clientRequest) <-
+    case parse shadowSocksRequestParser _msg of
+      Done _i _r -> pure (_i, _r)
+      _ -> throwIO - ParseException -
+            "R Failed to parse UDP request"
+  
+  puts - "R UDP: " <> show _clientRequest
+  puts - "R UDP: " <> show _decryptedMessage
+  
+  logSA "R UDP -->:" (initTarget - _clientRequest
+                                      & connectionType .~ 
+                                            UDP_port) - \_r -> do
+    let (_clientSocket, _clientAddr) = _r
 
-      when (_r & isn't _Empty) - do
-        sendAllTo aSocket _r aSockAddr
+    puts - "R UDP clientSocket: " <> show _r
+
+    connect _clientSocket _clientAddr
+    
+    send_ _clientSocket _decryptedMessage
+
+    _r <- recv_ _clientSocket
+
+    puts - "R UDP <--: " <> show _r
+
+    when (_r & isn't _Empty) - do
+      _encryptedMessage <- _encrypt _r
+      sendAllTo aSocket _encryptedMessage aSockAddr
