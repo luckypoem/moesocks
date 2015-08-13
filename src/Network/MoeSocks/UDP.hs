@@ -22,16 +22,16 @@ import Prelude hiding ((-), take)
 
 forwardUDPRequestHandler :: MoeConfig -> Forward -> 
                                   ByteString -> (Socket,SockAddr) -> IO ()
-forwardUDPRequestHandler aConfig aTCPForwarding aMessage 
+forwardUDPRequestHandler aConfig aForwarding aMessage 
                                                     (aSocket, aSockAddr) = do
 
   let _c = aConfig
 
   let _clientRequest = ClientRequest
                           UDP_port
-                          (Domain_name - aTCPForwarding ^. 
+                          (Domain_name - aForwarding ^. 
                             forwardRemoteHost)
-                          (aTCPForwarding ^. forwardRemotePort)
+                          (aForwarding ^. forwardRemotePort)
   
   puts - "L UDP: " <> show _clientRequest
 

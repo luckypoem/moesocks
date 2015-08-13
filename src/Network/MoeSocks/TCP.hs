@@ -20,12 +20,12 @@ import qualified Data.List as L
 
 forwardTCPRequestHandler :: MoeConfig -> Forward -> 
                                   ByteString -> (Socket, SockAddr) -> IO ()
-forwardTCPRequestHandler aConfig aTCPForwarding _ (aSocket,_) = do
+forwardTCPRequestHandler aConfig aForwarding _ (aSocket,_) = do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
-                          (Domain_name - aTCPForwarding ^. 
+                          (Domain_name - aForwarding ^. 
                             forwardRemoteHost)
-                          (aTCPForwarding ^. forwardRemotePort)
+                          (aForwarding ^. forwardRemotePort)
               
   localTCPRequestHandler aConfig (_clientRequest, mempty) False aSocket
 

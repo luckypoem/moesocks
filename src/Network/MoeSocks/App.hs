@@ -264,14 +264,28 @@ moeApp = do
       localSocks5App = localAppBuilder TCPApp "socks5" - 
                             localSocks5RequestHandler _config
 
+      showForwarding :: Forward -> String
+      showForwarding (Forward _localPort _remoteHost _remotePort) =
+                          "["
+                      <> show _localPort 
+                      <> " -> " 
+                      <> _remoteHost ^. _Text
+                      <> ":"
+                      <> show _remotePort
+                      <> "]"
+
       forwardTCPApp :: Forward -> (Socket, SockAddr) 
                                 -> IO ()
-      forwardTCPApp _f = localAppBuilder TCPApp "TCP forwarding" - 
-                                forwardTCPRequestHandler _config _f
+      forwardTCPApp _f _s = do
+        let _m = showForwarding _f
+        localAppBuilder TCPApp  ("TCP forwarding " <> _m)
+                                (forwardTCPRequestHandler _config _f) _s
 
       forwardUDPApp :: Forward -> (Socket, SockAddr) -> IO ()
-      forwardUDPApp _f = localAppBuilder UDPApp "UDP forwarding" - 
-                                forwardUDPRequestHandler _config _f
+      forwardUDPApp _f _s = do
+        let _m = showForwarding _f 
+        localAppBuilder UDPApp  ("UDP forwarding " <> _m)
+                                (forwardUDPRequestHandler _config _f) _s
       
   let remoteTCPApp :: (Socket, SockAddr) -> IO ()
       remoteTCPApp s = logSA "R loop" (pure s) -
