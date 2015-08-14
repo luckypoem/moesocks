@@ -21,9 +21,8 @@ remote)
 Not working
 -----------
 * Remote is flaky 
-* Socks4 / Socks4a
-* UDP over Socks5
-* Four times slower then original Python's implementation
+* UDP over Socks5 is not implemented
+* Four times slower then the original Python implementation
 
 Planning features
 ------------------
