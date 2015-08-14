@@ -334,7 +334,16 @@ moeApp = do
 
         _forward_TCP_Apps
         _forward_UDP_Apps
-        _socks5App
+        if (_options ^. disableSocks5) 
+          then 
+            if (_options ^. forwardTCP & isn't _Empty)
+                    || (_options ^. forwardUDP & isn't _Empty)
+              then 
+                forever - sleep 1
+              else
+                pute "Nothing to run!"
+                
+          else _socks5App
 
       debugRun :: IO ()
       debugRun = do

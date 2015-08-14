@@ -30,6 +30,14 @@ optionParser =
         | otherwise = DebugMode
   in
 
+  let _disableSocks5 :: O.Parser Bool
+      _disableSocks5 = switch -
+                      long "disable-socks5"
+                  <>  help ("Disable the socks5 server. It can be "
+                            <> "useful to run moesocks as a secure tunnel")
+                  
+  in
+                            
 
   let _config = ( strOption -
                       short 'c'
@@ -40,8 +48,8 @@ optionParser =
                  
   in
 
-  let __verbosity :: O.Parser Priority 
-      __verbosity = flag INFO DEBUG -
+  let _verbosity :: O.Parser Priority 
+      _verbosity = flag INFO DEBUG -
                           short 'v'
                       <>  long "verbose"
                       <>  help "Turn on logging"
@@ -115,9 +123,10 @@ optionParser =
   MoeOptions 
               <$> fmap parseMode _mode 
               <*> fmap (view packed) _config
-              <*> __verbosity
+              <*> _verbosity
               <*> fmap parseForwarding _forwardTCP
               <*> fmap parseForwarding _forwardUDP
+              <*> _disableSocks5
 
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 

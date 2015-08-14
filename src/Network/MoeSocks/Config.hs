@@ -30,4 +30,5 @@ defaultMoeOptions = MoeOptions
   , _verbosity = DEBUG
   , _forwardTCP = []
   , _forwardUDP = []
+  , _disableSocks5 = False
   } 

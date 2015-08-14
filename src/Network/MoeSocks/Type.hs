@@ -90,6 +90,7 @@ data MoeOptions = MoeOptions
   , _verbosity :: Priority
   , _forwardTCP :: [Forward]
   , _forwardUDP :: [Forward]
+  , _disableSocks5 :: Bool
   }
   deriving (Show, Eq)
 
