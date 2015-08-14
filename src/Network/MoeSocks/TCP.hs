@@ -63,7 +63,7 @@ local_TCP_RequestHandler aConfig
       _initSocket = 
           getSocket (_c ^. remote) (_c ^. remotePort) Stream 
 
-  puts - "L : " <> show _clientRequest
+  puts - "L: " <> show _clientRequest
   
   logSA "L remote socket" _initSocket - 
     \(_remoteSocket, _remoteAddress) -> do
@@ -80,7 +80,7 @@ local_TCP_RequestHandler aConfig
 
     let _msg = show _localPeerAddr <> " -> " <> showRequest _clientRequest
     
-    _log - "L : " <> _msg
+    _log - "L: " <> _msg
 
     let handleLocal __remoteSocket = do
           (_encrypt, _decrypt) <- getCipher
@@ -187,7 +187,7 @@ remote_TCP_RequestHandler aConfig aSocket = do
 
     let _msg = show _remotePeerAddr <> " -> " <> showRequest _clientRequest
 
-    _log - "R : " <> ": " <> _msg
+    _log - "R: " <> _msg
 
     let 
         handleTarget __leftOverBytes __targetSocket = do
