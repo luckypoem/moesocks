@@ -64,7 +64,7 @@ local_UDP_ForwardRequestHandler aConfig aForwarding aMessage
       {-puts - "L UDP: " <> show _bytes-}
 
       let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
-      _log - "L UDP: " <> _msg
+      _log - "L U: " <> _msg
       
       send_ _remoteSocket =<< _encrypt _bytes
 
@@ -98,7 +98,7 @@ remote_UDP_RequestHandler aConfig aMessage (aSocket, aSockAddr) = do
     {-puts - "R UDP clientSocket: " <> show _r-}
     
     let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
-    _log - "R UDP: " <> _msg
+    _log - "R U: " <> _msg
 
     connect _clientSocket _clientAddr
     

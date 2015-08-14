@@ -80,7 +80,7 @@ local_TCP_RequestHandler aConfig
 
     let _msg = show _localPeerAddr <> " -> " <> showRequest _clientRequest
     
-    _log - "L TCP: " <> _msg
+    _log - "L T: " <> _msg
 
     let handleLocal __remoteSocket = do
           (_encrypt, _decrypt) <- getCipher
@@ -187,7 +187,7 @@ remote_TCP_RequestHandler aConfig aSocket = do
 
     let _msg = show _remotePeerAddr <> " -> " <> showRequest _clientRequest
 
-    _log - "R TCP: " <> _msg
+    _log - "R T: " <> _msg
 
     let 
         handleTarget __leftOverBytes __targetSocket = do
