@@ -121,7 +121,7 @@ nemesis = do
   
   desc "local-debug"
   task "local-debug" - do
-    run "-m local -c dev.json -v"
+    run "-m local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53 -v"
 
   desc "ssserver"
   task "ssserver" - do
