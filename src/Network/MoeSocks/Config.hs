@@ -16,7 +16,7 @@ defaultMoeConfig = MoeConfig
   , _password = "moesocks"
   , _method = _DefaultMethod
   , _timeout = 300
-  , _tcpBufferSizeInPacket = _BufferSize
+  , _tcpBufferSizeInPacket = 256
   , _throttle = False
   , _throttleSpeed = 8000 -- in Kilobytes
   }

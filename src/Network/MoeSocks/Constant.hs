@@ -25,5 +25,3 @@ _DefaultMethod = "aes-256-cfb"
 _ReceiveLength :: Int
 _ReceiveLength = 4096
 
-_BufferSize :: Int
-_BufferSize = 2048
