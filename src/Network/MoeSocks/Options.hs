@@ -33,8 +33,8 @@ optionParser =
   let _disableSocks5 :: O.Parser Bool
       _disableSocks5 = switch -
                       long "disable-socks5"
-                  <>  help ("Disable the socks5 server. It can be "
-                            <> "useful to run moesocks as a secure tunnel")
+                  <>  help ("Do not start a socks5 server. It can be "
+                          <> "useful to run moesocks only as a secure tunnel")
                   
   in
                             
