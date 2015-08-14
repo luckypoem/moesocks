@@ -339,7 +339,7 @@ moeApp = do
             if (_options ^. forwardTCP & isn't _Empty)
                     || (_options ^. forwardUDP & isn't _Empty)
               then 
-                forever - sleep 1
+                forever - sleep 1000
               else
                 pute "Nothing to run!"
                 
