@@ -172,7 +172,9 @@ waitBothDebug x y = do
   pure ()
 
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectTunnel = waitBothDebug
+connectTunnel x y = 
+  withAsync (logWaitIO x) - const - do
+    logWaitIO y
 
 connectMarket :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 connectMarket = waitBothDebug
