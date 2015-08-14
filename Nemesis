@@ -23,6 +23,30 @@ nemesis = do
     task "run" - do
       sh "cabal run -- -m debug -c bench/bench.json -v"
     
+    desc "run-r"
+    task "run-r" - do
+      sh "cabal run -- -m remote -c bench/bench.json -v"
+    
+    desc "run-l"
+    task "run-l" - do
+      sh "cabal run -- -m local -c bench/bench.json -v"
+    
+    desc "run-ss-r"
+    task "run-ss-r" - do
+      sh "ssserver -c bench/bench.json -v"
+    
+    desc "run-ss-l"
+    task "run-ss-l" - do
+      sh "sslocal -c bench/bench.json -v"
+    
+    desc "run-ss-libev-r"
+    task "run-ss-libev-r" - do
+      sh "ss-server -c bench/bench.json -v"
+    
+    desc "run-ss-libev-l"
+    task "run-ss-libev-l" - do
+      sh "ss-local -c bench/bench.json -v"
+   
     desc "http"
     task "http" - do
       sh "cabal run -- -m debug -c bench/bench.json -T 8081:localhost:8080"
