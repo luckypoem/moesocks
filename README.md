@@ -34,7 +34,7 @@ Note
 
 There's a bug that prevents remote from working correctly.
 
-You should use the python implementation of [shadowsocks] on the remote
+You should use the original Python implementation of [shadowsocks] on the remote
 server.
 
 There is an earlier implementation of [shadowsocks in Haskell] by rnons that
