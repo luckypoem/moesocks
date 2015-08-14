@@ -89,7 +89,7 @@ nemesis = do
   
   desc "local"
   task "local" - do
-    run "-m local -c dev.json -U 5300:8.8.8.8:53"
+    run "-m local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
 
   desc "remote-debug"
   task "remote-debug" - do
