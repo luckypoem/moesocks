@@ -22,7 +22,7 @@ Not working
 -----------
 * Remote is flaky 
 * UDP over Socks5 is not implemented
-* 2.5 times slower then the original Python implementation (measured at 17.6M/s
+* 2.5 times as slow as the original Python implementation (measured at 17.6M/s
     vs 43.6M/s on an Intel P8800)
 
 Planning features
