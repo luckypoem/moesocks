@@ -1,7 +1,5 @@
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Network.MoeSocks.Helper where
 
@@ -273,8 +271,7 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
       {-puts - "rawBytes: " <> show _rawBytes-}
       _bytes <- _decrypt _rawBytes
 
-      let r =  _parser - _partial <> _bytes
-      case r of
+      case _parser - _partial <> _bytes of
         Done i _r -> pure (i, _r)
         Fail _ _ msg -> throwIO - ParseException -
                     "Failed to parse " <> _id <> ": " <> msg
@@ -284,8 +281,7 @@ type Timeout = Int
 
 timeoutFor :: String -> Timeout -> IO a -> IO a
 timeoutFor aID aTimeout aIO = do
-  _r <- timeout aTimeout aIO
-  case _r of
+  timeout aTimeout aIO >>= \case
     Nothing -> throw - TimeoutException aID
     Just _r -> pure _r
 
@@ -367,8 +363,7 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
                     <> " miliseconds."
             threadDelay - floor - _sleepTime
 
-        _r <- atomically - readTBQueue aTBQueue 
-        case _r of
+        (atomically - readTBQueue aTBQueue) >>= \case 
           Nothing -> () <$ _shutdown
           Just _data -> do
                           timeoutFor aID aTimeout - sendAll aSocket _data
