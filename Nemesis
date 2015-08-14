@@ -33,7 +33,7 @@ nemesis = do
     
     desc "run-ss-r"
     task "run-ss-r" - do
-      sh "ssserver -c bench/bench.json -v"
+      sh "ssserver -c bench/bench.json --forbidden-ip='' -v"
     
     desc "run-ss-l"
     task "run-ss-l" - do
@@ -51,14 +51,14 @@ nemesis = do
     task "http" - do
       sh "cabal run -- -m debug -c bench/bench.json -T 8081:localhost:8080"
     
-    let url = "http://localhost:8080/test.mp4"
+    let url = "http://127.0.0.1:8080/test.mp4"
         cmd = "parallel --no-notice curl -x socks5://localhost:1091 -o /dev/null" 
         args = concatMap (<> " ") - replicate 4 url
 
     desc "load"
     task "load" - do  
         forever-
-          sh - "curl -x socks5://localhost:1091 -o /dev/null"
+          sh - "curl -x socks5://127.0.0.1:1091 -o /dev/null"
               <> " "
               <> url
     
