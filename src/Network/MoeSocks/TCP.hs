@@ -16,8 +16,6 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
-import qualified Data.List as L
-
 
 local_Socks5_RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
                                                                     -> IO ()
@@ -80,15 +78,9 @@ local_TCP_RequestHandler aConfig
       send_ aSocket - builder_To_ByteString _connectionReplyBuilder
     
 
-    let _msg = 
-                concat - L.intersperse " -> " 
-                [ 
-                  show _localPeerAddr
-                , showRequest _clientRequest
-                ]
+    let _msg = show _localPeerAddr <> " -> " <> showRequest _clientRequest
     
-    _log - "L " -- <> showConnectionType (_clientRequest ^. connectionType)
-                <> ": " <> _msg
+    _log - "L : " <> _msg
 
     let handleLocal __remoteSocket = do
           (_encrypt, _decrypt) <- getCipher
@@ -193,15 +185,9 @@ remote_TCP_RequestHandler aConfig aSocket = do
     _remotePeerAddr <- getPeerName aSocket
     _targetPeerAddr <- getPeerName _targetSocket
 
-    let _msg = 
-                concat - L.intersperse " -> " - 
-                [ 
-                  show _remotePeerAddr
-                , showRequest _clientRequest
-                ]
+    let _msg = show _remotePeerAddr <> " -> " <> showRequest _clientRequest
 
-    _log - "R " -- <> showConnectionType (_clientRequest ^. connectionType)
-                  <> ": " <> _msg
+    _log - "R : " <> ": " <> _msg
 
     let 
         handleTarget __leftOverBytes __targetSocket = do

@@ -45,7 +45,7 @@ local_UDP_ForwardRequestHandler aConfig aForwarding aMessage
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
   
-  puts - "L UDP: " <> show _clientRequest
+  {-puts - "L UDP: " <> show _clientRequest-}
 
   _sa <- getSocket (_c ^. remote) (_c ^. remotePort) Datagram
 
@@ -59,15 +59,18 @@ local_UDP_ForwardRequestHandler aConfig aForwarding aMessage
 
       {-let (_encrypt, _decrypt) = (pure, pure)-}
 
-      let _msg = buildShadowSocksRequest _clientRequest aMessage
+      let _bytes = buildShadowSocksRequest _clientRequest aMessage
 
-      puts - "L UDP: " <> show _msg
+      {-puts - "L UDP: " <> show _bytes-}
+
+      let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
+      _log - "L UDP : " <> _msg
       
-      send_ _remoteSocket =<< _encrypt _msg
+      send_ _remoteSocket =<< _encrypt _bytes
 
       (_r, _) <- recv_ _remoteSocket >>= _decrypt >>= parseShadowSocksRequest
 
-      puts - "L UDP <--: " <> show _r
+      {-puts - "L UDP <--: " <> show _r-}
       when (_r & isn't _Empty) - do
         sendAllTo aSocket _r aSockAddr
 
@@ -86,13 +89,16 @@ remote_UDP_RequestHandler aConfig aMessage (aSocket, aSockAddr) = do
 
   (_decryptedMessage, _clientRequest) <- parseShadowSocksRequest _msg
   
-  puts - "R UDP: " <> show _clientRequest
-  puts - "R UDP: " <> show _decryptedMessage
+  {-puts - "R UDP: " <> show _clientRequest-}
+  {-puts - "R UDP: " <> show _decryptedMessage-}
   
   logSA "R UDP -->:" (initTarget _clientRequest) - \_r -> do
     let (_clientSocket, _clientAddr) = _r
 
-    puts - "R UDP clientSocket: " <> show _r
+    {-puts - "R UDP clientSocket: " <> show _r-}
+    
+    let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
+    _log - "R UDP: " <> _msg
 
     connect _clientSocket _clientAddr
     
@@ -100,7 +106,7 @@ remote_UDP_RequestHandler aConfig aMessage (aSocket, aSockAddr) = do
 
     _r <- buildShadowSocksRequest _clientRequest <$> recv_ _clientSocket
 
-    puts - "R UDP <--: " <> show _r
+    {-puts - "R UDP <--: " <> show _r-}
 
     when (_r & isn't _Empty) - do
       _encryptedMessage <- _encrypt _r
