@@ -304,7 +304,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
       _produce :: Int -> IO ()
       _produce _bytesReceived = do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
-        {-pute - "Get chunk: " <> (show - S.length _r)-}
+        pute - "Get chunk: " <> (show - S.length _r)
         if (_r & isn't _Empty) 
           then do
             forM_ aThrottle - \_throttle -> do
@@ -348,8 +348,8 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
                     tryIO aID - shutdown aSocket ShutdownSend
                     {-tryIO aID - close aSocket-}
 
-      _consume :: ByteString -> Int -> IO ()
-      _consume _leftOver _allBytesSent = do
+      _consume :: Int -> IO ()
+      _consume _allBytesSent = do
         forM_ aThrottle - \_throttle -> do
           _currentTime <- getCurrentTime
           let _timeDiff = realToFrac (diffUTCTime _currentTime 
@@ -370,48 +370,55 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
             threadDelay - floor - _sleepTime
 
         
-        _newPacket <- 
-              if S.length _leftOver >= 4096
-                then pure - Just mempty
-                else do
-                      _isEmpty <- atomically - isEmptyTBQueue aTBQueue
-                      if _isEmpty && (_leftOver & isn't _Empty)
-                        then do
-                              yield
-                              _stillEmpty <- atomically - 
-                                                isEmptyTBQueue aTBQueue
-                              if _stillEmpty
-                                then do
-                                  sleep 0.001
-                                  _emptyAgain <- atomically - 
-                                                  isEmptyTBQueue aTBQueue
-                                  if _emptyAgain
-                                    then
-                                      pure - Just mempty
-                                    else
-                                      atomically - readTBQueue aTBQueue
-                                else
-                                  atomically - readTBQueue aTBQueue
+        {-_newPacket <- -}
+              {-if S.length _leftOver >= 4096-}
+                {-then pure - Just mempty-}
+                {-else do-}
+                      {-_isEmpty <- atomically - isEmptyTBQueue aTBQueue-}
+                      {-if _isEmpty && (_leftOver & isn't _Empty)-}
+                        {-then do-}
+                              {-yield-}
+                              {-_stillEmpty <- atomically - -}
+                                                {-isEmptyTBQueue aTBQueue-}
+                              {-if _stillEmpty-}
+                                {-then do-}
+                                  {-sleep 0.001-}
+                                  {-_emptyAgain <- atomically - -}
+                                                  {-isEmptyTBQueue aTBQueue-}
+                                  {-if _emptyAgain-}
+                                    {-then-}
+                                      {-pure - Just mempty-}
+                                    {-else-}
+                                      {-atomically - readTBQueue aTBQueue-}
+                                {-else-}
+                                  {-atomically - readTBQueue aTBQueue-}
 
-                        else
-                          atomically - readTBQueue aTBQueue
+                        {-else-}
+                          {-atomically - readTBQueue aTBQueue-}
+        
+        _newPacket <- atomically - readTBQueue aTBQueue
                             
 
         case _newPacket of
           Nothing -> () <$ _shutdown
           Just _data -> do
-                          let (_thisBytes, _thatBytes) = 
-                                S.splitAt 4096 - _leftOver <> _data
+                          {-let (_thisBytes, _thatBytes) = -}
+                                {-S.splitAt 4096 - _leftOver <> _data-}
 
-                          _byteSent <- timeoutFor aID aTimeout - 
-                                          send aSocket _thisBytes
-                          let _curry = S.drop _byteSent _thisBytes
-                                        <> _thatBytes
+                          {-_byteSent <- timeoutFor aID aTimeout - -}
+                                          {-send aSocket _thisBytes-}
+                          {-let _curry = S.drop _byteSent _thisBytes-}
+                                        {-<> _thatBytes-}
+                          {-yield-}
+                          {-_consume _curry - -}
+                            {-_allBytesSent + _byteSent-}
+                          timeoutFor aID aTimeout - 
+                                          sendAll aSocket _data
                           yield
-                          _consume _curry - 
-                            _allBytesSent + _byteSent
+                          _consume - 
+                            _allBytesSent + S.length _data
   
-  _consume mempty 0 `onException` _shutdown
+  _consume 0 `onException` _shutdown
   pure ()
 
 
