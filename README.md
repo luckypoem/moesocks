@@ -34,7 +34,8 @@ remote)
 
 Not working
 -----------
-* Remote is flaky 
+* Remote is flaky, particularly when trying to send data through the 
+  Great Firewall of China (GFW).
 * UDP over Socks5 is not implemented
 * 2.5 times slower then the original Python implementation (measured at 17.6M/s
     vs 43.6M/s on an Intel P8800, using the AES-256-CFB encryption)
@@ -43,13 +44,17 @@ Planning features
 ------------------
 * None
 
-Note
+Notes
 ------
 
-There's a bug that prevents remote from working correctly.
+There's a bug that prevents moesocks remote from working correctly with GFW,
+thanks Prof Fang!
 
 You should use the original Python implementation of [shadowsocks] on the remote
-server.
+server if your primary goal is to bypass internet censorship in China.
+
+From the author's limited testing, [shadowsocks-go] also works reasonably
+well, though it might not run as fast as the Python's version.
 
 There is an earlier implementation of [shadowsocks in Haskell] by rnons that
 makes MoeSocks possible. 
@@ -58,6 +63,7 @@ The original goal of MoeSocks is to provide extra configurability to standard
 shadowsocks, but it has been discarded since the remote is too flaky. 
 
 [shadowsocks]:https://github.com/shadowsocks/shadowsocks 
+[shadowsocks-go]:https://github.com/shadowsocks/shadowsocks-go
 [shadowsocks in Haskell]:https://github.com/rnons/shadowsocks-haskell
 
 
