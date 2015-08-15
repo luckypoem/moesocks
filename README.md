@@ -21,10 +21,11 @@ Usage
 
 Features
 --------
-* TCP port forwarding 
-* UDP port forwarding
+* TCP port forwarding
+* UDP port forwarding, for example `-U 5300:8.8.8.8:53`
 * TCP per connection throttling (as a side effect of trying to find a bug in the
 remote)
+* Disable socks5 service on local
 
 Not working
 -----------
