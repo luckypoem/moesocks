@@ -30,8 +30,8 @@ Features
 * UDP port forwarding, for example `-U 5300:8.8.8.8:53`
 * TCP per connection throttling (as a side effect of trying to find a bug in the
 remote)
-* Disable socks5 service on local
-* Compatible with shadowsocks's configuration file
+* Socks5 service on local can be turned off
+* Understand shadowsocks's configuration file
 
 Not working
 -----------
