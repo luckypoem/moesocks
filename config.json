@@ -1,9 +1,9 @@
 {
-  "server":"localhost",
-  "server_port":1190,
-  "local_address":"localhost",
-  "local_port":1090,
+  "remote":"localhost",
+  "remotePort":1190,
+  "local":"localhost",
+  "localPort":1090,
   "password":"birthday!",
-	"method":"aes-256-cfb"
+  "method":"aes-256-cfb"
 }
 
