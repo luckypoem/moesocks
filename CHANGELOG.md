@@ -1,6 +1,9 @@
+0.1.0.17
+--------
+* Add `--no-socks5` flag to switch off the socks5 service on local
+
 0.1.0.16
 --------
-
 * Add compatibility with shadowsocks for UDP port forwarding
 
 0.1.0.15
