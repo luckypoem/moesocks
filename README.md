@@ -56,7 +56,7 @@ server if your primary goal is to bypass internet censorship in China.
 From the author's limited testing, [shadowsocks-go] also works reasonably
 well, though it might not run as fast as the Python's version.
 
-There is an earlier implementation of [shadowsocks in Haskell] by rnons that
+There is an earlier implementation of [shadowsocks-haskell] by rnons that
 makes MoeSocks possible. 
 
 The original goal of MoeSocks is to provide extra configurability to standard
@@ -64,7 +64,7 @@ shadowsocks, but it has been discarded since the remote is too flaky.
 
 [shadowsocks]:https://github.com/shadowsocks/shadowsocks 
 [shadowsocks-go]:https://github.com/shadowsocks/shadowsocks-go
-[shadowsocks in Haskell]:https://github.com/rnons/shadowsocks-haskell
+[shadowsocks-haskell]:https://github.com/rnons/shadowsocks-haskell
 
 
 
