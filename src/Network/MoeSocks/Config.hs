@@ -2,19 +2,18 @@
 
 module Network.MoeSocks.Config where
 
-import Network.MoeSocks.Constant
 import Network.MoeSocks.Type
 import System.Log.Logger
 
 defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig
   {
-    _remote= "127.0.0.1"
+    _remote= "0.0.0.0"
   , _remotePort = 1190
-  , _local = "127.0.0.1"
+  , _local = "localhost"
   , _localPort = 1090
   , _password = "moesocks"
-  , _method = _DefaultMethod
+  , _method = "aes-256-cfb"
   , _timeout = 300
   , _tcpBufferSizeInPacket = 256
   , _throttle = False

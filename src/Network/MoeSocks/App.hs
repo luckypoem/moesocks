@@ -86,11 +86,7 @@ parseConfig aFilePath = do
           Object -
             foldl (flip H.delete) _obj - 
               [
-                "_remote"
-              , "_remotePort"
-              , "_local"
-              , "_localPort"
-              , "_password"
+                "_password"
               ]
           
       filterEssentialConfig _ = Null
