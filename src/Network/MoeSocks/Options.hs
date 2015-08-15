@@ -16,10 +16,10 @@ import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace,
 optionParser :: O.Parser MoeOptions
 optionParser = 
   let _mode = ( strOption -
-                    short 'm'
-                <>  long "mode"
-                <>  metavar "MODE"
-                <>  help "Tell moesocks to runs in local or remote mode"
+                    short 'r'
+                <>  long "role"
+                <>  metavar "ROLE"
+                <>  help "Tell moesocks to run as local or remote"
               ) <|> pure "local" 
   
       parseMode :: String -> RunningMode

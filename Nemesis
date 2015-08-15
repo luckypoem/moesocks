@@ -21,15 +21,15 @@ nemesis = do
   namespace "bench" - do
     desc "run"
     task "run" - do
-      sh "cabal run -- -m debug -c bench/bench.json -v"
+      sh "cabal run -- -r debug -c bench/bench.json -v"
     
     desc "run-r"
     task "run-r" - do
-      sh "cabal run -- -m remote -c bench/bench.json -v"
+      sh "cabal run -- -r remote -c bench/bench.json -v"
     
     desc "run-l"
     task "run-l" - do
-      sh "cabal run -- -m local -c bench/bench.json -v"
+      sh "cabal run -- -r local -c bench/bench.json -v"
     
     desc "run-ss-r"
     task "run-ss-r" - do
@@ -49,7 +49,7 @@ nemesis = do
    
     desc "http"
     task "http" - do
-      sh "cabal run -- -m debug -c bench/bench.json -T 8081:localhost:8080"
+      sh "cabal run -- -r debug -c bench/bench.json -T 8081:localhost:8080"
     
     let url = "http://127.0.0.1:8080/test.mp4"
         cmd = "parallel --no-notice curl -x socks5://localhost:1091 -o /dev/null" 
@@ -109,19 +109,19 @@ nemesis = do
   
   desc "remote"
   task "remote" - do
-    run "-m remote -c dev.json"
+    run "-r remote -c dev.json"
   
   desc "local"
   task "local" - do
-    run "-m local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
+    run "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
 
   desc "remote-debug"
   task "remote-debug" - do
-    run "-m remote -c dev.json -v"
+    run "-r remote -c dev.json -v"
   
   desc "local-debug"
   task "local-debug" - do
-    run "-m local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53 -v"
+    run "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53 -v"
 
   desc "ssserver"
   task "ssserver" - do
@@ -133,7 +133,7 @@ nemesis = do
 
   desc "local2"
   task "local2" - do
-    run "-m local -c dev2.json -U 5300:8.8.8.8:53"
+    run "-r local -c dev2.json -U 5300:8.8.8.8:53"
   
   desc "i"
   task "i" - do
@@ -141,18 +141,18 @@ nemesis = do
 
   desc "local-debug-clean"
   task "local-debug-clean" - do
-    run - "-m local -c dev-debug.json -v -T "
+    run - "-r local -c dev-debug.json -v -T "
         <> " 5300:[2001:4860:4860::8888]:53"
   
   desc "remote-debug-clean"
   task "remote-debug-clean" - do
-    run "-m remote -c dev-debug.json -v"
+    run "-r remote -c dev-debug.json -v"
 
 
   desc "merge debug to master"
   task "m" - do
     sh "git checkout master"
-    sh "git merge dev -m \"Merge branch 'debug'\""
+    sh "git merge dev -r \"Merge branch 'debug'\""
     sh "git push origin master"
     sh "git checkout dev"
 
