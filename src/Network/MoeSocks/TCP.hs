@@ -112,7 +112,7 @@ local_TCP_RequestHandler aConfig
                 let _produce = do
                                   produceLoop (_logId "L --> + Loop")
                                     _timeout
-                                    Nothing
+                                    _NoThrottle
                                     aSocket 
                                     sendChannel 
                                     _encrypt
@@ -133,7 +133,7 @@ local_TCP_RequestHandler aConfig
           let receiveThread = do
                 let _produce = produceLoop (_logId "L <-- + Loop")
                                   _timeout
-                                  Nothing
+                                  _NoThrottle
                                   __remoteSocket 
                                   receiveChannel
                                   _decrypt
@@ -141,7 +141,7 @@ local_TCP_RequestHandler aConfig
                 let _consume = do
                                   consumeLoop (_logId "L <-- - Loop")
                                     _timeout
-                                    Nothing
+                                    _NoThrottle
                                     aSocket 
                                     receiveChannel
                 finally 
@@ -208,14 +208,14 @@ remote_TCP_RequestHandler aConfig aSocket = do
                 let _produce = do
                                   produceLoop (_logId "R --> + Loop")
                                     _timeout
-                                    Nothing
+                                    _NoThrottle 
                                     aSocket
                                     sendChannel
                                     _decrypt
 
                 let _consume = consumeLoop (_logId "R --> - Loop")
                                   _timeout
-                                  Nothing
+                                  _NoThrottle
                                   __targetSocket
                                   sendChannel
 
@@ -230,7 +230,7 @@ remote_TCP_RequestHandler aConfig aSocket = do
                 let _produce = do
                                   produceLoop (_logId "R <-- + Loop")
                                     _timeout
-                                    Nothing
+                                    _NoThrottle 
                                     __targetSocket
                                     receiveChannel
                                     _encrypt

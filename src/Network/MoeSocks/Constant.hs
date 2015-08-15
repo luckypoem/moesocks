@@ -25,3 +25,6 @@ _DefaultMethod = "aes-256-cfb"
 _PacketLength :: Int
 _PacketLength = 4096
 
+
+_NoThrottle :: Maybe a
+_NoThrottle = Nothing
