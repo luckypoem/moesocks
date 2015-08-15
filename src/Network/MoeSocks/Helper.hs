@@ -398,28 +398,29 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
                           {-atomically - readTBQueue aTBQueue-}
 
         
-        let _loop :: ByteString -> STM (Maybe ByteString)
-            _loop _lastBytes = do
-              _r <- readTBQueue aTBQueue
-              case _r of
-                Nothing -> pure Nothing
-                Just _data -> do
-                  let _allData = _lastBytes <> _data
-                  if S.length _allData < 4096
-                    then do
-                      _empty <- isEmptyTBQueue aTBQueue
-                      if _empty
-                        then pure - Just _allData
-                        else _loop _allData
-                    else
-                      pure - Just _allData
+        {-let _loop :: ByteString -> STM (Maybe ByteString)-}
+            {-_loop _lastBytes = do-}
+              {-_r <- readTBQueue aTBQueue-}
+              {-case _r of-}
+                {-Nothing -> pure Nothing-}
+                {-Just _data -> do-}
+                  {-let _allData = _lastBytes <> _data-}
+                  {-if S.length _allData < 4096-}
+                    {-then do-}
+                      {-_empty <- isEmptyTBQueue aTBQueue-}
+                      {-if _empty-}
+                        {-then pure - Just _allData-}
+                        {-else _loop _allData-}
+                    {-else-}
+                      {-pure - Just _allData-}
 
-        _newPacket <- atomically - _loop mempty
+        {-_newPacket <- atomically - _loop mempty-}
 
                         
                         
 
                             
+        _newPacket <- atomically - readTBQueue aTBQueue
 
         case _newPacket of
           Nothing -> () <$ _shutdown
