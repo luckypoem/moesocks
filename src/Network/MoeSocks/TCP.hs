@@ -228,7 +228,7 @@ remote_TCP_RequestHandler aConfig aSocket = do
 
           let receiveThread = do
                 let _produce = do
-                                  produceLoop (_logId "R --> + Loop")
+                                  produceLoop (_logId "R <-- + Loop")
                                     _timeout
                                     Nothing
                                     __targetSocket
@@ -237,7 +237,7 @@ remote_TCP_RequestHandler aConfig aSocket = do
 
 
                 let _consume = do
-                                  consumeLoop (_logId "R --> - Loop")
+                                  consumeLoop (_logId "R <-- - Loop")
                                     _timeout
                                     _throttle
                                     aSocket
