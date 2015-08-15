@@ -304,7 +304,8 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
       _produce :: Int -> IO ()
       _produce _bytesReceived = do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
-        pute - "Get chunk: " <> (show - S.length _r)
+        pute - "Get chunk: " <> (show - S.length _r) <> " " <> 
+                  aID
         if (_r & isn't _Empty) 
           then do
             forM_ aThrottle - \_throttle -> do
