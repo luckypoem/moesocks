@@ -371,50 +371,50 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
             threadDelay - floor - _sleepTime
 
         
-        {-_newPacket <- -}
-              {-if S.length _leftOver >= 4096-}
-                {-then pure - Just mempty-}
-                {-else do-}
-                      {-_isEmpty <- atomically - isEmptyTBQueue aTBQueue-}
-                      {-if _isEmpty && (_leftOver & isn't _Empty)-}
-                        {-then do-}
-                              {-yield-}
-                              {-_stillEmpty <- atomically - -}
-                                                {-isEmptyTBQueue aTBQueue-}
-                              {-if _stillEmpty-}
-                                {-then do-}
-                                  {-sleep 0.001-}
-                                  {-_emptyAgain <- atomically - -}
-                                                  {-isEmptyTBQueue aTBQueue-}
-                                  {-if _emptyAgain-}
-                                    {-then-}
-                                      {-pure - Just mempty-}
-                                    {-else-}
-                                      {-atomically - readTBQueue aTBQueue-}
-                                {-else-}
-                                  {-atomically - readTBQueue aTBQueue-}
+        _newPacket <- 
+              if S.length _leftOver >= 4096
+                then pure - Just mempty
+                else do
+                      _isEmpty <- atomically - isEmptyTBQueue aTBQueue
+                      if _isEmpty && (_leftOver & isn't _Empty)
+                        then do
+                              yield
+                              _stillEmpty <- atomically - 
+                                                isEmptyTBQueue aTBQueue
+                              if _stillEmpty
+                                then do
+                                  sleep 0.001
+                                  _emptyAgain <- atomically - 
+                                                  isEmptyTBQueue aTBQueue
+                                  if _emptyAgain
+                                    then
+                                      pure - Just mempty
+                                    else
+                                      atomically - readTBQueue aTBQueue
+                                else
+                                  atomically - readTBQueue aTBQueue
 
-                        {-else-}
-                          {-atomically - readTBQueue aTBQueue-}
+                        else
+                          atomically - readTBQueue aTBQueue
 
         
-        let _loop :: ByteString -> STM (Maybe ByteString)
-            _loop _lastBytes = do
-              _r <- readTBQueue aTBQueue
-              case _r of
-                Nothing -> pure Nothing
-                Just _data -> do
-                  let _allData = _lastBytes <> _data
-                  if S.length _allData < 4096
-                    then do
-                      _empty <- isEmptyTBQueue aTBQueue
-                      if _empty
-                        then pure - Just _allData
-                        else _loop _allData
-                    else
-                      pure - Just _allData
+        {-let _loop :: ByteString -> STM (Maybe ByteString)-}
+            {-_loop _lastBytes = do-}
+              {-_r <- readTBQueue aTBQueue-}
+              {-case _r of-}
+                {-Nothing -> pure Nothing-}
+                {-Just _data -> do-}
+                  {-let _allData = _lastBytes <> _data-}
+                  {-if S.length _allData < 4096-}
+                    {-then do-}
+                      {-_empty <- isEmptyTBQueue aTBQueue-}
+                      {-if _empty-}
+                        {-then pure - Just _allData-}
+                        {-else _loop _allData-}
+                    {-else-}
+                      {-pure - Just _allData-}
 
-        _newPacket <- atomically - _loop mempty
+        {-_newPacket <- atomically - _loop mempty-}
 
                         
                         
