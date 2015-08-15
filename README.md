@@ -34,11 +34,11 @@ remote)
 
 Not working
 -----------
-* Remote is flaky, particularly when trying to send data through the 
-  Great Firewall of China (GFW).
+* Remote is flaky, particularly when trying to send data through the Great
+  Firewall of China (GFW).
 * UDP over Socks5 is not implemented
-* 2.5 times slower then the original Python implementation (measured at 17.6M/s
-    vs 43.6M/s on an Intel P8800, using the AES-256-CFB encryption)
+* More then 2 times slower then the original Python implementation (measured at
+  20M/s vs 43M/s on an Intel P8800, using AES-256-CFB encryption)
 
 Planning features
 ------------------
