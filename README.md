@@ -47,8 +47,8 @@ Planning features
 Notes
 ------
 
-There's a bug that prevents remote from working correctly with GFW,
-thanks Prof Fang!
+There's a bug that prevents remote from working correctly with GFW.
+Thanks, Prof Fang!
 
 You should use the original Python implementation of [shadowsocks] on the remote
 server if your primary goal is to bypass internet censorship in China.
