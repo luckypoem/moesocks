@@ -47,7 +47,7 @@ Planning features
 Notes
 ------
 
-There's a bug that prevents moesocks remote from working correctly with GFW,
+There's a bug that prevents remote from working correctly with GFW,
 thanks Prof Fang!
 
 You should use the original Python implementation of [shadowsocks] on the remote
