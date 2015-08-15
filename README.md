@@ -1,7 +1,6 @@
 MoeSocks
 ========
 
-
 A socks5 proxy using the client / server architecture.
 
 MoeSocks is greatly inspired by [shadowsocks].
@@ -13,7 +12,8 @@ type `moesocks --help` for help.
 
 Usage
 -----
-
+* Edit `config.json` to fit your setup (at least the `remote` and `password`
+  fields)
 * Start a remote node outside the firewall: 
           
         moesocks --role remote -c config.json
