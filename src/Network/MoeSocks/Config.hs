@@ -9,9 +9,9 @@ defaultMoeConfig :: MoeConfig
 defaultMoeConfig = MoeConfig
   {
     _remote= "0.0.0.0"
-  , _remotePort = 1190
+  , _remotePort = 8388 
   , _local = "localhost"
-  , _localPort = 1090
+  , _localPort = 1080
   , _password = "moesocks"
   , _method = "aes-256-cfb"
   , _timeout = 300
