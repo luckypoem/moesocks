@@ -79,8 +79,8 @@ puteT = pute . view _Text
 showBytes :: ByteString -> String
 showBytes = show . S.unpack
 
-sleep :: Int -> IO ()
-sleep x = threadDelay - x * 1000 * 1000
+sleep :: Double -> IO ()
+sleep x = threadDelay - floor - x * 1000 * 1000
 
 foreverRun :: IO a -> IO ()
 foreverRun _io = do
@@ -204,8 +204,8 @@ getSocket aHost aPort aSocketType = do
           setSocketCloseOnExec _socket
 
           -- send immediately!
-          when (aSocketType == Stream) -
-            setSocketOption _socket NoDelay 1 
+          {-when (aSocketType == Stream) --}
+            {-setSocketOption _socket NoDelay 1 -}
 
           puts - "Getting socket: " <> show addrInfo
           {-puts - "Socket family: " <> show family-}
@@ -304,6 +304,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
       _produce :: Int -> IO ()
       _produce _bytesReceived = do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
+        pute - "Get chunk: " <> (show - S.length _r)
         if (_r & isn't _Empty) 
           then do
             forM_ aThrottle - \_throttle -> do
@@ -347,14 +348,14 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
                     tryIO aID - shutdown aSocket ShutdownSend
                     {-tryIO aID - close aSocket-}
 
-      _consume :: Int -> IO ()
-      _consume _bytesSent = do
+      _consume :: ByteString -> Int -> IO ()
+      _consume _leftOver _allBytesSent = do
         forM_ aThrottle - \_throttle -> do
           _currentTime <- getCurrentTime
           let _timeDiff = realToFrac (diffUTCTime _currentTime 
                                                   _startTime) :: Double
 
-              _bytesK = fromIntegral _bytesSent / 1000 :: Double
+              _bytesK = fromIntegral _allBytesSent / 1000 :: Double
 
           let _speed = _bytesK / _timeDiff
 
@@ -368,15 +369,49 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
                     <> " miliseconds."
             threadDelay - floor - _sleepTime
 
-        (atomically - readTBQueue aTBQueue) >>= \case 
+        
+        _newPacket <- 
+              if S.length _leftOver >= 4096
+                then pure - Just mempty
+                else do
+                      _isEmpty <- atomically - isEmptyTBQueue aTBQueue
+                      if _isEmpty && (_leftOver & isn't _Empty)
+                        then do
+                              yield
+                              _stillEmpty <- atomically - 
+                                                isEmptyTBQueue aTBQueue
+                              if _stillEmpty
+                                then do
+                                  sleep 0.001
+                                  _emptyAgain <- atomically - 
+                                                  isEmptyTBQueue aTBQueue
+                                  if _emptyAgain
+                                    then
+                                      pure - Just mempty
+                                    else
+                                      atomically - readTBQueue aTBQueue
+                                else
+                                  atomically - readTBQueue aTBQueue
+
+                        else
+                          atomically - readTBQueue aTBQueue
+                            
+
+        case _newPacket of
           Nothing -> () <$ _shutdown
           Just _data -> do
-                          timeoutFor aID aTimeout - sendAll aSocket _data
+                          let (_thisBytes, _thatBytes) = 
+                                S.splitAt 4096 - _leftOver <> _data
+
+                          _byteSent <- timeoutFor aID aTimeout - 
+                                          send aSocket _thisBytes
+                          let _curry = S.drop _byteSent _thisBytes
+                                        <> _thatBytes
                           yield
-                          _consume - 
-                            _bytesSent + S.length _data
+                          _consume _curry - 
+                            _allBytesSent + _byteSent
   
-  _consume 0 `onException` _shutdown
+  _consume mempty 0 `onException` _shutdown
   pure ()
 
 

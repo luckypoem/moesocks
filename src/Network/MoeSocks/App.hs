@@ -195,7 +195,7 @@ moeApp = do
                     _s@(_newSocket, _newSockAddr) <- accept _socket
                     setSocketCloseOnExec _newSocket
                     -- send immediately!
-                    setSocketOption _socket NoDelay 1 
+                    {-setSocketOption _socket NoDelay 1 -}
                     
                     forkIO - catchExceptAsyncLog "L TCP thread" - 
                               logSA "L TCP client socket" (pure _s) -
@@ -206,7 +206,7 @@ moeApp = do
             UDP_App -> do
               let handleLocal = do
                     (_msg, _sockAddr) <- 
-                        recvFrom _localSocket _ReceiveLength
+                        recvFrom _localSocket _PacketLength
 
                     puts - "L UDP: " <> show _msg
                     
@@ -263,7 +263,7 @@ moeApp = do
                 (_newSocket, _) <- accept _socket
                 setSocketCloseOnExec _newSocket
                 -- send immediately!
-                setSocketOption _socket NoDelay 1 
+                {-setSocketOption _socket NoDelay 1 -}
                 
                 forkIO - catchExceptAsyncLog "R thread" - 
                             logSocket "R remote socket" (pure _newSocket) -
@@ -280,7 +280,7 @@ moeApp = do
           bindSocket _remoteSocket _remoteAddr
 
           let handleRemote = do
-                (_msg, _sockAddr) <- recvFrom _remoteSocket _ReceiveLength
+                (_msg, _sockAddr) <- recvFrom _remoteSocket _PacketLength
 
                 puts - "R UDP: " <> show _msg
 

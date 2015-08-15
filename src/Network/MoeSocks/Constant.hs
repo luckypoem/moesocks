@@ -22,6 +22,6 @@ _DefaultMethod :: Text
 _DefaultMethod = "aes-256-cfb"
 
 
-_ReceiveLength :: Int
-_ReceiveLength = 4096
+_PacketLength :: Int
+_PacketLength = 4096
 
