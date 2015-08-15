@@ -38,7 +38,7 @@ Not working
   Firewall of China (GFW).
 * UDP over Socks5 is not implemented
 * More then 2 times slower then the original Python implementation (measured at
-  20M/s vs 43M/s on an Intel P8800, using AES-256-CFB encryption)
+  20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method)
 
 Planning features
 ------------------
