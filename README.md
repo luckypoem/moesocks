@@ -31,7 +31,7 @@ Features
 * TCP per connection throttling (as a side effect of trying to find a bug in the
 remote)
 * Socks5 service on local can be turned off
-* Understand shadowsocks's configuration file
+* Understand shadowsocks' configuration file
 
 Not working
 -----------
