@@ -16,10 +16,10 @@ Usage
 
 * Start a remote node outside the firewall: 
           
-        moesocks -r remote -c config.json
+        moesocks --role remote -c config.json
 * Start a local node inside the firewall: 
     
-        moesocks -r local -c config.json
+        moesocks --role local -c config.json
 * Now you have a socks5 proxy running inside the firewall using port 
   `localPort`.
 * The above commands can be shortened to: `moesocks -r remote` and `moesocks`.
