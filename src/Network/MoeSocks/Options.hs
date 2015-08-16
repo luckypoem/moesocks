@@ -53,6 +53,15 @@ optionParser =
                   <>  help ("Do not start a socks5 server on local. It can be "
                           <> "useful to run moesocks only as a secure tunnel")
                   
+      _tcpBufferSize = intParam -
+                              long "tcp-buffer-size"
+                          <>  metavar "SIZE"
+                          <>  defaultHelp (_c ^. tcpBufferSize
+                                            & show
+                                            & view (from _Text))
+                                          ("The number of packets used as a "
+                                            <> "buffer. A packet can hold "
+                                            <> "at most 4K of data.")
 
       _config = optional - textOption -
                       short 'c'
@@ -179,13 +188,14 @@ optionParser =
 
       _params :: O.Parser [(Text, Value)]
       _params = 
-        [ tag "_remote"     _remote    
-        , tag "_remotePort" _remotePort
-        , tag "_local"      _local     
-        , tag "_localPort"  _localPort 
-        , tag "_password"   _password
-        , tag "_method"     _method 
-        , tag "_timeout"    _timeout
+        [ tag "_remote"         _remote    
+        , tag "_remotePort"     _remotePort
+        , tag "_local"          _local     
+        , tag "_localPort"      _localPort 
+        , tag "_password"       _password
+        , tag "_method"         _method 
+        , tag "_timeout"        _timeout
+        , tag "_tcpBufferSize"  _tcpBufferSize
         ]
         & sequenceA
         & fmap catMaybes
