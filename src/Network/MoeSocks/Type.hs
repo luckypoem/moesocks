@@ -86,7 +86,7 @@ makeLenses ''Forward
 data MoeOptions = MoeOptions
   {
     _runningMode :: RunningMode
-  , _configFile :: Text
+  , _configFile :: Maybe Text
   , _verbosity :: Priority
   , _forwardTCP :: [Forward]
   , _forwardUDP :: [Forward]

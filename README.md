@@ -22,7 +22,6 @@ Usage
         moesocks --role local -c config.json
 * Now you have a socks5 proxy running inside the firewall using port 
   `localPort`.
-* The above commands can be shortened to: `moesocks -r remote` and `moesocks`.
 
 Features
 --------

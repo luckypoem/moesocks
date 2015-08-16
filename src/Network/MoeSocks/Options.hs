@@ -54,13 +54,11 @@ optionParser =
                           <> "useful to run moesocks only as a secure tunnel")
                   
 
-      _config = ( textOption -
+      _config = optional - textOption -
                       short 'c'
                   <>  long "config"
                   <>  metavar "CONFIG"
-                  <>  defaultHelp "config.json"
-                                  "Point to the path of the configuration file"
-                ) <|> pure "config.json"
+                  <>  help "Point to the path of the configuration file"
                  
       _remote = textParam -
                       short 's'
@@ -93,6 +91,7 @@ optionParser =
       _password = textParam -
                         short 'k'
                     <>  metavar "PASSWORD"
+                    <>  help "password"
 
       _method   = textParam -
                         short 'm'

@@ -1,9 +1,0 @@
-{
-  "remote":"0.0.0.0",
-  "remotePort":1190,
-  "local":"localhost",
-  "localPort":1090,
-  "password":"birthday!",
-  "method":"aes-256-cfb"
-}
-

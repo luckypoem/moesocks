@@ -37,8 +37,32 @@ import qualified System.Log.Handler as LogHandler
 
 parseConfig :: MoeOptions -> MoeMonadT MoeConfig
 parseConfig aOption = do
-  let _filePath = aOption ^. configFile
-  _configFile <- io - TIO.readFile - _filePath ^. _Text
+  let
+    formatConfig :: Value -> Value
+    formatConfig (Object _obj) =
+        Object -
+          _obj
+              & H.toList 
+              & over (mapped . _1) T.tail 
+              & H.fromList
+    formatConfig _ = Null
+
+    showConfig :: MoeConfig -> Text
+    showConfig =    view utf8 
+                  . toStrict 
+                  . encode 
+                  . formatConfig 
+                  . toJSON 
+
+  let _maybeFilePath = aOption ^. configFile 
+
+  _v <- case _maybeFilePath of
+          Nothing -> pure - Just - Object mempty
+          Just _filePath -> do
+                              _data <- io - TIO.readFile - _filePath ^. _Text
+                              pure -
+                                (decodeStrict - review utf8 _data 
+                                    :: Maybe Value)
 
   let 
       fromShadowSocksConfig :: [(Text, Value)] -> [(Text, Value)]
@@ -58,8 +82,7 @@ parseConfig aOption = do
       fromSS = fromShadowSocksConfig
 
 
-  let _v = decodeStrict - review utf8 _configFile :: Maybe Value
-
+  let 
       fixConfig :: Value -> Value
       fixConfig (Object _obj) =
           Object - 
@@ -73,14 +96,6 @@ parseConfig aOption = do
 
 
       
-      formatConfig :: Value -> Value
-      formatConfig (Object _obj) =
-          Object -
-            _obj
-                & H.toList 
-                & over (mapped . _1) T.tail 
-                & H.fromList
-      formatConfig _ = Null
 
       filterEssentialConfig :: Value -> Value
       filterEssentialConfig (Object _obj) =
@@ -105,39 +120,34 @@ parseConfig aOption = do
 
       optionalConfig = filterEssentialConfig - toJSON defaultMoeConfig
       
-      _maybeConfig = _v 
+      _maybeConfig = _v
                       >>= decode 
                           . encode 
                           . flip mergeConfigObject optionalConfig
                           . mergeParams (aOption ^. params)
                           . fixConfig 
 
-  let 
-      showConfig :: MoeConfig -> ByteString
-      showConfig = 
-                      toStrict 
-                    . encode 
-                    . formatConfig 
-                    . toJSON 
-
-
   case _maybeConfig of
     Nothing -> do
       let _r = 
             execWriter - do
               tell "\n\n"
-              tell "Failed to parse configuration file\n"
-              tell "Example: \n"
-
-              let configBS :: ByteString  
-                  configBS = showConfig defaultMoeConfig
-              
-              tell - configBS ^. utf8 <> "\n"
+              case _maybeFilePath of
+                Just _filePath -> do
+                                    tell "Failed to parse configuration file"
+                                    tell _filePath
+                                    tell "\n"
+                                    tell "Example: \n"
+                                    tell - showConfig defaultMoeConfig <> "\n"
+                Nothing -> do
+                            tell "The password argument '-k' is required.\n"
+                            tell "Alternatively, use '-c' to provide a "
+                            tell "configuration file.\n"
 
       throwError - _r ^. _Text 
 
     Just _config -> do
-      let configStr = showConfig _config ^. utf8 . _Text :: String
+      let configStr = showConfig _config ^. _Text :: String
       io - puts - "Using config: " <> configStr
       pure - _config 
               
@@ -176,8 +186,6 @@ moeApp = do
     case _cipher of
       Nothing -> throwError - "Invalid method '" 
                               <> _method
-                              <> "' in "
-                              <> _options ^. configFile . _Text
       Just _ -> pure ()
 
   let localAppBuilder :: AppType -> String -> 

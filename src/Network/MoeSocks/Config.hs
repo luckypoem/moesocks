@@ -25,7 +25,7 @@ defaultMoeOptions :: MoeOptions
 defaultMoeOptions = MoeOptions
   {
     _runningMode = DebugMode
-  , _configFile = ""
+  , _configFile = Nothing
   , _verbosity = DEBUG
   , _forwardTCP = []
   , _forwardUDP = []

@@ -21,7 +21,7 @@ import qualified Prelude as P
 main :: IO ()
 main = do
   let _options = defaultMoeOptions 
-                                    & configFile .~ "config.json"
+                                    & configFile .~ Just "config.json"
                                     & forwardUDP .~ 
                                                 [Forward 5301 "localhost" 53]
   r <- runExceptT - runReaderT moeApp _options
