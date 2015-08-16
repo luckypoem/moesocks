@@ -1,3 +1,7 @@
+0.1.0.18
+--------
+* Add complete command line arguments
+
 0.1.0.17
 --------
 * Add `--disable-socks5` flag to switch off the socks5 service on local
