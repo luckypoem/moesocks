@@ -55,7 +55,7 @@ data MoeConfig = MoeConfig
   , _password :: Text
   , _method :: Text
   , _timeout :: Int
-  , _tcpBufferSizeInPacket :: Int
+  , _tcpBufferSize :: Int -- in packets
   , _throttle :: Bool
   , _throttleSpeed :: Double
   }

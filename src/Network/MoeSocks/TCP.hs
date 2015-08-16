@@ -90,8 +90,8 @@ local_TCP_RequestHandler aConfig
           let 
               _header = shadowSocksRequestBuilder _clientRequest
           
-          sendChannel <- newTBQueueIO - aConfig ^. tcpBufferSizeInPacket
-          receiveChannel <- newTBQueueIO - aConfig ^. tcpBufferSizeInPacket
+          sendChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
+          receiveChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
 
           let _logId x = x <> " " <> _msg
               _timeout = aConfig ^. timeout * 1000 * 1000
@@ -190,8 +190,8 @@ remote_TCP_RequestHandler aConfig aSocket = do
 
     let 
         handleTarget __leftOverBytes __targetSocket = do
-          sendChannel <- newTBQueueIO - aConfig ^. tcpBufferSizeInPacket
-          receiveChannel <- newTBQueueIO - aConfig ^. tcpBufferSizeInPacket
+          sendChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
+          receiveChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
 
           let _logId x = x <> " " <> _msg
               _timeout = aConfig ^. timeout * 1000 * 1000

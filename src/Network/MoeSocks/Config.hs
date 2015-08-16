@@ -15,7 +15,7 @@ defaultMoeConfig = MoeConfig
   , _password = "moesocks"
   , _method = "aes-256-cfb"
   , _timeout = 300
-  , _tcpBufferSizeInPacket = 256
+  , _tcpBufferSize = 256
   , _throttle = False
   , _throttleSpeed = 8000 -- in Kilobytes
   }
