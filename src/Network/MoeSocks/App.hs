@@ -35,9 +35,10 @@ import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
 
-parseConfig :: Text -> MoeMonadT MoeConfig
-parseConfig aFilePath = do
-  _configFile <- io - TIO.readFile - aFilePath ^. _Text
+parseConfig :: MoeOptions -> MoeMonadT MoeConfig
+parseConfig aOption = do
+  let _filePath = aOption ^. configFile
+  _configFile <- io - TIO.readFile - _filePath ^. _Text
 
   let 
       fromShadowSocksConfig :: [(Text, Value)] -> [(Text, Value)]
@@ -96,6 +97,11 @@ parseConfig aFilePath = do
           Object - _x `H.union` _y
       mergeConfigObject _ _ = Null
 
+      mergeParams :: [(Text, Value)] -> Value -> Value
+      mergeParams xs (Object _x) =
+          Object - H.fromList xs `H.union` _x
+      mergeParams _ _ = Null
+
 
       optionalConfig = filterEssentialConfig - toJSON defaultMoeConfig
       
@@ -103,6 +109,7 @@ parseConfig aFilePath = do
                       >>= decode 
                           . encode 
                           . flip mergeConfigObject optionalConfig
+                          . mergeParams (aOption ^. params)
                           . fixConfig 
 
   let 
@@ -158,7 +165,7 @@ moeApp = do
   
   io - puts - show _options
   
-  _config <- parseConfig - _options ^. configFile
+  _config <- parseConfig - _options
   let _c = _config
 
   let _method = _config ^. method . _Text

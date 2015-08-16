@@ -21,7 +21,7 @@ textOption :: O.Mod O.OptionFields String -> O.Parser Text
 textOption x = strOption x <&> view (from _Text)
 
 defaultHelp :: Text -> Text -> Mod f a
-defaultHelp val str = help - str <> ", default: " <> val & view _Text
+defaultHelp val x = help - x <> ", default: " <> val & view _Text
 
 textParam :: O.Mod O.OptionFields String -> O.Parser (Maybe Value)
 textParam = optional . fmap toJSON . textOption
@@ -178,8 +178,8 @@ optionParser =
       tag x = fmap . fmap - ((,) x)
 
 
-      params :: O.Parser [(Text, Value)]
-      params = 
+      _params :: O.Parser [(Text, Value)]
+      _params = 
         [ tag "_remote"     _remote    
         , tag "_remotePort" _remotePort
         , tag "_local"      _local     
@@ -201,7 +201,7 @@ optionParser =
               <*> fmap parseForwarding _forwardTCP
               <*> fmap parseForwarding _forwardUDP
               <*> _disableSocks5
-              <*> params
+              <*> _params
 
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 
