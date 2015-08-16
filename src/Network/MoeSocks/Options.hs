@@ -4,8 +4,12 @@ module Network.MoeSocks.Options where
 
 import Control.Lens
 import Data.Text.Lens
+import Data.Aeson
+import Data.Maybe
+import Data.Text (Text)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import Network.MoeSocks.Config
 import Options.Applicative hiding (Parser)
 import Prelude hiding ((-), takeWhile)
 import System.Log.Logger
@@ -13,51 +17,106 @@ import qualified Options.Applicative as O
 import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace, 
                               parseOnly, many', choice)
 
+textOption :: O.Mod O.OptionFields String -> O.Parser Text
+textOption x = strOption x <&> view (from _Text)
+
+defaultHelp :: Text -> Text -> Mod f a
+defaultHelp val str = help - str <> ", default: " <> val & view _Text
+
+textParam :: O.Mod O.OptionFields String -> O.Parser (Maybe Value)
+textParam = optional . fmap toJSON . textOption
+
+intParam :: O.Mod O.OptionFields Int -> O.Parser (Maybe Value)
+intParam = optional . fmap toJSON . option auto
+
 optionParser :: O.Parser MoeOptions
 optionParser = 
-  let _mode = ( strOption -
+  let _c = defaultMoeConfig
+      _mode = ( textOption -
                     short 'r'
                 <>  long "role"
                 <>  metavar "ROLE"
-                <>  help "Tell moesocks to run as local or remote"
+                <>  defaultHelp "local" 
+                                "Tell moesocks to run as local or remote"
               ) <|> pure "local" 
   
-      parseMode :: String -> RunningMode
+      parseMode :: Text -> RunningMode
       parseMode x 
         | x `elem` ["server", "remote"] = RemoteMode
         | x `elem` ["client", "local"] = LocalMode
         | x == "debug" = DebugMode
         | otherwise = DebugMode
-  in
 
-  let _disableSocks5 :: O.Parser Bool
+      _disableSocks5 :: O.Parser Bool
       _disableSocks5 = switch -
                       long "disable-socks5"
                   <>  help ("Do not start a socks5 server on local. It can be "
                           <> "useful to run moesocks only as a secure tunnel")
                   
-  in
-                            
 
-  let _config = ( strOption -
+      _config = ( textOption -
                       short 'c'
                   <>  long "config"
                   <>  metavar "CONFIG"
-                  <>  help "Point to the path of the configuration file"
+                  <>  defaultHelp "config.json"
+                                  "Point to the path of the configuration file"
                 ) <|> pure "config.json"
                  
-  in
+      _remote = textParam -
+                      short 's'
+                  <>  metavar "REMOTE"
+                  <>  defaultHelp (_c ^. remote)
+                                  "remote address"
+  
+      _remotePort = textParam -
+                          short 'p'
+                      <>  metavar "REMOTE_PORT"
+                      <>  defaultHelp (_c ^. remotePort 
+                                          & show 
+                                          & view (from _Text))
+                                      "remote port"
 
-  let _verbosity :: O.Parser Priority 
+      _local = textParam -
+                      short 'b'
+                  <>  metavar "LOCAL"
+                  <>  defaultHelp (_c ^. local)
+                                  "local address"
+
+      _localPort = textParam -
+                        short 'l'
+                    <>  metavar "LOCAL PORT"
+                    <>  defaultHelp (_c ^. remotePort
+                                        & show
+                                        & view (from _Text))
+                                    "local port"
+
+      _password = textParam -
+                        short 'k'
+                    <>  metavar "PASSWORD"
+
+      _method   = textParam -
+                        short 'm'
+                    <>  metavar "METHOD"
+                    <> defaultHelp (_c ^. method)
+                                    "encryption method"
+
+      _timeout  = intParam - 
+                        short 't'
+                    <>  metavar "TIMEOUT"
+                    <>  defaultHelp (_c ^. timeout
+                                        & show
+                                        & view (from _Text))
+                                    "timeout connection in seconds"
+                        
+
+      _verbosity :: O.Parser Priority 
       _verbosity = flag INFO DEBUG -
                           short 'v'
                       <>  long "verbose"
                       <>  help "Turn on logging"
-  in
 
-
-  let _forwardTCP :: O.Parser String
-      _forwardTCP = ( strOption -
+      _forwardTCP :: O.Parser (Maybe Text)
+      _forwardTCP = optional - textOption -
                           short 'T'
                       <>  long "tcp"
                       <>  metavar "port:host:hostport"
@@ -67,13 +126,11 @@ optionParser =
                                 <> "(client) host is to be forwarded to the "
                                 <> "given host and port on the remote side."
                                 )
-                    ) <|> pure ""
-                      
   
 
 
-      _forwardUDP :: O.Parser String
-      _forwardUDP = ( strOption -
+      _forwardUDP :: O.Parser (Maybe Text)
+      _forwardUDP = optional - textOption -
                           short 'U'
                       <>  long "udp"
                       <>  metavar "port:host:hostport"
@@ -83,8 +140,6 @@ optionParser =
                                 <> "(client) host is to be forwarded to the "
                                 <> "given host and port on the remote side."
                                 )
-                    ) <|> pure ""
-
   
       forwardParser ::  Parser Forward
       forwardParser = do
@@ -112,26 +167,45 @@ optionParser =
       forwardListParser :: Parser [Forward]
       forwardListParser = many' forwardParser
 
-      parseForwarding :: String -> [Forward]
-      parseForwarding x = 
-        x ^. from _Text 
+      parseForwarding :: Maybe Text -> [Forward]
+      parseForwarding Nothing = []
+      parseForwarding (Just x ) = 
+        x 
           & parseOnly forwardListParser 
           & toListOf (traverse . traverse)
+
+      tag :: a -> O.Parser (Maybe b) -> O.Parser (Maybe (a, b))
+      tag x = fmap . fmap - ((,) x)
+
+
+      params :: O.Parser [(Text, Value)]
+      params = 
+        [ tag "_remote"     _remote    
+        , tag "_remotePort" _remotePort
+        , tag "_local"      _local     
+        , tag "_localPort"  _localPort 
+        , tag "_password"   _password
+        , tag "_method"     _method 
+        , tag "_timeout"    _timeout
+        ]
+        & sequenceA
+        & fmap catMaybes
+          
   in
         
 
   MoeOptions 
               <$> fmap parseMode _mode 
-              <*> fmap (view packed) _config
+              <*> _config
               <*> _verbosity
               <*> fmap parseForwarding _forwardTCP
               <*> fmap parseForwarding _forwardUDP
               <*> _disableSocks5
+              <*> params
 
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 
         fullDesc
     <>  progDesc "A socks5 proxy using the client / server architecture"
     <>  header "A functional firewall killer"
-
 

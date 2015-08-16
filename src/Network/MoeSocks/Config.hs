@@ -10,7 +10,7 @@ defaultMoeConfig = MoeConfig
   {
     _remote= "0.0.0.0"
   , _remotePort = 8388 
-  , _local = "localhost"
+  , _local = "127.0.0.1"
   , _localPort = 1080
   , _password = "moesocks"
   , _method = "aes-256-cfb"
@@ -30,4 +30,5 @@ defaultMoeOptions = MoeOptions
   , _forwardTCP = []
   , _forwardUDP = []
   , _disableSocks5 = False
+  , _params = []
   } 

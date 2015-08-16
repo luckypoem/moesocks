@@ -91,6 +91,7 @@ data MoeOptions = MoeOptions
   , _forwardTCP :: [Forward]
   , _forwardUDP :: [Forward]
   , _disableSocks5 :: Bool
+  , _params :: [(Text, Value)]
   }
   deriving (Show, Eq)
 
