@@ -92,7 +92,7 @@ optionParser =
       _localPort = intParam -
                         short 'l'
                     <>  metavar "LOCAL PORT"
-                    <>  defaultHelp (_c ^. remotePort
+                    <>  defaultHelp (_c ^. localPort
                                         & show
                                         & view (from _Text))
                                     "local port"
