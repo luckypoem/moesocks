@@ -37,23 +37,6 @@ import qualified System.Log.Handler as LogHandler
 
 parseConfig :: MoeOptions -> MoeMonadT MoeConfig
 parseConfig aOption = do
-  let
-    formatConfig :: Value -> Value
-    formatConfig (Object _obj) =
-        Object -
-          _obj
-              & H.toList 
-              & over (mapped . _1) T.tail 
-              & H.fromList
-    formatConfig _ = Null
-
-    showConfig :: MoeConfig -> Text
-    showConfig =    view utf8 
-                  . toStrict 
-                  . encode 
-                  . formatConfig 
-                  . toJSON 
-
   let _maybeFilePath = aOption ^. configFile 
 
   _v <- case _maybeFilePath of
@@ -94,6 +77,21 @@ parseConfig aOption = do
       fixConfig _ = Null
   
 
+      formatConfig :: Value -> Value
+      formatConfig (Object _obj) =
+          Object -
+            _obj
+                & H.toList 
+                & over (mapped . _1) T.tail 
+                & H.fromList
+      formatConfig _ = Null
+
+      showConfig :: MoeConfig -> Text
+      showConfig =    view utf8 
+                    . toStrict 
+                    . encode 
+                    . formatConfig 
+                    . toJSON 
 
       
 
