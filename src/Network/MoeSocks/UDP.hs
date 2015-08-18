@@ -15,6 +15,7 @@ import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import Prelude hiding ((-), take)
+import qualified Data.Strict as S
 
 
 buildShadowSocksRequest :: ClientRequest -> ByteString -> ByteString
@@ -33,7 +34,7 @@ parseShadowSocksRequest aMessage =
 
 processAll :: Cipher -> ByteString -> IO ByteString
 processAll f x = 
-  (<>) <$> f (Just x) <*> f Nothing
+  (<>) <$> f (S.Just x) <*> f S.Nothing
 
 local_UDP_ForwardRequestHandler :: MoeConfig -> Forward -> 
                                   ByteString -> (Socket,SockAddr) -> IO ()
@@ -69,7 +70,7 @@ local_UDP_ForwardRequestHandler aConfig aForwarding aMessage
       let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
       _log - "L U: " <> _msg
       
-      send_ _remoteSocket =<< _encrypt (Just _bytes)
+      send_ _remoteSocket =<< _encrypt (S.Just _bytes)
 
       (_r, _) <- recv_ _remoteSocket >>= processAll _decrypt 
                                       >>= parseShadowSocksRequest

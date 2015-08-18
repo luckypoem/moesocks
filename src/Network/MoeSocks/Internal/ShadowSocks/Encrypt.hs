@@ -2,7 +2,7 @@
  - https://hackage.haskell.org/package/shadowsocks
  - Copyright: rnons
  - Licence: MIT
- - Slightly modified to work better with moesocks
+ - Heavily modified here
  -}
 
 
@@ -57,6 +57,7 @@ import           OpenSSL.Random (randBytes)
 import           Data.Text (Text)
 import           Control.Lens
 import           Data.Text.Lens
+import qualified Data.Strict as S
 
 
 method_supported :: HM.HashMap Text (Int, Int)
@@ -96,8 +97,8 @@ evpBytesToKey password keyLen ivLen =
         | otherwise = m
 
 getSSLEncDec :: Text -> ByteString
-             -> IO (Maybe ByteString -> IO ByteString
-                    , Maybe ByteString -> IO ByteString)
+             -> IO (S.Maybe ByteString -> IO ByteString
+                    , S.Maybe ByteString -> IO ByteString)
 getSSLEncDec method password = do
     let (m0, m1) = fromJust $ HM.lookup method method_supported
     random_iv <- withOpenSSL $ randBytes 32
@@ -110,10 +111,10 @@ getSSLEncDec method password = do
                                         method ^. _Text
     ctx <- withOpenSSL $ cipherInitBS cipherMethod key cipher_iv Encrypt
     let
-        encrypt :: (Maybe ByteString) -> IO ByteString
+        encrypt :: (S.Maybe ByteString) -> IO ByteString
         encrypt = \case
-          Nothing -> cipherFinalBS ctx
-          Just buf -> do
+          S.Nothing -> cipherFinalBS ctx
+          S.Just buf -> do
             if S.null buf
               then return $! mempty
               else do
@@ -127,10 +128,10 @@ getSSLEncDec method password = do
                         r <- withOpenSSL $ cipherUpdateBS ctx buf
                         return $! r
 
-        decrypt :: (Maybe ByteString) -> IO ByteString
+        decrypt :: (S.Maybe ByteString) -> IO ByteString
         decrypt = \case
-          Nothing -> cipherFinalBS ctx
-          Just buf -> do 
+          S.Nothing -> cipherFinalBS ctx
+          S.Just buf -> do 
             if S.null buf
               then return $! S.empty
               else do
@@ -154,12 +155,12 @@ getSSLEncDec method password = do
 
     return (encrypt, decrypt)
 
-plainCipher :: (Maybe ByteString -> IO ByteString)
-plainCipher = pure . fromMaybe mempty
+plainCipher :: (S.Maybe ByteString -> IO ByteString)
+plainCipher = pure . S.fromMaybe mempty
 
 getEncDec :: Text -> ByteString  
-          -> IO (Maybe ByteString -> IO ByteString
-                , Maybe ByteString -> IO ByteString)
+          -> IO (S.Maybe ByteString -> IO ByteString
+                , S.Maybe ByteString -> IO ByteString)
 getEncDec t
   | t == "none" = const $ pure (plainCipher, plainCipher)
   | otherwise = getSSLEncDec t

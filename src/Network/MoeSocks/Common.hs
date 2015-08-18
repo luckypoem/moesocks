@@ -14,8 +14,9 @@ import Prelude hiding ((-), take)
 import qualified Data.List as L
 import Data.ByteString (ByteString)
 import Network.MoeSocks.Internal.ShadowSocks.Encrypt as E
+import qualified Data.Strict as S
 
-plainCipher :: (Maybe ByteString) -> IO ByteString
+plainCipher :: (S.Maybe ByteString) -> IO ByteString
 plainCipher = E.plainCipher
 
 getCipher :: Text -> Text -> IO (Cipher, Cipher)

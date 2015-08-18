@@ -13,7 +13,7 @@ ping = do
 
 runP :: String -> IO ()
 runP x = do
-  run . (<> " +RTS -hc; exit 0") - x
+  run . (<> " +RTS -hd; exit 0") - x
 
 
 run :: String -> IO ()

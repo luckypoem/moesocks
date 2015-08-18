@@ -15,6 +15,7 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
+import qualified Data.Strict as S
 
 local_Socks5_RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
                                                                     -> IO ()
@@ -106,8 +107,8 @@ local_TCP_RequestHandler aConfig
                   sendChannel _encrypt _header
 
                 when (_partialBytesAfterClientRequest & isn't _Empty) -
-                  atomically . writeTBQueue sendChannel . Just =<< 
-                    _encrypt (Just _partialBytesAfterClientRequest)
+                  atomically . writeTBQueue sendChannel . S.Just =<< 
+                    _encrypt (S.Just _partialBytesAfterClientRequest)
 
 
                 let _produce = do
@@ -204,7 +205,7 @@ remote_TCP_RequestHandler aConfig aSocket = do
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
-                  atomically - writeTBQueue sendChannel - Just _leftOverBytes
+                  atomically - writeTBQueue sendChannel - S.Just _leftOverBytes
 
                 let _produce = do
                                   produceLoop (_logId "R --> + Loop")

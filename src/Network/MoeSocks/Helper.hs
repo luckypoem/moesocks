@@ -29,6 +29,8 @@ import System.Timeout (timeout)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
+import qualified Data.Strict as S
+
 
 -- BEGIN backports
 
@@ -38,6 +40,9 @@ infixr 0 -
 
 -- END backports
 
+
+type HCipher = S.Maybe ByteString -> IO ByteString 
+type HQueue = TBQueue (S.Maybe ByteString)
 
 io :: (MonadIO m) => IO a -> m a
 io = liftIO
@@ -249,16 +254,16 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
-sendBuilder :: TBQueue (Maybe ByteString) -> B.Builder -> IO ()
+sendBuilder :: HQueue -> B.Builder -> IO ()
 sendBuilder _queue = 
-  atomically . writeTBQueue _queue . Just . builder_To_ByteString
+  atomically . writeTBQueue _queue . S.Just . builder_To_ByteString
 
-sendBuilderEncrypted ::  TBQueue (Maybe ByteString) -> 
-                          (Maybe ByteString -> IO ByteString) -> 
+sendBuilderEncrypted ::  HQueue -> 
+                          HCipher -> 
                           B.Builder -> IO ()
 sendBuilderEncrypted _queue _encrypt x = 
-  atomically . writeTBQueue _queue . Just =<< 
-                                      _encrypt (Just - builder_To_ByteString x)
+  atomically . writeTBQueue _queue . S.Just =<< 
+                                      _encrypt (S.Just - builder_To_ByteString x)
 
 -- | An exception raised when parsing fails.
 data ParseException = ParseException String
@@ -268,7 +273,7 @@ instance Show ParseException where
 
 instance Exception ParseException
 
-parseSocket :: String -> ByteString -> (Maybe ByteString -> IO ByteString) ->
+parseSocket :: String -> ByteString -> HCipher ->
                   Parser a -> Socket -> IO (ByteString, a)
 parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
   where
@@ -277,7 +282,7 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
     parseSocketWith _id _parser _socket = do
       _rawBytes <- recv_ _socket
       {-puts - "rawBytes: " <> show _rawBytes-}
-      _bytes <- _decrypt (Just _rawBytes)
+      _bytes <- _decrypt (S.Just _rawBytes)
 
       case _parser - _partial <> _bytes of
         Done i _r -> pure (i, _r)
@@ -295,8 +300,8 @@ timeoutFor aID aTimeout aIO = do
 
 -- throttle speed in kilobytes per second
 produceLoop :: String -> Timeout -> Maybe Double ->
-              Socket -> TBQueue (Maybe ByteString) -> 
-              (Maybe ByteString -> IO ByteString) -> IO ()
+              Socket -> HQueue -> 
+              HCipher -> IO ()
 produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
   _startTime <- getCurrentTime
 
@@ -305,7 +310,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
                     {-tryIO aID - close aSocket-}
                   
       _produce :: Int -> IO ()
-      _produce _bytesReceived = flip onException (f Nothing) - do
+      _produce _bytesReceived = flip onException (f S.Nothing) - do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
         {-pute - "Get chunk: " <> (show - S.length _r) -- <> " " <> aID-}
         if (_r & isn't _Empty) 
@@ -329,13 +334,13 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
                         <> " miliseconds."
                 threadDelay - floor - _sleepTime
               
-            f (Just _r) >>= atomically . writeTBQueue aTBQueue . Just
+            f (S.Just _r) >>= atomically . writeTBQueue aTBQueue . S.Just
             yield
             _produce (_bytesReceived + S.length _r)
           else do
             puts -  "Half closed: " <> aID 
-            f Nothing >>= atomically . writeTBQueue aTBQueue . Just
-            atomically - writeTBQueue aTBQueue Nothing
+            f S.Nothing >>= atomically . writeTBQueue aTBQueue . S.Just
+            atomically - writeTBQueue aTBQueue S.Nothing
 
   _produce 0 `onException` _shutdown
   pure ()
@@ -343,7 +348,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
   
 
 consumeLoop :: String -> Timeout -> Maybe Double ->
-                Socket -> TBQueue (Maybe ByteString) -> IO ()
+                Socket -> HQueue -> IO ()
 consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
   _startTime <- getCurrentTime
   
@@ -378,8 +383,8 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
         _newPacket <- atomically - readTBQueue aTBQueue
 
         case _newPacket of
-          Nothing -> () <$ _shutdown
-          Just _data -> do
+          S.Nothing -> () <$ _shutdown
+          S.Just _data -> do
                           timeoutFor aID aTimeout - 
                                           sendAll aSocket _data
                           yield

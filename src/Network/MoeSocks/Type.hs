@@ -4,6 +4,7 @@
 module Network.MoeSocks.Type where
 
 import Control.Lens
+import Control.Concurrent.STM
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Aeson
@@ -12,6 +13,7 @@ import Data.Text (Text)
 import Data.Word
 import GHC.Generics
 import System.Log.Logger
+import qualified Data.Strict as S
 
 data ClientGreeting = ClientGreeting
   {
@@ -106,7 +108,7 @@ data Env = Env
 
 makeLenses ''Env
 
-type Cipher = Maybe ByteString -> IO ByteString 
-
+type Cipher = S.Maybe ByteString -> IO ByteString 
+type Queue = TBQueue (Maybe ByteString) 
 
 type MoeMonadT = ReaderT MoeOptions (ExceptT String IO)
