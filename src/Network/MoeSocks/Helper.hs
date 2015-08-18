@@ -24,9 +24,9 @@ import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.IO.Unsafe (unsafePerformIO)
 import System.Log.Logger
+-- import System.Mem (performGC)
 import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import System.Timeout (timeout)
-import System.Mem (performGC)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
