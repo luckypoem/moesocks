@@ -1,7 +1,7 @@
-import Prelude ()
+import Prelude ((.))
 import System.Nemesis.Env hiding (run)
 import qualified System.Nemesis.Env as N
-import Air.Env
+import Air.Env hiding ((.))
 import Control.Monad
 import Data.Monoid
 
@@ -10,8 +10,15 @@ main = N.run nemesis
 ping = do
         sh "curl -x socks5://localhost:1090 'http://localhost:8080'; exit 0"
 
+runP :: String -> IO ()
+runP = do
+  run . (<> " +RTS -hc; exit 0")
+  sh "hp2ps moesocks.hp"
+  sh "evince moesocks.ps"
+
+run :: String -> IO ()
 run x = do
-  let cmd = "cabal run -- " <> x <> " +RTS -h"
+  let cmd = "cabal run -- " <> x
   puts cmd
   sh cmd
 
@@ -24,15 +31,15 @@ nemesis = do
   namespace "bench" - do
     desc "run"
     task "run" - do
-      run "-r debug -c bench/bench.json -v"
+      runP "-r debug -c bench/bench.json -v"
     
     desc "run-r"
     task "run-r" - do
-      run "-r remote -c bench/bench.json -v"
+      runP "-r remote -c bench/bench.json -v"
     
     desc "run-l"
     task "run-l" - do
-      run "-r local -c bench/bench.json -v"
+      runP "-r local -c bench/bench.json -v"
     
     desc "run-ss-r"
     task "run-ss-r" - do
