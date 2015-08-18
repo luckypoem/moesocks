@@ -96,6 +96,7 @@ logClose aID aSocket = do
   puts - "Closing socket " <> aID
   close aSocket 
 
+
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
                         ((Socket, SockAddr) -> IO a) -> IO a
 logSocketWithAddress aID _init f = do
@@ -173,7 +174,8 @@ waitBothDebug x y = do
   pure ()
 
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectTunnel x y = finally (waitBothDebug x y) performGC
+-- connectTunnel x y = finally (waitBothDebug x y) performGC
+connectTunnel = waitBothDebug
 
 {-connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
 {-connectTunnel x y = -}
