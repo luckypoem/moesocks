@@ -3,8 +3,8 @@
 
 module Network.MoeSocks.Type where
 
-import Control.Lens
 import Control.Concurrent.STM
+import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.Aeson

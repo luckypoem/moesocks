@@ -17,8 +17,8 @@ import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
 import Network.MoeSocks.TCP
+import Network.MoeSocks.Type
 import Network.MoeSocks.UDP
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString

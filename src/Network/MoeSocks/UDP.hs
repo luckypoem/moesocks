@@ -2,15 +2,15 @@
 
 module Network.MoeSocks.UDP where
 
+import Control.Exception
 import Control.Lens
 import Control.Monad
-import Data.Attoparsec.ByteString
 import Control.Monad.Writer hiding (listen)
-import Control.Exception
+import Data.Attoparsec.ByteString
 import Data.ByteString (ByteString)
-import Network.MoeSocks.Helper
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
+import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString

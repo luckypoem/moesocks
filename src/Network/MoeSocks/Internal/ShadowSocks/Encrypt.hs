@@ -47,7 +47,7 @@ import           Crypto.Hash.MD5 (hash)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
 import qualified Data.HashMap.Strict as HM
-import           Data.Maybe (fromJust, fromMaybe)
+import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
 import           OpenSSL (withOpenSSL)
 import           OpenSSL.EVP.Cipher (getCipherByName, CryptoMode(..))
