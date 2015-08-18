@@ -24,7 +24,6 @@ import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.IO.Unsafe (unsafePerformIO)
 import System.Log.Logger
--- import System.Mem (performGC)
 import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import System.Timeout (timeout)
 import qualified Data.ByteString as S
@@ -306,7 +305,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
                     {-tryIO aID - close aSocket-}
                   
       _produce :: Int -> IO ()
-      _produce _bytesReceived = do
+      _produce _bytesReceived = flip onException (f Nothing) - do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
         {-pute - "Get chunk: " <> (show - S.length _r) -- <> " " <> aID-}
         if (_r & isn't _Empty) 
