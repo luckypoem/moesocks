@@ -26,6 +26,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import System.Log.Logger
 import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import System.Timeout (timeout)
+import System.Mem (performGC)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
@@ -172,7 +173,7 @@ waitBothDebug x y = do
   pure ()
 
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectTunnel = waitBothDebug
+connectTunnel x y = finally (waitBothDebug x y) performGC
 
 {-connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
 {-connectTunnel x y = -}
