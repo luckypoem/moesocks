@@ -24,7 +24,7 @@ source-repository head
 executable moesocks
   main-is:             Main.hs
   ghc-options:        -Wall -fno-warn-unused-do-bind -threaded 
-                      -rtsopts "-with-rtsopts=-N -c" -prof
+                      -rtsopts "-with-rtsopts=-N -c"
   build-depends:       base > 4 && <= 5
                       , HsOpenSSL
                       , aeson
