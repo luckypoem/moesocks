@@ -31,6 +31,10 @@ parseShadowSocksRequest aMessage =
             "R Failed to parse UDP request"
 
 
+processAll :: Cipher -> ByteString -> IO ByteString
+processAll f x = 
+  (<>) <$> f (Just x) <*> f Nothing
+
 local_UDP_ForwardRequestHandler :: MoeConfig -> Forward -> 
                                   ByteString -> (Socket,SockAddr) -> IO ()
 local_UDP_ForwardRequestHandler aConfig aForwarding aMessage 
@@ -65,9 +69,10 @@ local_UDP_ForwardRequestHandler aConfig aForwarding aMessage
       let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
       _log - "L U: " <> _msg
       
-      send_ _remoteSocket =<< _encrypt _bytes
+      send_ _remoteSocket =<< _encrypt (Just _bytes)
 
-      (_r, _) <- recv_ _remoteSocket >>= _decrypt >>= parseShadowSocksRequest
+      (_r, _) <- recv_ _remoteSocket >>= processAll _decrypt 
+                                      >>= parseShadowSocksRequest
 
       {-puts - "L UDP <--: " <> show _r-}
       when (_r & isn't _Empty) - do
@@ -84,7 +89,7 @@ remote_UDP_RequestHandler aConfig aMessage (aSocket, aSockAddr) = do
 
   {-let (_encrypt, _decrypt) = (pure, pure)-}
   
-  _msg <- _decrypt aMessage
+  _msg <- processAll _decrypt aMessage
 
   (_decryptedMessage, _clientRequest) <- parseShadowSocksRequest _msg
   
@@ -108,5 +113,5 @@ remote_UDP_RequestHandler aConfig aMessage (aSocket, aSockAddr) = do
     {-puts - "R UDP <--: " <> show _r-}
 
     when (_r & isn't _Empty) - do
-      _encryptedMessage <- _encrypt _r
+      _encryptedMessage <- processAll _encrypt _r
       sendAllTo aSocket _encryptedMessage aSockAddr

@@ -255,10 +255,11 @@ sendBuilder _queue =
   atomically . writeTBQueue _queue . Just . builder_To_ByteString
 
 sendBuilderEncrypted ::  TBQueue (Maybe ByteString) -> 
-                          (ByteString -> IO ByteString) -> B.Builder -> IO ()
+                          (Maybe ByteString -> IO ByteString) -> 
+                          B.Builder -> IO ()
 sendBuilderEncrypted _queue _encrypt x = 
   atomically . writeTBQueue _queue . Just =<< 
-                                      _encrypt (builder_To_ByteString x)
+                                      _encrypt (Just - builder_To_ByteString x)
 
 -- | An exception raised when parsing fails.
 data ParseException = ParseException String
@@ -268,7 +269,7 @@ instance Show ParseException where
 
 instance Exception ParseException
 
-parseSocket :: String -> ByteString -> (ByteString -> IO ByteString) ->
+parseSocket :: String -> ByteString -> (Maybe ByteString -> IO ByteString) ->
                   Parser a -> Socket -> IO (ByteString, a)
 parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
   where
@@ -277,7 +278,7 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
     parseSocketWith _id _parser _socket = do
       _rawBytes <- recv_ _socket
       {-puts - "rawBytes: " <> show _rawBytes-}
-      _bytes <- _decrypt _rawBytes
+      _bytes <- _decrypt (Just _rawBytes)
 
       case _parser - _partial <> _bytes of
         Done i _r -> pure (i, _r)
@@ -296,7 +297,7 @@ timeoutFor aID aTimeout aIO = do
 -- throttle speed in kilobytes per second
 produceLoop :: String -> Timeout -> Maybe Double ->
               Socket -> TBQueue (Maybe ByteString) -> 
-              (ByteString -> IO ByteString) -> IO ()
+              (Maybe ByteString -> IO ByteString) -> IO ()
 produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
   _startTime <- getCurrentTime
 
@@ -329,11 +330,12 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
                         <> " miliseconds."
                 threadDelay - floor - _sleepTime
               
-            f _r >>= atomically . writeTBQueue aTBQueue . Just
+            f (Just _r) >>= atomically . writeTBQueue aTBQueue . Just
             yield
             _produce (_bytesReceived + S.length _r)
           else do
             puts -  "Half closed: " <> aID 
+            f Nothing >>= atomically . writeTBQueue aTBQueue . Just
             atomically - writeTBQueue aTBQueue Nothing
 
   _produce 0 `onException` _shutdown

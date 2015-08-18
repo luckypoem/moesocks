@@ -106,7 +106,7 @@ data Env = Env
 
 makeLenses ''Env
 
-type Cipher = ByteString -> IO ByteString 
+type Cipher = Maybe ByteString -> IO ByteString 
 
 
 type MoeMonadT = ReaderT MoeOptions (ExceptT String IO)

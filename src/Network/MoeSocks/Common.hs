@@ -12,7 +12,11 @@ import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 import qualified Data.List as L
-import Network.MoeSocks.Internal.ShadowSocks.Encrypt
+import Data.ByteString (ByteString)
+import Network.MoeSocks.Internal.ShadowSocks.Encrypt as E
+
+plainCipher :: (Maybe ByteString) -> IO ByteString
+plainCipher = E.plainCipher
 
 getCipher :: Text -> Text -> IO (Cipher, Cipher)
 getCipher aMethod aPassword =

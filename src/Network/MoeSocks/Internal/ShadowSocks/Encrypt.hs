@@ -33,9 +33,12 @@ SOFTWARE.
 
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
+
 module Network.MoeSocks.Internal.ShadowSocks.Encrypt
   ( getEncDec
   , iv_len
+  , plainCipher
   ) where
 
 import           Control.Concurrent.MVar ( newEmptyMVar, isEmptyMVar
@@ -44,11 +47,12 @@ import           Crypto.Hash.MD5 (hash)
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
 import qualified Data.HashMap.Strict as HM
-import           Data.Maybe (fromJust)
+import           Data.Maybe (fromJust, fromMaybe)
 import           Data.Monoid ((<>))
 import           OpenSSL (withOpenSSL)
 import           OpenSSL.EVP.Cipher (getCipherByName, CryptoMode(..))
-import           OpenSSL.EVP.Internal (cipherInitBS, cipherUpdateBS)
+import           OpenSSL.EVP.Internal (cipherInitBS, cipherUpdateBS,
+                                        cipherFinalBS)
 import           OpenSSL.Random (randBytes)
 import           Data.Text (Text)
 import           Control.Lens
@@ -92,7 +96,8 @@ evpBytesToKey password keyLen ivLen =
         | otherwise = m
 
 getSSLEncDec :: Text -> ByteString
-             -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
+             -> IO (Maybe ByteString -> IO ByteString
+                    , Maybe ByteString -> IO ByteString)
 getSSLEncDec method password = do
     let (m0, m1) = fromJust $ HM.lookup method method_supported
     random_iv <- withOpenSSL $ randBytes 32
@@ -105,46 +110,56 @@ getSSLEncDec method password = do
                                         method ^. _Text
     ctx <- withOpenSSL $ cipherInitBS cipherMethod key cipher_iv Encrypt
     let
-        encrypt buf = 
-          if S.null buf
-            then return $! S.empty
-            else do
-              empty <- isEmptyMVar cipherCtx
-              if empty
-                  then do
-                      putMVar cipherCtx $! ()
-                      ciphered <- withOpenSSL $ cipherUpdateBS ctx buf
-                      return $! cipher_iv <> ciphered
-                  else do
-                      r <- withOpenSSL $ cipherUpdateBS ctx buf
-                      return $! r
+        encrypt :: (Maybe ByteString) -> IO ByteString
+        encrypt = \case
+          Nothing -> cipherFinalBS ctx
+          Just buf -> do
+            if S.null buf
+              then return $! mempty
+              else do
+                empty <- isEmptyMVar cipherCtx
+                if empty
+                    then do
+                        putMVar cipherCtx $! ()
+                        ciphered <- withOpenSSL $ cipherUpdateBS ctx buf
+                        return $! cipher_iv <> ciphered
+                    else do
+                        r <- withOpenSSL $ cipherUpdateBS ctx buf
+                        return $! r
 
-        decrypt buf =
-          if S.null buf
-            then return $! S.empty
-            else do
-              empty <- isEmptyMVar decipherCtx
-              if empty
-                  then do
-                      let decipher_iv = S.take m1 buf
-                      dctx <- withOpenSSL $ 
-                              cipherInitBS cipherMethod key decipher_iv Decrypt
-                      putMVar decipherCtx $! dctx
-                      if S.null (S.drop m1 buf)
-                          then return ""
-                          else do
-                              r <- withOpenSSL $
-                                      cipherUpdateBS dctx (S.drop m1 buf)
-                              return $! r
-                  else do
-                      dctx <- readMVar decipherCtx
-                      r <- withOpenSSL $ cipherUpdateBS dctx buf
-                      return $! r
+        decrypt :: (Maybe ByteString) -> IO ByteString
+        decrypt = \case
+          Nothing -> cipherFinalBS ctx
+          Just buf -> do 
+            if S.null buf
+              then return $! S.empty
+              else do
+                empty <- isEmptyMVar decipherCtx
+                if empty
+                    then do
+                        let decipher_iv = S.take m1 buf
+                        dctx <- withOpenSSL $ 
+                                cipherInitBS cipherMethod key decipher_iv Decrypt
+                        putMVar decipherCtx $! dctx
+                        if S.null (S.drop m1 buf)
+                            then return ""
+                            else do
+                                r <- withOpenSSL $
+                                        cipherUpdateBS dctx (S.drop m1 buf)
+                                return $! r
+                    else do
+                        dctx <- readMVar decipherCtx
+                        r <- withOpenSSL $ cipherUpdateBS dctx buf
+                        return $! r
 
     return (encrypt, decrypt)
 
+plainCipher :: (Maybe ByteString -> IO ByteString)
+plainCipher = pure . fromMaybe mempty
+
 getEncDec :: Text -> ByteString  
-          -> IO (ByteString -> IO ByteString, ByteString -> IO ByteString)
+          -> IO (Maybe ByteString -> IO ByteString
+                , Maybe ByteString -> IO ByteString)
 getEncDec t
-  | t == "none" = const $ pure (pure, pure)
+  | t == "none" = const $ pure (plainCipher, plainCipher)
   | otherwise = getSSLEncDec t

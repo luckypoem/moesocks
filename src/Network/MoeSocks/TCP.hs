@@ -20,7 +20,8 @@ local_Socks5_RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr)
                                                                     -> IO ()
 local_Socks5_RequestHandler aConfig _ (aSocket,_) = do
   (_partialBytesAfterGreeting, _r) <- 
-      parseSocket "clientGreeting" mempty pure greetingParser aSocket
+      parseSocket "clientGreeting" mempty plainCipher
+        greetingParser aSocket
 
   when (not - _No_authentication `elem` (_r ^. authenticationMethods)) - 
     throwIO - ParseException
@@ -31,7 +32,7 @@ local_Socks5_RequestHandler aConfig _ (aSocket,_) = do
   _parsedRequest <- parseSocket 
                                 "clientRequest" 
                                 _partialBytesAfterGreeting
-                                pure
+                                plainCipher
                                 connectionParser
                                 aSocket
 
@@ -106,7 +107,7 @@ local_TCP_RequestHandler aConfig
 
                 when (_partialBytesAfterClientRequest & isn't _Empty) -
                   atomically . writeTBQueue sendChannel . Just =<< 
-                    _encrypt _partialBytesAfterClientRequest
+                    _encrypt (Just _partialBytesAfterClientRequest)
 
 
                 let _produce = do
