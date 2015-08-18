@@ -1,3 +1,7 @@
+0.1.0.19
+--------
+* Fix a memory leak
+
 0.1.0.18
 --------
 * Add complete command line arguments
