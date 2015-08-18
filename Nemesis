@@ -52,8 +52,9 @@ nemesis = do
       sh "cabal run -- -r debug -c bench/bench.json -T 8081:localhost:8080"
     
     let url = "http://127.0.0.1:8080/test.mp4"
+        urlSmall = "http://127.0.0.1:8080/"
         cmd = "parallel --no-notice curl -x socks5://localhost:1091 -o /dev/null" 
-        args = concatMap (<> " ") - replicate 4 url
+        args _url = concatMap (<> " ") - replicate 4 _url
 
     desc "load"
     task "load" - do  
@@ -66,15 +67,21 @@ nemesis = do
     task "parallel-one" - do  
       sh - cmd
             <> " ::: "
-            <> args
+            <> args url
 
     desc "parallel"
     task "parallel" - do  
       forever - 
         sh - cmd
               <> " ::: "
-              <> args
+              <> args url
 
+    desc "parallel-small"
+    task "parallel-small" - do  
+      forever - 
+        sh - cmd
+              <> " ::: "
+              <> args urlSmall
 
   desc "test port forwarding with a tcp dns request"
   task "dig-tcp" - do
