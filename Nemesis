@@ -186,4 +186,5 @@ nemesis = do
     let newPath = "moesocks-" <> timeStr <> ".hp"
         
     sh - "mv moesocks.ps " <> newPath
+    sh - "rm moesocks.aux"
     sh - "evince " <> newPath
