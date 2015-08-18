@@ -11,8 +11,8 @@ ping = do
         sh "curl -x socks5://localhost:1090 'http://localhost:8080'; exit 0"
 
 runP :: String -> IO ()
-runP = do
-  run . (<> " +RTS -hc; exit 0")
+runP x = do
+  run . (<> " +RTS -hc; exit 0") - x
   sh "hp2ps moesocks.hp"
   sh "evince moesocks.ps"
 
@@ -127,6 +127,10 @@ nemesis = do
   desc "remote"
   task "remote" - do
     run "-r remote -c dev.json"
+  
+  desc "local-profile"
+  task "local-profile" - do
+    runP "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
   
   desc "local"
   task "local" - do
