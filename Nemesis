@@ -10,7 +10,10 @@ main = N.run nemesis
 ping = do
         sh "curl -x socks5://localhost:1090 'http://localhost:8080'; exit 0"
 
-run x = sh - "cabal run -- +RTS -h " <> x
+run x = do
+  let cmd = "cabal run -- " <> x <> " +RTS -h"
+  puts cmd
+  sh cmd
 
 nemesis = do
 
@@ -21,15 +24,15 @@ nemesis = do
   namespace "bench" - do
     desc "run"
     task "run" - do
-      sh "cabal run -- -r debug -c bench/bench.json -v"
+      run "-r debug -c bench/bench.json -v"
     
     desc "run-r"
     task "run-r" - do
-      sh "cabal run -- -r remote -c bench/bench.json -v"
+      run "-r remote -c bench/bench.json -v"
     
     desc "run-l"
     task "run-l" - do
-      sh "cabal run -- -r local -c bench/bench.json -v"
+      run "-r local -c bench/bench.json -v"
     
     desc "run-ss-r"
     task "run-ss-r" - do
@@ -49,7 +52,7 @@ nemesis = do
    
     desc "http"
     task "http" - do
-      sh "cabal run -- -r debug -c bench/bench.json -T 8081:localhost:8080"
+      run "-r debug -c bench/bench.json -T 8081:localhost:8080"
     
     let url = "http://127.0.0.1:8080/test.mp4"
         urlSmall = "http://127.0.0.1:8080/"
