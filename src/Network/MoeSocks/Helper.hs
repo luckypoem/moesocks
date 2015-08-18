@@ -95,6 +95,7 @@ logClose aID aSocket = do
   pure aID
   puts - "Closing socket " <> aID
   close aSocket 
+  performGC
 
 
 logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
