@@ -4,6 +4,7 @@ import qualified System.Nemesis.Env as N
 import Air.Env hiding ((.))
 import Control.Monad
 import Data.Monoid
+import Data.Time
 
 main = N.run nemesis
 
@@ -13,8 +14,7 @@ ping = do
 runP :: String -> IO ()
 runP x = do
   run . (<> " +RTS -hc; exit 0") - x
-  sh "hp2ps moesocks.hp"
-  sh "evince moesocks.ps"
+
 
 run :: String -> IO ()
 run x = do
@@ -177,3 +177,13 @@ nemesis = do
     sh "git push origin master"
     sh "git checkout dev"
 
+
+  task "gen-profile" - do
+    sh "hp2ps moesocks.hp"
+    time <- getCurrentTime 
+    let timeStr =  formatTime  defaultTimeLocale 
+                      (iso8601DateFormat (Just "-%H-%M-%S") ) time
+    let newPath = "moesocks-" <> timeStr <> ".hp"
+        
+    sh - "mv moesocks.ps " <> newPath
+    sh - "evince " <> newPath
