@@ -112,6 +112,7 @@ data CipherBox = CipherBox
 
 makeLenses '' CipherBox
 
+{-
 data Env = Env
   {
     _options :: MoeOptions
@@ -120,6 +121,7 @@ data Env = Env
   }
 
 makeLenses ''Env
+-}
 
 
 
