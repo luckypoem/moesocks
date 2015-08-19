@@ -1,3 +1,7 @@
+0.1.0.20
+--------
+* Rewrite Encrypt module, cache password hash
+
 0.1.0.19
 --------
 * Fix a memory leak
