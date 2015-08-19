@@ -39,6 +39,8 @@ module Network.MoeSocks.Internal.ShadowSocks.Encrypt
   ( getEncDec
   , iv_len
   , plainCipher
+  , evpBytesToKey
+  , hashKey
   ) where
 
 import           Control.Concurrent.MVar ( newEmptyMVar, isEmptyMVar
@@ -59,8 +61,10 @@ import           Control.Lens
 import           Data.Text.Lens
 import qualified Data.Strict as S
 
+type KeyLength = Int
+type IV_Length = Int
 
-method_supported :: HM.HashMap Text (Int, Int)
+method_supported :: HM.HashMap Text (KeyLength, IV_Length)
 method_supported = HM.fromList
     [ ("aes-128-cfb", (16, 16))
     , ("aes-192-cfb", (24, 16))
@@ -82,12 +86,11 @@ iv_len method = m1
   where
     (_, m1) = method_supported HM.! method
 
-evpBytesToKey :: ByteString -> Int -> Int -> (ByteString, ByteString)
+evpBytesToKey :: ByteString -> Int -> Int -> ByteString
 evpBytesToKey password keyLen ivLen =
     let ms' = S.concat $ ms 0 []
         key = S.take keyLen ms'
-        iv  = S.take ivLen $ S.drop keyLen ms'
-     in (key, iv)
+     in key
   where
     ms :: Int -> [ByteString] -> [ByteString]
     ms 0 _ = ms 1 [hash password]
@@ -96,6 +99,21 @@ evpBytesToKey password keyLen ivLen =
             ms (i+1) (m ++ [hash (last m <> password)])
         | otherwise = m
 
+hashKey :: ByteString -> Int -> Int -> ByteString
+hashKey aPassword aKeyLen a_IV_len = loop mempty mempty 
+  where
+    _stopLength = aKeyLen + a_IV_len
+
+    loop :: ByteString -> ByteString -> ByteString
+    loop _lastHashedBytes _accumHashedBytes
+      | S.length _accumHashedBytes >= _stopLength = S.take aKeyLen
+                                                            _accumHashedBytes
+      | otherwise = let _new = hash $ _lastHashedBytes <> aPassword
+                    in
+                    loop _new $ _accumHashedBytes <> _new
+
+
+  
 getSSLEncDec :: Text -> ByteString
              -> IO (S.Maybe ByteString -> IO ByteString
                     , S.Maybe ByteString -> IO ByteString)
@@ -103,7 +121,7 @@ getSSLEncDec method password = do
     let (m0, m1) = fromJust $ HM.lookup method method_supported
     random_iv <- withOpenSSL $ randBytes 32
     let cipher_iv = S.take m1 random_iv
-    let (key, _) = evpBytesToKey password m0 m1
+    let key = evpBytesToKey password m0 m1
     cipherCtx <- newEmptyMVar
     decipherCtx <- newEmptyMVar
 

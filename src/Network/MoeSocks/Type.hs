@@ -99,16 +99,30 @@ data MoeOptions = MoeOptions
 
 makeLenses ''MoeOptions
 
+type Cipher = S.Maybe ByteString -> IO ByteString 
+type CipherBuilder = ByteString -> IO Cipher
+
+data CipherBox = CipherBox
+  {
+    _ivLength :: Int
+  , _generateIV :: IO ByteString
+  , _encryptBuilder :: CipherBuilder
+  , _decryptBuilder ::  CipherBuilder
+  }
+
+makeLenses '' CipherBox
+
 data Env = Env
   {
     _options :: MoeOptions
   , _config :: MoeConfig
+  , _cipherBox :: CipherBox
   }
-  deriving (Show, Eq)
 
 makeLenses ''Env
 
-type Cipher = S.Maybe ByteString -> IO ByteString 
-type Queue = TBQueue (Maybe ByteString) 
 
+
+type Queue = TBQueue (Maybe ByteString) 
 type MoeMonadT = ReaderT MoeOptions (ExceptT String IO)
+

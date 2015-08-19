@@ -9,19 +9,15 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Helper
-import Network.MoeSocks.Internal.ShadowSocks.Encrypt as E
+import qualified Network.MoeSocks.Encrypt as E
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 import qualified Data.List as L
 import qualified Data.Strict as S
 
-plainCipher :: (S.Maybe ByteString) -> IO ByteString
+plainCipher :: Cipher
 plainCipher = E.plainCipher
-
-getCipher :: Text -> Text -> IO (Cipher, Cipher)
-getCipher aMethod aPassword =
-  getEncDec aMethod (review utf8 aPassword)
 
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 

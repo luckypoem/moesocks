@@ -14,12 +14,16 @@ import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
+import Network.Socket.ByteString (recv)
 import Prelude hiding ((-), take)
 import qualified Data.Strict as S
 
-local_Socks5_RequestHandler :: MoeConfig -> ByteString -> (Socket, SockAddr) 
-                                                                    -> IO ()
-local_Socks5_RequestHandler aConfig _ (aSocket,_) = do
+local_Socks5_RequestHandler :: CipherBox 
+                            -> MoeConfig 
+                            -> ByteString 
+                            -> (Socket, SockAddr) 
+                            -> IO ()
+local_Socks5_RequestHandler aCipherBox aConfig _ (aSocket,_) = do
   (_partialBytesAfterGreeting, _r) <- 
       parseSocket "clientGreeting" mempty plainCipher
         greetingParser aSocket
@@ -37,26 +41,34 @@ local_Socks5_RequestHandler aConfig _ (aSocket,_) = do
                                 connectionParser
                                 aSocket
 
-  local_TCP_RequestHandler aConfig _parsedRequest True aSocket
+  local_TCP_RequestHandler aCipherBox aConfig _parsedRequest True aSocket
 
 
 
-local_TCP_ForwardRequestHandler :: MoeConfig -> Forward -> 
-                                  ByteString -> (Socket, SockAddr) -> IO ()
-local_TCP_ForwardRequestHandler aConfig aForwarding _ (aSocket,_) = do
+local_TCP_ForwardRequestHandler :: CipherBox 
+                                -> MoeConfig 
+                                -> Forward 
+                                -> ByteString 
+                                -> (Socket, SockAddr) 
+                                -> IO ()
+local_TCP_ForwardRequestHandler aCipherBox aConfig aForwarding _ (aSocket,_) = do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
                           (Domain_name - aForwarding ^. 
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
               
-  local_TCP_RequestHandler aConfig (mempty, _clientRequest) False aSocket
+  local_TCP_RequestHandler aCipherBox aConfig (mempty, _clientRequest) False aSocket
 
 
 
-local_TCP_RequestHandler :: MoeConfig -> (ByteString, ClientRequest) -> 
-                        Bool -> Socket -> IO ()
-local_TCP_RequestHandler aConfig 
+local_TCP_RequestHandler :: CipherBox 
+                          -> MoeConfig 
+                          -> (ByteString, ClientRequest) 
+                          -> Bool 
+                          -> Socket 
+                          -> IO ()
+local_TCP_RequestHandler aCipherBox aConfig 
                         (_partialBytesAfterClientRequest, _clientRequest) 
                         shouldReplyClient aSocket = do
   let 
@@ -84,11 +96,9 @@ local_TCP_RequestHandler aConfig
     _log - "L T: " <> _msg
 
     let handleLocal __remoteSocket = do
-          (_encrypt, _decrypt) <- getCipher
-                                    (aConfig ^. method)
-                                    (aConfig ^. password)
-
-
+          _encodeIV <- aCipherBox ^. generateIV 
+          _encrypt <- aCipherBox ^. encryptBuilder - _encodeIV
+          
           let 
               _header = shadowSocksRequestBuilder _clientRequest
           
@@ -103,13 +113,12 @@ local_TCP_RequestHandler aConfig
                   else Nothing
 
           let sendThread = do
-                sendBuilderEncrypted 
-                  sendChannel _encrypt _header
+                sendBytes sendChannel _encodeIV
+                sendBuilderEncrypt sendChannel _encrypt _header
 
                 when (_partialBytesAfterClientRequest & isn't _Empty) -
-                  atomically . writeTBQueue sendChannel . S.Just =<< 
-                    _encrypt (S.Just _partialBytesAfterClientRequest)
-
+                  sendBytesEncrypt sendChannel _encrypt 
+                    _partialBytesAfterClientRequest
 
                 let _produce = do
                                   produceLoop (_logId "L --> + Loop")
@@ -133,6 +142,9 @@ local_TCP_RequestHandler aConfig
                   pure ()
 
           let receiveThread = do
+                _decodeIV <- recv __remoteSocket (aCipherBox ^. ivLength)
+                _decrypt <- aCipherBox ^. decryptBuilder - _decodeIV
+
                 let _produce = produceLoop (_logId "L <-- + Loop")
                                   _timeout
                                   _NoThrottle
@@ -161,12 +173,11 @@ local_TCP_RequestHandler aConfig
     handleLocal _remoteSocket
 
 
-remote_TCP_RequestHandler:: MoeConfig -> Socket -> IO ()
-remote_TCP_RequestHandler aConfig aSocket = do
-  (_encrypt, _decrypt) <- getCipher
-                            (aConfig ^. method)
-                            (aConfig ^. password)
-  
+remote_TCP_RequestHandler :: CipherBox -> MoeConfig -> Socket -> IO ()
+remote_TCP_RequestHandler aCipherBox aConfig aSocket = do
+  _decodeIV <- recv aSocket (aCipherBox ^. ivLength)
+  _decrypt <- aCipherBox ^. decryptBuilder - _decodeIV
+
   (_leftOverBytes, _clientRequest) <- parseSocket 
                                           "clientRequest"
                                           mempty
@@ -229,6 +240,10 @@ remote_TCP_RequestHandler aConfig aSocket = do
                   pure ()
 
           let receiveThread = do
+                _encodeIV <- aCipherBox ^. generateIV 
+                _encrypt <- aCipherBox ^. encryptBuilder - _encodeIV
+                sendBytes receiveChannel _encodeIV
+
                 let _produce = do
                                   produceLoop (_logId "R <-- + Loop")
                                     _timeout

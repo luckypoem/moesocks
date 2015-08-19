@@ -254,16 +254,19 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
-sendBuilder :: HQueue -> B.Builder -> IO ()
-sendBuilder _queue = 
-  atomically . writeTBQueue _queue . S.Just . builder_To_ByteString
 
-sendBuilderEncrypted ::  HQueue -> 
-                          HCipher -> 
-                          B.Builder -> IO ()
-sendBuilderEncrypted _queue _encrypt x = 
-  atomically . writeTBQueue _queue . S.Just =<< 
-                                      _encrypt (S.Just - builder_To_ByteString x)
+sendBytes :: HQueue -> ByteString -> IO ()
+sendBytes _queue = atomically . writeTBQueue _queue . S.Just
+
+sendBytesEncrypt :: HQueue -> HCipher -> ByteString -> IO ()
+sendBytesEncrypt _queue _cipher x = sendBytes _queue =<< _cipher (S.Just x)
+
+sendBuilder :: HQueue -> B.Builder -> IO ()
+sendBuilder _queue = sendBytes _queue . builder_To_ByteString
+
+sendBuilderEncrypt :: HQueue -> HCipher -> B.Builder -> IO ()
+sendBuilderEncrypt _queue _encrypt = 
+  sendBytesEncrypt _queue _encrypt . builder_To_ByteString
 
 -- | An exception raised when parsing fails.
 data ParseException = ParseException String

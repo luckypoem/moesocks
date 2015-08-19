@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Network.MoeSocks.App where
 
@@ -20,6 +21,7 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
 import Network.MoeSocks.UDP
+import Network.MoeSocks.Encrypt (initBuilder)
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import OpenSSL (withOpenSSL)
@@ -176,15 +178,12 @@ moeApp = do
   _config <- parseConfig - _options
   let _c = _config
 
-  let _method = _config ^. method . _Text
+  let _method = _config ^. method
 
-  when (_method /= "none") - do
-    _cipher <- io - withOpenSSL - getCipherByName _method
-
-    case _cipher of
-      Nothing -> throwError - "Invalid method '" 
-                              <> _method
-      Just _ -> pure ()
+  _cipherBox <- (io - initBuilder _method (_config ^. password)) >>= \case
+    Nothing -> throwError - "Invalid method '" 
+                            <> _method ^. _Text
+    Just (a, b, c, d) -> pure - CipherBox a b c d
 
   let localAppBuilder :: AppType -> String -> 
                           (ByteString -> (Socket, SockAddr) -> IO ()) -> 
@@ -229,7 +228,7 @@ moeApp = do
 
   let localSocks5App :: (Socket, SockAddr) -> IO ()
       localSocks5App = localAppBuilder TCP_App "socks5" - 
-                            local_Socks5_RequestHandler _config
+                            local_Socks5_RequestHandler _cipherBox _config
 
       showForwarding :: Forward -> String
       showForwarding (Forward _localPort _remoteHost _remotePort) =
@@ -246,14 +245,16 @@ moeApp = do
       forward_TCP_App _f _s = do
         let _m = showForwarding _f
         localAppBuilder TCP_App  ("TCP forwarding " <> _m)
-                                (local_TCP_ForwardRequestHandler _config _f) 
+                                (local_TCP_ForwardRequestHandler _cipherBox 
+                                _config _f) 
                                 _s
 
       forward_UDP_App :: Forward -> (Socket, SockAddr) -> IO ()
       forward_UDP_App _f _s = do
         let _m = showForwarding _f 
         localAppBuilder UDP_App  ("UDP forwarding " <> _m)
-                                (local_UDP_ForwardRequestHandler _config _f) 
+                                (local_UDP_ForwardRequestHandler _cipherBox
+                                _config _f) 
                                 _s
       
   let remote_TCP_App :: (Socket, SockAddr) -> IO ()
@@ -276,7 +277,7 @@ moeApp = do
                 
                 forkIO - catchExceptAsyncLog "R thread" - 
                             logSocket "R remote socket" (pure _newSocket) -
-                              remote_TCP_RequestHandler _config 
+                              remote_TCP_RequestHandler _cipherBox _config 
 
           forever - handleRemote _remoteSocket
 
@@ -297,7 +298,7 @@ moeApp = do
 
 
                 forkIO - catchExceptAsyncLog "R thread" - 
-                            remote_UDP_RequestHandler _config _msg _s
+                            remote_UDP_RequestHandler _cipherBox _config _msg _s
 
                 
 
