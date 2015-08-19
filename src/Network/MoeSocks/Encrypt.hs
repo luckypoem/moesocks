@@ -85,10 +85,7 @@ getMaybe Nothing = throwError ()
 getMaybe (Just x) = pure x
 
 mio :: IO (Maybe a) -> MaybeExceptT a
-mio = (>>= getMaybe) . io
-
-io :: (MonadIO m) => IO a -> m a
-io = liftIO
+mio = (>>= getMaybe) . liftIO
 
 plainCipher :: Cipher
 plainCipher = pure . S.fromMaybe mempty
@@ -109,11 +106,11 @@ initBuilder' aMethod aPassword = do
   (_keyLength, _IV_Length) <- getMaybe - methods ^? ix aMethod
 
   let _hashed = hashKey (review utf8 aPassword) _keyLength _IV_Length
-      _IV_Maker = io - ssl - randBytes _IV_Length
+      _IV_Maker = ssl - randBytes _IV_Length
 
       _encryptBuilder :: ByteString -> IO Cipher
       _encryptBuilder _iv = do
-          _ctx <- io - ssl - E.cipherInitBS _method _hashed _iv Encrypt
+          _ctx <- ssl - E.cipherInitBS _method _hashed _iv Encrypt
 
           let _encrypt :: Cipher
               _encrypt = \case
@@ -125,7 +122,7 @@ initBuilder' aMethod aPassword = do
 
       _decryptBuilder :: ByteString -> IO Cipher
       _decryptBuilder _iv = do
-          _ctx <- io - ssl - E.cipherInitBS _method _hashed _iv Decrypt
+          _ctx <- ssl - E.cipherInitBS _method _hashed _iv Decrypt
 
           let _decrypt :: Cipher
               _decrypt = \case
