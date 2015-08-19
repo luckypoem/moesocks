@@ -66,11 +66,11 @@ hashKey aPassword aKeyLen a_IV_len = loop mempty mempty
 
     loop :: ByteString -> ByteString -> ByteString
     loop _lastHashedBytes _accumHashedBytes
-      | S.length _accumHashedBytes >= _stopLength = S.take aKeyLen
-                                                            _accumHashedBytes
-      | otherwise = let _new = hash $ _lastHashedBytes <> aPassword
+      | S.length _accumHashedBytes >= _stopLength 
+        = S.take aKeyLen _accumHashedBytes
+      | otherwise = let _new = hash - _lastHashedBytes <> aPassword
                     in
-                    loop _new $ _accumHashedBytes <> _new
+                    loop _new - _accumHashedBytes <> _new
 
 
 ssl :: IO a -> IO a
