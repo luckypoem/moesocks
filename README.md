@@ -10,8 +10,8 @@ archive.
 
 type `moesocks --help` for help.
 
-Install
--------
+Installation
+------------
 
 * Need `GHC 7.10.2` and `cabal-install`.
       
