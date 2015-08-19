@@ -35,6 +35,12 @@ infixr 0 -
 type KeyLength = Int
 type IV_Length = Int
 
+type Cipher = S.Maybe ByteString -> IO ByteString 
+type CipherBuilder = ByteString -> IO Cipher
+type CipherBox = (Int, IO ByteString, CipherBuilder, CipherBuilder)
+
+type MaybeExceptT = ExceptT () IO
+
 methods :: Map Text (KeyLength, IV_Length)
 methods = fromList
     [ ("aes-128-cfb", (16, 16))
@@ -66,19 +72,13 @@ hashKey aPassword aKeyLen a_IV_len = loop mempty mempty
                     in
                     loop _new $ _accumHashedBytes <> _new
 
-type Cipher = S.Maybe ByteString -> IO ByteString 
 
 ssl :: IO a -> IO a
 ssl = withOpenSSL
 
-type CipherBuilder = ByteString -> IO Cipher
-
 eitherToMaybe :: Either a b -> Maybe b
 eitherToMaybe (Left _) = Nothing
 eitherToMaybe (Right x) = Just x
-
-
-type MaybeExceptT = ExceptT () IO
 
 getMaybe :: Maybe a -> MaybeExceptT a
 getMaybe Nothing = throwError ()
@@ -90,8 +90,6 @@ mio = (>>= getMaybe) . io
 io :: (MonadIO m) => IO a -> m a
 io = liftIO
 
-type CipherBox = (Int, IO ByteString, CipherBuilder, CipherBuilder)
-
 plainCipher :: Cipher
 plainCipher = pure . S.fromMaybe mempty
 
@@ -99,7 +97,7 @@ initBuilder :: Text -> Text -> IO (Maybe CipherBox)
 initBuilder aMethod aPassword 
   | aMethod == "none" = let constCipher = const - pure plainCipher
                         in
-                        pure - Just - (0, pure mempty, constCipher, constCipher)
+                        pure - Just (0, pure mempty, constCipher, constCipher)
 
   | otherwise =
       fmap eitherToMaybe - runExceptT - initBuilder' aMethod aPassword
