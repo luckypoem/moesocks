@@ -117,7 +117,7 @@ initBuilder' aMethod aPassword = do
 
           let _encrypt :: Cipher
               _encrypt = \case
-                  S.Nothing -> E.cipherFinalBS _ctx
+                  S.Nothing -> ssl - E.cipherFinalBS _ctx
                   S.Just _bytes -> do
                     ssl - E.cipherUpdateBS _ctx _bytes
 
@@ -129,7 +129,7 @@ initBuilder' aMethod aPassword = do
 
           let _decrypt :: Cipher
               _decrypt = \case
-                  S.Nothing -> E.cipherFinalBS _ctx
+                  S.Nothing -> ssl - E.cipherFinalBS _ctx
                   S.Just _bytes -> do
                     ssl - E.cipherUpdateBS _ctx _bytes 
           
