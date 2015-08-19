@@ -87,12 +87,12 @@ getMaybe (Just x) = pure x
 mio :: IO (Maybe a) -> MaybeT_IO a
 mio = (>>= getMaybe) . liftIO
 
-plainCipher :: Cipher
-plainCipher = pure . S.fromMaybe mempty
+identityCipher :: Cipher
+identityCipher = pure . S.fromMaybe mempty
 
 initBuilder :: Text -> Text -> IO (Maybe CipherBox)
 initBuilder aMethod aPassword 
-  | aMethod == "none" = let constCipher = const - pure plainCipher
+  | aMethod == "none" = let constCipher = const - pure identityCipher
                         in
                         pure - Just (0, pure mempty, constCipher, constCipher)
 

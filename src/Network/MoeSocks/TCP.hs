@@ -12,6 +12,7 @@ import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
+import Network.MoeSocks.Encrypt (identityCipher)
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString (recv)
@@ -25,7 +26,7 @@ local_Socks5_RequestHandler :: CipherBox
                             -> IO ()
 local_Socks5_RequestHandler aCipherBox aConfig _ (aSocket,_) = do
   (_partialBytesAfterGreeting, _r) <- 
-      parseSocket "clientGreeting" mempty plainCipher
+      parseSocket "clientGreeting" mempty identityCipher
         greetingParser aSocket
 
   when (not - _No_authentication `elem` (_r ^. authenticationMethods)) - 
@@ -37,7 +38,7 @@ local_Socks5_RequestHandler aCipherBox aConfig _ (aSocket,_) = do
   _parsedRequest <- parseSocket 
                                 "clientRequest" 
                                 _partialBytesAfterGreeting
-                                plainCipher
+                                identityCipher
                                 connectionParser
                                 aSocket
 

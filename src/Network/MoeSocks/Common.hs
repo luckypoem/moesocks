@@ -11,10 +11,7 @@ import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 import qualified Data.List as L
-import qualified Network.MoeSocks.Encrypt as E
 
-plainCipher :: Cipher
-plainCipher = E.plainCipher
 
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 
