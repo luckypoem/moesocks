@@ -10,6 +10,20 @@ archive.
 
 type `moesocks --help` for help.
 
+Install
+-------
+
+* Need `GHC 7.10.2` and `cabal-install`.
+      
+  You could use the [haskell-platform](https://www.haskell.org/platform/)
+
+* Update packages
+
+        `cabal update`
+* Install
+
+        `cabal install moesocks`
+
 Usage
 -----
 * Edit `config.json` to fit your setup (at least the `remote` and `password`
