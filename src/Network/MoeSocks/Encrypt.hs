@@ -39,7 +39,7 @@ type Cipher = S.Maybe ByteString -> IO ByteString
 type CipherBuilder = ByteString -> IO Cipher
 type CipherBox = (Int, IO ByteString, CipherBuilder, CipherBuilder)
 
-type MaybeTIO = ExceptT () IO
+type MaybeT_IO = ExceptT () IO
 
 methods :: Map Text (KeyLength, IV_Length)
 methods = fromList
@@ -80,11 +80,11 @@ eitherToMaybe :: Either a b -> Maybe b
 eitherToMaybe (Left _) = Nothing
 eitherToMaybe (Right x) = Just x
 
-getMaybe :: Maybe a -> MaybeTIO a
+getMaybe :: Maybe a -> MaybeT_IO a
 getMaybe Nothing = throwError ()
 getMaybe (Just x) = pure x
 
-mio :: IO (Maybe a) -> MaybeTIO a
+mio :: IO (Maybe a) -> MaybeT_IO a
 mio = (>>= getMaybe) . liftIO
 
 plainCipher :: Cipher
@@ -99,7 +99,7 @@ initBuilder aMethod aPassword
   | otherwise =
       fmap eitherToMaybe - runExceptT - initBuilder' aMethod aPassword
 
-initBuilder' :: Text -> Text -> MaybeTIO CipherBox
+initBuilder' :: Text -> Text -> MaybeT_IO CipherBox
 initBuilder' aMethod aPassword = do
   _method <- mio - ssl - getCipherByName - aMethod ^. _Text
 
