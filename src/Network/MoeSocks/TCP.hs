@@ -11,8 +11,8 @@ import Data.ByteString (ByteString)
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
 import Network.MoeSocks.Constant
-import Network.MoeSocks.Helper
 import Network.MoeSocks.Encrypt (identityCipher)
+import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString (recv)
