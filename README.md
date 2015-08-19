@@ -16,7 +16,8 @@ Installation
 * Need `GHC 7.10.2` and `cabal-install`.
       
   Installing [haskell-platform](https://www.haskell.org/platform/) should be
-  sufficient. (Linux users should pick the *Generic* distribution)
+  sufficient. (Linux users should pick the *Generic* distribution, since
+  it's the most up to date)
 
 * Update packages
 
