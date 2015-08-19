@@ -61,7 +61,7 @@ optionParser =
                                             & view (from _Text))
                                           ("The number of packets used as a "
                                             <> "buffer. A packet can hold "
-                                            <> "at most 4K of data.")
+                                            <> "at most 4K of data")
 
       _config = optional - textOption -
                       short 'c'
