@@ -183,9 +183,11 @@ moeApp = do
                             <> _method ^. _Text
     Just (a, b, c, d) -> pure - CipherBox a b c d
 
-  let localAppBuilder :: AppType -> String -> 
-                          (ByteString -> (Socket, SockAddr) -> IO ()) -> 
-                          (Socket, SockAddr) -> IO ()
+  let localAppBuilder :: AppType 
+                      -> String 
+                      -> (ByteString -> (Socket, SockAddr) -> IO ()) 
+                      -> (Socket, SockAddr) 
+                      -> IO ()
       localAppBuilder aAppType aID aHandler s = 
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
           _say - "L " <> aID <> ": nyaa!"
@@ -238,8 +240,7 @@ moeApp = do
                       <> show _remotePort
                       <> "]"
 
-      forward_TCP_App :: Forward -> (Socket, SockAddr) 
-                                -> IO ()
+      forward_TCP_App :: Forward -> (Socket, SockAddr) -> IO ()
       forward_TCP_App _f _s = do
         let _m = showForwarding _f
         localAppBuilder TCP_App  ("TCP forwarding " <> _m)
