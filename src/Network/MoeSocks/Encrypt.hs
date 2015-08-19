@@ -7,25 +7,22 @@
 
 module Network.MoeSocks.Encrypt where
 
-import Control.Concurrent.MVar (newEmptyMVar, isEmptyMVar, putMVar, readMVar)
 import Control.Lens
 import Control.Monad.Except
 import Crypto.Hash.MD5 (hash)
 import Data.ByteString (ByteString)
 import Data.Map
-import Data.Maybe (fromJust)
 import Data.Monoid ((<>))
 import Data.Text (Text)
-import Data.Text.Strict.Lens (utf8)
 import Data.Text.Lens
+import Data.Text.Strict.Lens (utf8)
 import OpenSSL (withOpenSSL)
 import OpenSSL.EVP.Cipher (getCipherByName, CryptoMode(..))
-import qualified OpenSSL.EVP.Internal as E
 import OpenSSL.Random (randBytes)
-import qualified Data.ByteString as S
-import qualified Data.HashMap.Strict as HM
-import qualified Data.Strict as S
 import Prelude hiding ((-))
+import qualified Data.ByteString as S
+import qualified Data.Strict as S
+import qualified OpenSSL.EVP.Internal as E
 
 -- BEGIN backports
 

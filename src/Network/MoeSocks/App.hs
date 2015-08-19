@@ -24,8 +24,6 @@ import Network.MoeSocks.UDP
 import Network.MoeSocks.Encrypt (initBuilder)
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
-import OpenSSL (withOpenSSL)
-import OpenSSL.EVP.Cipher (getCipherByName)
 import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple

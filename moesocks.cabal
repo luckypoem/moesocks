@@ -1,6 +1,6 @@
 name:               moesocks
 category:           Network
-version:            0.1.0.19
+version:            0.1.0.20
 license:            Apache-2.0
 synopsis:           A functional firewall killer
 description:        A socks5 proxy using the client / server architecture.
@@ -54,13 +54,13 @@ executable moesocks
   other-modules:        
                       Network.MoeSocks.App
                       Network.MoeSocks.BuilderAndParser
+                      Network.MoeSocks.Common
                       Network.MoeSocks.Config
                       Network.MoeSocks.Constant
                       Network.MoeSocks.Helper
-                      Network.MoeSocks.Internal.ShadowSocks.Encrypt
                       Network.MoeSocks.Options
-                      Network.MoeSocks.Type
-                      Network.MoeSocks.Common
                       Network.MoeSocks.TCP
+                      Network.MoeSocks.Type
                       Network.MoeSocks.UDP
+                      Network.MoeSocks.Encrypt
 

@@ -96,7 +96,7 @@ remote_UDP_RequestHandler :: CipherBox
                           -> ByteString 
                           -> (Socket, SockAddr) 
                           -> IO ()
-remote_UDP_RequestHandler aCipherBox aConfig aMessage (aSocket, aSockAddr) = do
+remote_UDP_RequestHandler aCipherBox _ aMessage (aSocket, aSockAddr) = do
   let (_decodeIV, _eMsg) = S.splitAt (aCipherBox ^. ivLength) 
                                        aMessage 
 

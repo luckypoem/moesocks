@@ -4,17 +4,14 @@ module Network.MoeSocks.Common where
 
 import Control.Lens
 import Control.Monad.Writer hiding (listen)
-import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Text.Lens
-import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Helper
-import qualified Network.MoeSocks.Encrypt as E
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 import qualified Data.List as L
-import qualified Data.Strict as S
+import qualified Network.MoeSocks.Encrypt as E
 
 plainCipher :: Cipher
 plainCipher = E.plainCipher
