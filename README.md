@@ -21,10 +21,10 @@ Installation
 
 * Update packages
 
-        `cabal update`
+        cabal update
 * Install
 
-        `cabal install moesocks`
+        cabal install moesocks
 
 Usage
 -----
