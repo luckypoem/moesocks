@@ -83,7 +83,7 @@ Credits
   stream cipher can be cracked on a per connection basis. DPI is made more
   difficult by that the encryption method can be easily swapped to another one,
   for example Salsa20. In fact, every shadowsocks user is likely to be using an
-  encryption method that please them the most. With this much redundancy of
+  encryption method that pleases them the most. With this much redundancy of
   variety of encryptions, each requires years of research, if ever, to break in,
   and consequently the ineffectiveness of DPI, the Great Firewall of China (GFW)
   is likely to be left with only two options: block any transmission it can not
