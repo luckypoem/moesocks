@@ -19,6 +19,8 @@ Installation
   sufficient. (Linux users should pick the *Generic* distribution, since
   it's the most up to date)
 
+* Repeat, you need `GHC 7.10.2` exactly, not `7.10.1` or anything else, since
+  remote only runs well in `7.10.2`.
 * Update packages
 
         cabal update
@@ -51,8 +53,6 @@ remote)
 
 Not working
 -----------
-* Remote is flaky, particularly when trying to send data through the Great
-  Firewall of China (GFW).
 * UDP over Socks5 is not implemented
 * More then 2 times slower then the original Python implementation (measured at
   20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method)
@@ -63,16 +63,6 @@ Planning features
 
 Notes
 ------
-
-There's a bug that prevents remote from working correctly with GFW.
-Thanks, Prof Fang!
-
-You should use the original Python implementation of [shadowsocks] on the remote
-server if your primary goal is to bypass internet censorship in China.
-
-From the author's limited testing, [shadowsocks-go] also works reasonably
-well, though it might not run as fast as the Python's version.
-
 There is an earlier implementation of [shadowsocks-haskell] by rnons that
 makes MoeSocks possible. 
 

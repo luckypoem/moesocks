@@ -1,3 +1,7 @@
+0.1.0.21
+--------
+* Add in README that `GHC 7.10.2` is a must!
+
 0.1.0.20
 --------
 * Rewrite Encrypt module, cache password hash
