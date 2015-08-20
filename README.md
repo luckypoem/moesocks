@@ -67,7 +67,7 @@ There is an earlier implementation of [shadowsocks-haskell] by rnons that
 makes MoeSocks possible. 
 
 The original goal of MoeSocks is to provide extra configurability to standard
-shadowsocks, but it has been discarded since remote is too flaky. 
+shadowsocks, but it has been discarded since remote was too flaky. 
 
 License
 --------
