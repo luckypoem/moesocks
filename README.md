@@ -82,7 +82,7 @@ Credits
   infeasible unless AES256 stream cipher can be broken on a per connection
   basis. This is made more difficult by that the encryption method can be easily
   swapped to, for example, Salsa20. With this much redundancy in encryption
-  options, the Great Firewall of China (GFW) was likely to be left with only two
+  options, the Great Firewall of China (GFW) is likely to be left with only two
   options: block any transmission it can not understand using any method,
   particularly DPI, or leave shadowsocks alone. So far GFW has chosen the
   latter.
