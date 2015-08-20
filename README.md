@@ -77,12 +77,15 @@ Credits
   Internet censorship in China. What's unique about it is that instead of
   relying on a persistent TCP connection to transmit all data, it uses the
   design of a socks proxy, which start a new connection for every request, but
-  without using a protocol header. Key exchange is done complete offline, prior
-  to any transmission. Deep packet inspection (DPI) becomes almost impossible
-  unless AES256 stream cipher can be broken on a per connection basis. This
-  leaves the Great Firewall of China (GFW) only two options: block any
-  transmission it can not understand using any method, particularly DPI, or
-  leave shadowsocks alone. So far GFW has chosen the latter.
+  without using a protocol header. Key exchange is done offline and there is no
+  handshake anywhere inside a transmission. Deep packet inspection (DPI) becomes
+  infeasible unless AES256 stream cipher can be broken on a per connection
+  basis. This is made more difficult by that the encryption method can be easily
+  swapped to, for example, Salsa20 (not implemented in moesocks). With this
+  much redundancy in encryption options, the Great Firewall of China (GFW) was
+  likely to be left with only two options: block any transmission it can not
+  understand using any method, particularly DPI, or leave shadowsocks alone. So
+  far GFW has chosen the latter.
 * [shadowsocks-haskell] by rnons, another implementation of shadowsocks in 
   Haskell, also greatly inspired MoeSocks. Much of the understanding of
   the internal of shadowsocks was gained by reading rnons's implementation.
