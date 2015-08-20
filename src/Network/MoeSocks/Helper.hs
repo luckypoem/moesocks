@@ -35,6 +35,7 @@ import qualified Data.Strict as S
 -- BEGIN backports
 
 infixr 0 -
+{-# INLINE (-) #-}
 (-) :: (a -> b) -> a -> b
 (-) = ($)
 

@@ -27,6 +27,7 @@ import qualified OpenSSL.EVP.Internal as E
 -- BEGIN backports
 
 infixr 0 -
+{-# INLINE (-) #-}
 (-) :: (a -> b) -> a -> b
 (-) = ($)
 
