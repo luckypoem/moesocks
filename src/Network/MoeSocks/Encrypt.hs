@@ -42,7 +42,7 @@ type CipherBuilder = IV -> IO Cipher
 type EncryptBuilder = CipherBuilder
 type DecryptBuilder = CipherBuilder
 
-type CipherBox = (Int, IO IV, EncryptBuilder, DecryptBuilder)
+type CipherBox = (IV_Length, IO IV, EncryptBuilder, DecryptBuilder)
 
 type MaybeT_IO = ExceptT () IO
 
