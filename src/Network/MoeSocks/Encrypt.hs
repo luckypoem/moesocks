@@ -37,7 +37,11 @@ type IV_Length = Int
 
 type Cipher = S.Maybe ByteString -> IO ByteString 
 type CipherBuilder = ByteString -> IO Cipher
-type CipherBox = (Int, IO ByteString, CipherBuilder, CipherBuilder)
+
+type EncryptBuilder = CipherBuilder
+type DecryptBuilder = CipherBuilder
+
+type CipherBox = (Int, IO ByteString, EncryptBuilder, DecryptBuilder)
 
 type MaybeT_IO = ExceptT () IO
 
