@@ -73,9 +73,9 @@ Planning features
 Credits
 -------
 * [shadowsocks] greatly inspired MoeSocks.
-  Shadowsocks introduced a ground breaking design and implementation in
-  bypassing Internet censorship in China. What's unique about it is that instead
-  of relying on a persistent TCP connection to transmit all data, it uses the
+  Shadowsocks introduced a ground breaking design and implementation to bypass
+  Internet censorship in China. What's unique about it is that instead of
+  relying on a persistent TCP connection to transmit all data, it uses the
   design of a socks proxy, which start a new connection for every request, but
   without using a protocol header. Key exchange is done complete offline, prior
   to any transmission. Deep packet inspection (DPI) becomes almost impossible
