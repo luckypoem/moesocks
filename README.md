@@ -81,8 +81,8 @@ Credits
   to any transmission. Deep packet inspection (DPI) becomes almost impossible
   unless AES256 stream cipher can be broken on a per connection basis. This
   leaves the Great Firewall of China (GFW) only two options: block any
-  connection it can not understand using any method, particularly DPI, or leave
-  shadowsocks alone. So far GFW has chosen the latter.
+  transmission it can not understand using any method, particularly DPI, or
+  leave shadowsocks alone. So far GFW has chosen the latter.
 * [shadowsocks-haskell] by rnons, another implementation of shadowsocks in 
   Haskell, also greatly inspired MoeSocks. Much of the understanding of
   the internal of shadowsocks was gained by reading rnons's implementation.
