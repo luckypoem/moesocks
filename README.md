@@ -21,25 +21,32 @@ Installation
 
 * Repeat, you need `GHC 7.10.2` exactly, not `7.10.1` or anything else, since
   remote only runs well in `7.10.2`.
+
 * Update packages
 
         cabal update
+
 * Install
 
         cabal install moesocks
+
 * Add `~/.cabal/bin` to your `$PATH`, if you haven't already.
 
 Usage
 -----
 * Download a sample [config.json] to your current path
+
 * Edit `config.json` to fit your setup (at least the `remote` and `password`
   fields)
+
 * Start a remote node outside the firewall: 
           
         moesocks --role remote -c config.json
+
 * Start a local node inside the firewall: 
     
         moesocks --role local -c config.json
+
 * Now you have a socks5 proxy running inside the firewall using port 
   `localPort`.
 
