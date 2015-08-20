@@ -21,7 +21,7 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
 import Network.MoeSocks.UDP
-import Network.MoeSocks.Encrypt (initBuilder)
+import Network.MoeSocks.Encrypt (initCipherBox)
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import Prelude hiding ((-), take)
@@ -178,7 +178,7 @@ moeApp = do
 
   let _method = _config ^. method
 
-  _cipherBox <- (io - initBuilder _method (_config ^. password)) >>= \case
+  _cipherBox <- (io - initCipherBox _method (_config ^. password)) >>= \case
     Nothing -> throwError - "Invalid method '" 
                             <> _method ^. _Text
     Just (a, b, c, d) -> pure - CipherBox a b c d

@@ -94,17 +94,17 @@ mio = (>>= getMaybe) . liftIO
 identityCipher :: Cipher
 identityCipher = pure . S.fromMaybe mempty
 
-initBuilder :: Text -> Text -> IO (Maybe CipherBox)
-initBuilder aMethod aPassword 
+initCipherBox :: Text -> Text -> IO (Maybe CipherBox)
+initCipherBox aMethod aPassword 
   | aMethod == "none" = let constCipher = const - pure identityCipher
                         in
                         pure - Just (0, pure mempty, constCipher, constCipher)
 
   | otherwise =
-      fmap eitherToMaybe - runExceptT - initBuilder' aMethod aPassword
+      fmap eitherToMaybe - runExceptT - initCipherBox' aMethod aPassword
 
-initBuilder' :: Text -> Text -> MaybeT_IO CipherBox
-initBuilder' aMethod aPassword = do
+initCipherBox' :: Text -> Text -> MaybeT_IO CipherBox
+initCipherBox' aMethod aPassword = do
   _method <- mio - ssl - getCipherByName - aMethod ^. _Text
 
   (_keyLength, _IV_Length) <- getMaybe - methods ^? ix aMethod
