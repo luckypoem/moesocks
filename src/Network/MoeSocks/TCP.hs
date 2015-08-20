@@ -52,7 +52,8 @@ local_TCP_ForwardRequestHandler :: CipherBox
                                 -> ByteString 
                                 -> (Socket, SockAddr) 
                                 -> IO ()
-local_TCP_ForwardRequestHandler aCipherBox aConfig aForwarding _ (aSocket,_) = do
+local_TCP_ForwardRequestHandler aCipherBox aConfig aForwarding _ (aSocket,_) = 
+  do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
                           (Domain_name - aForwarding ^. 
