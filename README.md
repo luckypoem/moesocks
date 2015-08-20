@@ -3,12 +3,7 @@ MoeSocks
 
 A socks5 proxy using the client / server architecture.
 
-MoeSocks is greatly inspired by [shadowsocks].
-
-A sample `config.json` file is included in this repository and the cabal
-archive.
-
-type `moesocks --help` for help.
+MoeSocks is greatly inspired by [shadowsocks] and can be used as a port of it.
 
 Installation
 ------------
@@ -49,6 +44,11 @@ Usage
 
 * Now you have a socks5 proxy running inside the firewall using port 
   `localPort`.
+
+* See more options:
+
+        moesocks --help
+
 
 Features
 --------
