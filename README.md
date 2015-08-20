@@ -21,12 +21,14 @@ Installation
 
 * Repeat, you need `GHC 7.10.2` exactly, not `7.10.1` or anything else, since
   remote only runs well in `7.10.2`.
+
 * Update packages
 
         cabal update
 * Install
 
         cabal install moesocks
+* Add `~/.cabal/bin` to your `$PATH`, if you haven't already.
 
 Usage
 -----
