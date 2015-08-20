@@ -64,7 +64,7 @@ methods = fromList
     ]
 
 
-hashKey :: ByteString -> Int -> Int -> ByteString
+hashKey :: ByteString -> KeyLength -> IV_Length -> ByteString
 hashKey aPassword aKeyLen a_IV_len = loop mempty mempty 
   where
     _stopLength = aKeyLen + a_IV_len
