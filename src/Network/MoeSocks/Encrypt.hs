@@ -113,7 +113,7 @@ initCipherBox' aMethod aPassword = do
   let _hashed = hashKey (review utf8 aPassword) _keyLength _IV_Length
       _IV_Maker = ssl - randBytes _IV_Length
 
-      _encryptBuilder :: ByteString -> IO Cipher
+      _encryptBuilder :: CipherBuilder
       _encryptBuilder _iv = do
           _ctx <- ssl - E.cipherInitBS _method _hashed _iv Encrypt
 
@@ -125,7 +125,7 @@ initCipherBox' aMethod aPassword = do
 
           pure _encrypt
 
-      _decryptBuilder :: ByteString -> IO Cipher
+      _decryptBuilder :: CipherBuilder 
       _decryptBuilder _iv = do
           _ctx <- ssl - E.cipherInitBS _method _hashed _iv Decrypt
 
