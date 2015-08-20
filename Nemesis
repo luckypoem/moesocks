@@ -11,9 +11,11 @@ main = N.run nemesis
 ping = do
         sh "curl -x socks5://localhost:1090 'http://localhost:8080'; exit 0"
 
+{-
 runP :: String -> IO ()
 runP x = do
   run . (<> " +RTS -hd; exit 0") - x
+-}
 
 
 run :: String -> IO ()
@@ -21,6 +23,8 @@ run x = do
   let cmd = "cabal run -- " <> x
   puts cmd
   sh cmd
+
+runP = run
 
 nemesis = do
 
