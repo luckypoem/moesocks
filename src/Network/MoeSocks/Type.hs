@@ -100,12 +100,13 @@ data MoeOptions = MoeOptions
 makeLenses ''MoeOptions
 
 type Cipher = S.Maybe ByteString -> IO ByteString 
-type CipherBuilder = ByteString -> IO Cipher
+type IV = ByteString
+type CipherBuilder = IV -> IO Cipher
 
 data CipherBox = CipherBox
   {
     _ivLength :: Int
-  , _generateIV :: IO ByteString
+  , _generateIV :: IO IV
   , _encryptBuilder :: CipherBuilder
   , _decryptBuilder ::  CipherBuilder
   }
