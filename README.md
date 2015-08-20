@@ -85,10 +85,11 @@ Credits
   for example Salsa20. In fact, every shadowsocks user is likely to be using an
   encryption method that please them the most. With this much redundancy of
   variety of encryptions, each requires years of research, if ever, to break in,
-  the Great Firewall of China (GFW) is likely to be left with only two options:
-  block any transmission it can not understand using any method, particularly
-  DPI, or leave shadowsocks alone. So far GFW has chosen the latter. Can you see
-  the genius design of shadowsocks now?
+  and consequently the ineffectiveness of DPI, the Great Firewall of China (GFW)
+  is likely to be left with only two options: block any transmission it can not
+  understand using any method, particularly DPI, or leave shadowsocks alone. So
+  far GFW has chosen the latter. Can you see the genius design of shadowsocks
+  now?
 * [shadowsocks-haskell] by rnons, another implementation of shadowsocks in 
   Haskell, also greatly inspired MoeSocks. Much of the understanding of
   the internal of shadowsocks was gained by reading rnons's implementation.
