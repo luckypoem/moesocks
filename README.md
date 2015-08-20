@@ -80,7 +80,7 @@ Credits
   but unlike a socks proxy or other VPN services, it does not have a protocol
   header. Key exchange is done offline and there is no handshake anywhere inside
   a transmission. Deep packet inspection (DPI) becomes infeasible unless AES256
-  stream cipher can be cracked on a per connection basis. This is made more
+  stream cipher can be cracked on a per connection basis. DPI is made more
   difficult by that the encryption method can be easily swapped to another one,
   for example Salsa20. In fact, every shadowsocks user is likely to be using an
   encryption method that please them the most. With this much redundancy of
