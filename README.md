@@ -64,11 +64,6 @@ Planning features
 Notes
 ------
 * [shadowsocks-haskell] by rnons greatly inspired MoeSocks. 
-* There was a bug before GHC 7.10.2 that made moesocks remote unusable. It was
-  not without merid since it made the implementer to experiment and optimize
-  moesocks in different ways. All the code has been carefully examined as
-  a result of trying to dig out the bug. The presence of some bug outside of
-  the scope of the project actually made the quality of the code better ;)
 
 License
 --------
