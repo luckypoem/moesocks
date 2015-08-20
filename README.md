@@ -74,7 +74,7 @@ Credits
 -------
 * [shadowsocks] greatly inspired MoeSocks.
   Shadowsocks introduced a ground breaking design and implementation in
-  combating Internet censorship in China. What's unique about it is that instead
+  bypassing Internet censorship in China. What's unique about it is that instead
   of relying on a persistent TCP connection to transmit all data, it uses the
   design of a socks proxy, which start a new connection for every request, but
   without using a protocol header. Key exchange is done complete offline, prior
