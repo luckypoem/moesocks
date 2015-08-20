@@ -25,21 +25,28 @@ Installation
 * Update packages
 
         cabal update
+
 * Install
 
         cabal install moesocks
+
 * Add `~/.cabal/bin` to your `$PATH`, if you haven't already.
 
 Usage
 -----
+* Download a sample `[config.json]` to your current path
+
 * Edit `config.json` to fit your setup (at least the `remote` and `password`
   fields)
+
 * Start a remote node outside the firewall: 
           
         moesocks --role remote -c config.json
+
 * Start a local node inside the firewall: 
     
         moesocks --role local -c config.json
+
 * Now you have a socks5 proxy running inside the firewall using port 
   `localPort`.
 
@@ -86,6 +93,6 @@ limitations under the License.
 [shadowsocks]:https://github.com/shadowsocks/shadowsocks 
 [shadowsocks-go]:https://github.com/shadowsocks/shadowsocks-go
 [shadowsocks-haskell]:https://github.com/rnons/shadowsocks-haskell
-
+[config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json
 
 
