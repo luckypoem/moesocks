@@ -140,6 +140,10 @@ nemesis = do
   task "local" - do
     run "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
 
+  desc "local128"
+  task "local128" - do
+    run "-r local -c dev-128.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
+  
   desc "remote-debug"
   task "remote-debug" - do
     run "-r remote -c dev.json -v"
