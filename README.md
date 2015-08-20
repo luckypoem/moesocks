@@ -3,7 +3,7 @@ MoeSocks
 
 A socks5 proxy using the client / server architecture.
 
-MoeSocks is greatly inspired by [shadowsocks] and can be used as a port of it.
+MoeSocks is greatly inspired by [shadowsocks] and can be used in place of it.
 
 Installation
 ------------
