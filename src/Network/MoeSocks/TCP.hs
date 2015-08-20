@@ -59,7 +59,8 @@ local_TCP_ForwardRequestHandler aCipherBox aConfig aForwarding _ (aSocket,_) = d
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
               
-  local_TCP_RequestHandler aCipherBox aConfig (mempty, _clientRequest) False aSocket
+  local_TCP_RequestHandler aCipherBox aConfig 
+                          (mempty, _clientRequest) False aSocket
 
 
 
