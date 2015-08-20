@@ -63,11 +63,12 @@ Planning features
 
 Notes
 ------
-There is an earlier implementation of [shadowsocks-haskell] by rnons that
-makes MoeSocks possible. 
-
-The original goal of MoeSocks is to provide extra configurability to standard
-shadowsocks, but it has been discarded since remote was too flaky. 
+* [shadowsocks-haskell] by rnons greatly inspired MoeSocks. 
+* There was a bug before GHC 7.10.2 that made moesocks remote unusable. It was
+  not without merid since it made the implementer to experiment and optimize
+  moesocks in different ways. All the code has been carefully examined as
+  a result of trying to dig out the bug. The presence of the bug outside the
+  scope of the code actaully made the quality of the code better ;)
 
 License
 --------
