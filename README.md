@@ -70,9 +70,11 @@ Planning features
 ------------------
 * None
 
-Notes
-------
-* [shadowsocks-haskell] by rnons greatly inspired MoeSocks. 
+Credits
+-------
+* [shadowsocks-haskell] by rnons, another implementation of shadowsocks in 
+  Haskell, also greatly inspired MoeSocks. Much of the understanding of
+  the internal of shadowsocks was gained by reading rnons's implementation.
 
 License
 --------
