@@ -132,7 +132,7 @@ parseConfig aOption = do
               tell "\n\n"
               case _maybeFilePath of
                 Just _filePath -> do
-                                    tell "Failed to parse configuration file"
+                                    tell "Failed to parse configuration file: "
                                     tell _filePath
                                     tell "\n"
                                     tell "Example: \n"
