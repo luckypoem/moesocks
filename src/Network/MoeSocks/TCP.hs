@@ -210,7 +210,9 @@ remote_TCP_RequestHandler aCipherBox aConfig aSocket = do
           receiveChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
 
           let _logId x = x <> " " <> _msg
-              _timeout = aConfig ^. timeout * 1000 * 1000
+              -- let remote wait slightly longer, so local can timeout
+              -- and disconnect
+              _timeout = (aConfig ^. timeout + 30) * 1000 * 1000
               
               _throttle = 
                 if aConfig ^. throttle
