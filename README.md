@@ -74,22 +74,7 @@ Credits
 -------
 * [shadowsocks] greatly inspired MoeSocks.
   Shadowsocks introduced a ground breaking design and implementation to bypass
-  Internet censorship in China. What's unique about it is that instead of
-  relying on a persistent TCP connection to transmit all data, it uses the
-  design of a socks proxy, that is to start a new connection for every request,
-  but unlike a socks proxy or other VPN services, it does not have a protocol
-  header. Key exchange is done offline and there is no handshake anywhere inside
-  a transmission. Deep packet inspection (DPI) becomes infeasible unless AES256
-  stream cipher can be cracked on a per connection basis. DPI is made more
-  difficult by that the encryption method can be easily swapped to another one,
-  for example Salsa20. In fact, every shadowsocks user is likely to be using an
-  encryption method that is preferred. With this much redundancy of
-  variety of encryptions, each requires years of research, if ever, to break in,
-  and consequently the ineffectiveness of DPI, the Great Firewall of China (GFW)
-  is likely to be left with only two options: block any transmission it can not
-  understand using any method, particularly DPI, or leave shadowsocks alone. So
-  far GFW has chosen the latter. Can you see the genius design of shadowsocks
-  now?
+  Internet censorship in China. 
 * [shadowsocks-haskell] by rnons, another implementation of shadowsocks in 
   Haskell, also greatly inspired MoeSocks. Much of the understanding of
   the internal of shadowsocks was gained by reading rnons's implementation.
