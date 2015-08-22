@@ -24,6 +24,7 @@ import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.IO.Unsafe (unsafePerformIO)
 import System.Log.Logger
+import System.Random
 import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import System.Timeout (timeout)
 import qualified Data.ByteString as S
@@ -212,8 +213,8 @@ getSocket aHost aPort aSocketType = do
           setSocketCloseOnExec _socket
 
           -- send immediately!
-          {-when (aSocketType == Stream) --}
-            {-setSocketOption _socket NoDelay 1 -}
+          when (aSocketType == Stream) -
+            setSocketOption _socket NoDelay 1 
 
           puts - "Getting socket: " <> show addrInfo
           {-puts - "Socket family: " <> show family-}
@@ -255,6 +256,19 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
+sendAllRandom :: Socket -> ByteString -> IO ()
+sendAllRandom aSocket aBuffer = do
+  _loop aBuffer
+  where
+    _lengthUpperBound = 4096
+    _loop _buffer = do
+      _randomLength <- randomRIO (0, _lengthUpperBound)
+      {-_say - "randomLength: " <> show _randomLength-}
+      let (_thisBuffer, _nextBuffer) = S.splitAt _randomLength _buffer
+      sendAll aSocket _thisBuffer
+      when (_nextBuffer & isn't _Empty) - do
+        yield
+        _loop _nextBuffer
 
 sendBytes :: HQueue -> ByteString -> IO ()
 sendBytes _queue = atomically . writeTBQueue _queue . S.Just
@@ -316,7 +330,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
       _produce :: Int -> IO ()
       _produce _bytesReceived = flip onException (f S.Nothing) - do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
-        {-pute - "Get chunk: " <> (show - S.length _r) -- <> " " <> aID-}
+        pute - "Get chunk: " <> (show - S.length _r) -- <> " " <> aID
         if (_r & isn't _Empty) 
           then do
             forM_ aThrottle - \_throttle -> do
@@ -352,8 +366,8 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
   
 
 consumeLoop :: String -> Timeout -> Maybe Double ->
-                Socket -> HQueue -> IO ()
-consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
+                Socket -> HQueue -> Bool -> IO ()
+consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize = do
   _startTime <- getCurrentTime
   
   
@@ -389,8 +403,12 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue = do
         case _newPacket of
           S.Nothing -> () <$ _shutdown
           S.Just _data -> do
+                          let _send = if randomize 
+                                          then sendAllRandom
+                                          else sendAll
+                                                    
                           timeoutFor aID aTimeout - 
-                                          sendAll aSocket _data
+                                          _send aSocket _data
                           yield
                           _consume - 
                             _allBytesSent + S.length _data

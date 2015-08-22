@@ -30,5 +30,6 @@ defaultMoeOptions = MoeOptions
   , _forwardTCP = []
   , _forwardUDP = []
   , _disableSocks5 = False
+  , _obfuscation = False
   , _params = []
   } 

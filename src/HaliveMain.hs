@@ -17,6 +17,7 @@ import Prelude ((.))
 import System.Exit
 import System.Random
 import qualified Prelude as P
+import System.Log.Logger
 
 main :: IO ()
 main = do
@@ -24,6 +25,8 @@ main = do
                                     & configFile .~ Just "config.json"
                                     & forwardUDP .~ 
                                                 [Forward 5301 "localhost" 53]
+                                    & verbosity .~ INFO
+                                    & obfuscation .~ True
   r <- runExceptT - runReaderT moeApp _options
   case r of
     Left e -> pute e >> exitFailure

@@ -116,6 +116,13 @@ optionParser =
                                         & view (from _Text))
                                     "timeout connection in seconds"
                         
+      _obfuscation :: O.Parser Bool 
+      _obfuscation = switch -
+                          short 'o'
+                      <>  long "obfuscation"
+                      <>  help ("Turn on simple obfuscation while still "
+                               <> "being compatible with "
+                               <> "shadowsocks protocol")
 
       _verbosity :: O.Parser Priority 
       _verbosity = flag INFO DEBUG -
@@ -210,6 +217,7 @@ optionParser =
               <*> fmap parseForwarding _forwardTCP
               <*> fmap parseForwarding _forwardUDP
               <*> _disableSocks5
+              <*> _obfuscation
               <*> _params
 
 opts :: ParserInfo MoeOptions

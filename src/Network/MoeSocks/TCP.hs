@@ -19,12 +19,11 @@ import Network.Socket.ByteString (recv)
 import Prelude hiding ((-), take)
 import qualified Data.Strict as S
 
-local_Socks5_RequestHandler :: CipherBox 
-                            -> MoeConfig 
+local_Socks5_RequestHandler :: Env
                             -> ByteString 
                             -> (Socket, SockAddr) 
                             -> IO ()
-local_Socks5_RequestHandler aCipherBox aConfig _ (aSocket,_) = do
+local_Socks5_RequestHandler aEnv _ (aSocket,_) = do
   (_partialBytesAfterGreeting, _r) <- 
       parseSocket "clientGreeting" mempty identityCipher
         greetingParser aSocket
@@ -42,17 +41,16 @@ local_Socks5_RequestHandler aCipherBox aConfig _ (aSocket,_) = do
                                 connectionParser
                                 aSocket
 
-  local_TCP_RequestHandler aCipherBox aConfig _parsedRequest True aSocket
+  local_TCP_RequestHandler aEnv _parsedRequest True aSocket
 
 
 
-local_TCP_ForwardRequestHandler :: CipherBox 
-                                -> MoeConfig 
+local_TCP_ForwardRequestHandler :: Env
                                 -> Forward 
                                 -> ByteString 
                                 -> (Socket, SockAddr) 
                                 -> IO ()
-local_TCP_ForwardRequestHandler aCipherBox aConfig aForwarding _ (aSocket,_) = 
+local_TCP_ForwardRequestHandler aEnv aForwarding _ (aSocket,_) = 
   do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
@@ -60,22 +58,24 @@ local_TCP_ForwardRequestHandler aCipherBox aConfig aForwarding _ (aSocket,_) =
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
               
-  local_TCP_RequestHandler aCipherBox aConfig 
+  local_TCP_RequestHandler aEnv
                           (mempty, _clientRequest) False aSocket
 
 
 
-local_TCP_RequestHandler :: CipherBox 
-                          -> MoeConfig 
+local_TCP_RequestHandler :: Env
                           -> (ByteString, ClientRequest) 
                           -> Bool 
                           -> Socket 
                           -> IO ()
-local_TCP_RequestHandler aCipherBox aConfig 
+local_TCP_RequestHandler aEnv
                         (_partialBytesAfterClientRequest, _clientRequest) 
                         shouldReplyClient aSocket = do
   let 
-      _c = aConfig 
+      _c = aEnv ^. config 
+      _cipherBox = aEnv ^. cipherBox
+      _obfuscation = aEnv ^. options . obfuscation
+
       _initSocket = 
           getSocket (_c ^. remote) (_c ^. remotePort) Stream 
 
@@ -99,20 +99,20 @@ local_TCP_RequestHandler aCipherBox aConfig
     _log - "L T: " <> _msg
 
     let handleLocal __remoteSocket = do
-          _encodeIV <- aCipherBox ^. generateIV 
-          _encrypt <- aCipherBox ^. encryptBuilder - _encodeIV
+          _encodeIV <- _cipherBox ^. generateIV 
+          _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
           
           let 
               _header = shadowSocksRequestBuilder _clientRequest
           
-          sendChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
-          receiveChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
+          sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
+          receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
           let _logId x = x <> " " <> _msg
-              _timeout = aConfig ^. timeout * 1000 * 1000
+              _timeout = _c ^. timeout * 1000 * 1000
               _throttle = 
-                if aConfig ^. throttle
-                  then Just - aConfig ^. throttleSpeed
+                if _c ^. throttle
+                  then Just - _c ^. throttleSpeed
                   else Nothing
 
           let sendThread = do
@@ -137,6 +137,7 @@ local_TCP_RequestHandler aCipherBox aConfig
                                     _throttle
                                     __remoteSocket 
                                     sendChannel
+                                    _obfuscation
                 finally
                   (
                     connectMarket (Just - _logId "L --> +", _produce)
@@ -145,8 +146,8 @@ local_TCP_RequestHandler aCipherBox aConfig
                   pure ()
 
           let receiveThread = do
-                _decodeIV <- recv __remoteSocket (aCipherBox ^. ivLength)
-                _decrypt <- aCipherBox ^. decryptBuilder - _decodeIV
+                _decodeIV <- recv __remoteSocket (_cipherBox ^. ivLength)
+                _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
 
                 let _produce = produceLoop (_logId "L <-- + Loop")
                                   _timeout
@@ -161,6 +162,7 @@ local_TCP_RequestHandler aCipherBox aConfig
                                     _NoThrottle
                                     aSocket 
                                     receiveChannel
+                                    False
                 finally 
                   (
                     connectMarket (Just - _logId "L <-- +", _produce)
@@ -176,10 +178,15 @@ local_TCP_RequestHandler aCipherBox aConfig
     handleLocal _remoteSocket
 
 
-remote_TCP_RequestHandler :: CipherBox -> MoeConfig -> Socket -> IO ()
-remote_TCP_RequestHandler aCipherBox aConfig aSocket = do
-  _decodeIV <- recv aSocket (aCipherBox ^. ivLength)
-  _decrypt <- aCipherBox ^. decryptBuilder - _decodeIV
+remote_TCP_RequestHandler :: Env -> Socket -> IO ()
+remote_TCP_RequestHandler aEnv aSocket = do
+  let
+        _obfuscation = aEnv ^. options . obfuscation
+        _cipherBox = aEnv ^. cipherBox
+        _c = aEnv ^. config
+
+  _decodeIV <- recv aSocket (_cipherBox ^. ivLength)
+  _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
 
   (_leftOverBytes, _clientRequest) <- parseSocket 
                                           "clientRequest"
@@ -206,17 +213,17 @@ remote_TCP_RequestHandler aCipherBox aConfig aSocket = do
 
     let 
         handleTarget __leftOverBytes __targetSocket = do
-          sendChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
-          receiveChannel <- newTBQueueIO - aConfig ^. tcpBufferSize
+          sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
+          receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
           let _logId x = x <> " " <> _msg
               -- let remote wait slightly longer, so local can timeout
               -- and disconnect
-              _timeout = (aConfig ^. timeout + 30) * 1000 * 1000
+              _timeout = (_c ^. timeout + 30) * 1000 * 1000
               
               _throttle = 
-                if aConfig ^. throttle
-                  then Just - aConfig ^. throttleSpeed
+                if _c ^. throttle
+                  then Just - _c ^. throttleSpeed
                   else Nothing
 
           let sendThread = do
@@ -236,6 +243,7 @@ remote_TCP_RequestHandler aCipherBox aConfig aSocket = do
                                   _NoThrottle
                                   __targetSocket
                                   sendChannel
+                                  False
 
                 finally
                   (
@@ -245,8 +253,8 @@ remote_TCP_RequestHandler aCipherBox aConfig aSocket = do
                   pure ()
 
           let receiveThread = do
-                _encodeIV <- aCipherBox ^. generateIV 
-                _encrypt <- aCipherBox ^. encryptBuilder - _encodeIV
+                _encodeIV <- _cipherBox ^. generateIV 
+                _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
                 sendBytes receiveChannel _encodeIV
 
                 let _produce = do
@@ -264,6 +272,7 @@ remote_TCP_RequestHandler aCipherBox aConfig aSocket = do
                                     _throttle
                                     aSocket
                                     receiveChannel
+                                    _obfuscation
 
                 finally 
                   (

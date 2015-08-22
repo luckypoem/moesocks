@@ -93,6 +93,7 @@ data MoeOptions = MoeOptions
   , _forwardTCP :: [Forward]
   , _forwardUDP :: [Forward]
   , _disableSocks5 :: Bool
+  , _obfuscation :: Bool
   , _params :: [(Text, Value)]
   }
   deriving (Show, Eq)
@@ -113,7 +114,7 @@ data CipherBox = CipherBox
 
 makeLenses '' CipherBox
 
-{-
+
 data Env = Env
   {
     _options :: MoeOptions
@@ -122,7 +123,7 @@ data Env = Env
   }
 
 makeLenses ''Env
--}
+
 
 
 

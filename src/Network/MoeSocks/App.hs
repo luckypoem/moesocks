@@ -182,6 +182,8 @@ moeApp = do
     Nothing -> throwError - "Invalid method '" 
                             <> _method ^. _Text
     Just (a, b, c, d) -> pure - CipherBox a b c d
+  
+  let _env = Env _options _config _cipherBox
 
   let localAppBuilder :: AppType 
                       -> String 
@@ -203,7 +205,7 @@ moeApp = do
                     _s@(_newSocket, _newSockAddr) <- accept _socket
                     setSocketCloseOnExec _newSocket
                     -- send immediately!
-                    {-setSocketOption _socket NoDelay 1 -}
+                    setSocketOption _socket NoDelay 1 
                     
                     forkIO - catchExceptAsyncLog "L TCP thread" - 
                               logSA "L TCP client socket" (pure _s) -
@@ -228,7 +230,7 @@ moeApp = do
 
   let localSocks5App :: (Socket, SockAddr) -> IO ()
       localSocks5App = localAppBuilder TCP_App "socks5" - 
-                            local_Socks5_RequestHandler _cipherBox _config
+                            local_Socks5_RequestHandler _env
 
       showForwarding :: Forward -> String
       showForwarding (Forward _localPort _remoteHost _remotePort) =
@@ -244,16 +246,14 @@ moeApp = do
       forward_TCP_App _f _s = do
         let _m = showForwarding _f
         localAppBuilder TCP_App  ("TCP forwarding " <> _m)
-                                (local_TCP_ForwardRequestHandler _cipherBox 
-                                _config _f) 
+                                (local_TCP_ForwardRequestHandler _env _f) 
                                 _s
 
       forward_UDP_App :: Forward -> (Socket, SockAddr) -> IO ()
       forward_UDP_App _f _s = do
         let _m = showForwarding _f 
         localAppBuilder UDP_App  ("UDP forwarding " <> _m)
-                                (local_UDP_ForwardRequestHandler _cipherBox
-                                _config _f) 
+                                (local_UDP_ForwardRequestHandler _env _f) 
                                 _s
       
   let remote_TCP_App :: (Socket, SockAddr) -> IO ()
@@ -272,11 +272,11 @@ moeApp = do
                 (_newSocket, _) <- accept _socket
                 setSocketCloseOnExec _newSocket
                 -- send immediately!
-                {-setSocketOption _socket NoDelay 1 -}
+                setSocketOption _socket NoDelay 1 
                 
                 forkIO - catchExceptAsyncLog "R thread" - 
                             logSocket "R remote socket" (pure _newSocket) -
-                              remote_TCP_RequestHandler _cipherBox _config 
+                              remote_TCP_RequestHandler _env 
 
           forever - handleRemote _remoteSocket
 
@@ -297,7 +297,7 @@ moeApp = do
 
 
                 forkIO - catchExceptAsyncLog "R thread" - 
-                            remote_UDP_RequestHandler _cipherBox _config _msg _s
+                            remote_UDP_RequestHandler _env _msg _s
 
                 
 

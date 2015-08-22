@@ -1,3 +1,8 @@
+0.1.0.22
+--------
+* Add a flag to turn on simple obfuscation (randomly flush socket to vary
+  packet length)
+
 0.1.0.21
 --------
 * Add in README that `GHC 7.10.2` is a must!

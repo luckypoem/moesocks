@@ -37,16 +37,16 @@ processAll :: Cipher -> ByteString -> IO ByteString
 processAll f x = 
   (<>) <$> f (S.Just x) <*> f S.Nothing
 
-local_UDP_ForwardRequestHandler :: CipherBox 
-                                -> MoeConfig 
+local_UDP_ForwardRequestHandler :: Env
                                 -> Forward 
                                 -> ByteString 
                                 -> (Socket,SockAddr) 
                                 -> IO ()
-local_UDP_ForwardRequestHandler aCipherBox aConfig aForwarding aMessage 
+local_UDP_ForwardRequestHandler aEnv aForwarding aMessage 
                                                     (aSocket, aSockAddr) = do
 
-  let _c = aConfig
+  let _c = aEnv ^. config
+      _cipherBox = _cipherBox
 
   let _clientRequest = ClientRequest
                           UDP_port
@@ -62,8 +62,8 @@ local_UDP_ForwardRequestHandler aCipherBox aConfig aForwarding aMessage
     \(_remoteSocket, _remoteAddr) -> do
       connect _remoteSocket _remoteAddr
 
-      _encodeIV <- aCipherBox ^. generateIV 
-      _encrypt <- aCipherBox ^. encryptBuilder - _encodeIV
+      _encodeIV <- _cipherBox ^. generateIV 
+      _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
 
       {-let (_encrypt, _decrypt) = (pure, pure)-}
 
@@ -80,9 +80,9 @@ local_UDP_ForwardRequestHandler aCipherBox aConfig aForwarding aMessage
 
       _response <- recv_ _remoteSocket 
 
-      let (_decodeIV, _responseMsg) = S.splitAt (aCipherBox ^. ivLength) 
+      let (_decodeIV, _responseMsg) = S.splitAt (_cipherBox ^. ivLength) 
                                         _response
-      _decrypt <- aCipherBox ^. decryptBuilder - _decodeIV
+      _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
       
       (_r, _) <- processAll _decrypt _responseMsg
                                       >>= parseShadowSocksRequest
@@ -91,16 +91,16 @@ local_UDP_ForwardRequestHandler aCipherBox aConfig aForwarding aMessage
         sendAllTo aSocket _r aSockAddr
 
 
-remote_UDP_RequestHandler :: CipherBox 
-                          -> MoeConfig 
+remote_UDP_RequestHandler :: Env
                           -> ByteString 
                           -> (Socket, SockAddr) 
                           -> IO ()
-remote_UDP_RequestHandler aCipherBox _ aMessage (aSocket, aSockAddr) = do
-  let (_decodeIV, _eMsg) = S.splitAt (aCipherBox ^. ivLength) 
+remote_UDP_RequestHandler aEnv aMessage (aSocket, aSockAddr) = do
+  let _cipherBox = aEnv ^. cipherBox
+  let (_decodeIV, _eMsg) = S.splitAt (_cipherBox ^. ivLength) 
                                        aMessage 
 
-  _decrypt <- aCipherBox ^. decryptBuilder - _decodeIV
+  _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
   _msg <- processAll _decrypt _eMsg
 
   (_decryptedMessage, _clientRequest) <- parseShadowSocksRequest _msg
@@ -125,8 +125,8 @@ remote_UDP_RequestHandler aCipherBox _ aMessage (aSocket, aSockAddr) = do
     {-puts - "R UDP <--: " <> show _r-}
 
     when (_r & isn't _Empty) - do
-      _encodeIV <- aCipherBox ^. generateIV 
-      _encrypt <- aCipherBox ^. encryptBuilder - _encodeIV
+      _encodeIV <- _cipherBox ^. generateIV 
+      _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
       
       _encryptedMessage <- processAll _encrypt _r
       sendAllTo aSocket (_encodeIV <> _encryptedMessage) aSockAddr
