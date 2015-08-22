@@ -259,7 +259,8 @@ send_ = sendAll
 
 sendAllRandom :: Socket -> ByteString -> IO ()
 sendAllRandom aSocket aBuffer = do
-  _lengthUpperBound <- randomRIO (2048, 4096)
+  -- _lengthUpperBound <- randomRIO (1024, 4096)
+  _lengthUpperBound <- pure 4096
   _loop _lengthUpperBound aBuffer
   where
     _loop _bound _buffer = do
