@@ -45,6 +45,9 @@ Usage
 * Now you have a socks5 proxy running inside the firewall using port 
   `localPort`.
 
+* Shadowsocks compatible obfuscation can be turned on with the `-o` flag to make
+  statistical analysis on packet length a bit more confusing.
+
 * See more options:
 
         moesocks --help
