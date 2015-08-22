@@ -25,7 +25,7 @@ main = do
                                     & configFile .~ Just "config.json"
                                     & forwardUDP .~ 
                                                 [Forward 5301 "localhost" 53]
-                                    & verbosity .~ INFO
+                                    {-& verbosity .~ INFO-}
                                     & obfuscation .~ True
   r <- runExceptT - runReaderT moeApp _options
   case r of
