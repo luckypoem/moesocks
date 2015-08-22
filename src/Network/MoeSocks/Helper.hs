@@ -150,7 +150,7 @@ logException aID aIO = catch (() <$ aIO) - \e ->
 logWaitIO :: (Maybe String, IO a) -> IO ()
 logWaitIO x = do
   let _io = wrapIO x
-      aID = x ^. _1 & fromMaybe ""
+      aID = x ^. _1 . _Just 
 
   puts - "waiting for : " <> aID
   _io
@@ -173,8 +173,8 @@ instance Exception TimeoutException
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitBothDebug x y = do
   concurrently (logWaitIO x) (logWaitIO y)
-  let _xID = x ^. _1 & fromMaybe ""
-      _yID = y ^. _1 & fromMaybe ""
+  let _xID = x ^. _1 . _Just 
+      _yID = y ^. _1 . _Just
       _hID = _xID <> " / " <> _yID
   puts - "All done for " <> _hID
   pure ()
