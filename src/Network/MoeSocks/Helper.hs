@@ -18,20 +18,20 @@ import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
-{-import Data.List (isPrefixOf)-}
 import Data.Time.Clock
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.IO.Unsafe (unsafePerformIO)
 import System.Log.Logger
-import System.Random
 import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
+import System.Random
 import System.Timeout (timeout)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Strict as S
+{-import Data.List (isPrefixOf)-}
 
 
 -- BEGIN backports
@@ -186,11 +186,11 @@ waitBothDebug x y = do
 
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 connectTunnel x y = 
-  let _sleep _io = _io >> sleep 10
+  let _prolong _io = _io >> sleep 10
   in
 
-  race_ (_sleep - logWaitIO x) 
-        (_sleep - logWaitIO y)
+  race_ (_prolong - logWaitIO x) 
+        (_prolong - logWaitIO y)
 
 connectMarket :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 connectMarket = waitBothDebug

@@ -1,3 +1,7 @@
+0.1.0.23
+---------
+* Fix a bug to prevent a half closed connection to hold a file handle
+
 0.1.0.22
 --------
 * Add the `-o` flag to turn on simple obfuscation (randomly flush socket to vary
