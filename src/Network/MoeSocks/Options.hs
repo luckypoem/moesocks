@@ -123,7 +123,7 @@ optionParser =
                       <>  help ("Turn on simple obfuscation while still "
                                <> "being compatible with "
                                <> "shadowsocks protocol, with the cost of "
-                               <> "about 10-20% performance degradation")
+                               <> "about 10-20% performance degradation.")
 
       _verbosity :: O.Parser Priority 
       _verbosity = flag INFO DEBUG -
