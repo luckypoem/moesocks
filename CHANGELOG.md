@@ -1,6 +1,6 @@
 0.1.0.22
 --------
-* Add a flag to turn on simple obfuscation (randomly flush socket to vary
+* Add the `-o` flag to turn on simple obfuscation (randomly flush socket to vary
   packet length)
 
 0.1.0.21
