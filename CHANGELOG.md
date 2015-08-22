@@ -1,7 +1,7 @@
 0.1.0.22
 --------
 * Add the `-o` flag to turn on simple obfuscation (randomly flush socket to vary
-  packet length)
+  packet length). There is about a 10-20% performance cost.
 
 0.1.0.21
 --------
