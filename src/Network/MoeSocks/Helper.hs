@@ -18,6 +18,7 @@ import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
+import Data.List (isPrefixOf)
 import Data.Time.Clock
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
@@ -258,17 +259,18 @@ send_ = sendAll
 
 sendAllRandom :: Socket -> ByteString -> IO ()
 sendAllRandom aSocket aBuffer = do
-  _loop aBuffer
+  _lengthUpperBound <- randomRIO (1024, 4096)
+  _loop _lengthUpperBound aBuffer
   where
-    _lengthUpperBound = 4096
-    _loop _buffer = do
-      _randomLength <- randomRIO (0, _lengthUpperBound)
+    _loop _bound _buffer = do
+      -- _lengthUpperBound <- randomRIO (1024, 4096)
+      _randomLength <- randomRIO (0, _bound)
       {-_say - "randomLength: " <> show _randomLength-}
       let (_thisBuffer, _nextBuffer) = S.splitAt _randomLength _buffer
       sendAll aSocket _thisBuffer
       when (_nextBuffer & isn't _Empty) - do
         yield
-        _loop _nextBuffer
+        _loop _bound _nextBuffer
 
 sendBytes :: HQueue -> ByteString -> IO ()
 sendBytes _queue = atomically . writeTBQueue _queue . S.Just
@@ -330,7 +332,9 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
       _produce :: Int -> IO ()
       _produce _bytesReceived = flip onException (f S.Nothing) - do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
-        {-puts - "Get chunk: " <> (show - S.length _r) -- <> " " <> aID-}
+        when ("L" `isPrefixOf` aID) - do
+          _say - "Get chunk: " <> (show - S.length _r) <> " " <> aID
+        
         if (_r & isn't _Empty) 
           then do
             forM_ aThrottle - \_throttle -> do
