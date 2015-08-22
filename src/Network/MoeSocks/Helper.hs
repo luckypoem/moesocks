@@ -180,14 +180,17 @@ waitBothDebug x y = do
   puts - "All done for " <> _hID
   pure ()
 
-connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
--- connectTunnel x y = finally (waitBothDebug x y) performGC
-connectTunnel = waitBothDebug
-
 {-connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
-{-connectTunnel x y = -}
-  {-withAsync (logWaitIO x) - const - do-}
-    {-logWaitIO y-}
+{--- connectTunnel x y = finally (waitBothDebug x y) performGC-}
+{-connectTunnel = waitBothDebug-}
+
+connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
+connectTunnel x y = 
+  let _sleep _io = _io >> sleep 10
+  in
+
+  race_ (_sleep - logWaitIO x) 
+        (_sleep - logWaitIO y)
 
 connectMarket :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 connectMarket = waitBothDebug
