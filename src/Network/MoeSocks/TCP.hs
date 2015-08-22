@@ -98,15 +98,15 @@ local_TCP_RequestHandler aEnv
     
     _log - "L T: " <> _msg
 
-    let handleLocal __remoteSocket = do
+    let handleLocal _remoteSocket = do
           _encodeIV <- _cipherBox ^. generateIV 
           _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
           
           let 
               _header = shadowSocksRequestBuilder _clientRequest
           
-          sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
-          receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
+          _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
+          _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
           let _logId x = x <> " " <> _msg
               _timeout = _c ^. timeout * 1000 * 1000
@@ -116,11 +116,11 @@ local_TCP_RequestHandler aEnv
                   else Nothing
 
           let sendThread = do
-                sendBytes sendChannel _encodeIV
-                sendBuilderEncrypt sendChannel _encrypt _header
+                sendBytes _sendChannel _encodeIV
+                sendBuilderEncrypt _sendChannel _encrypt _header
 
                 when (_partialBytesAfterClientRequest & isn't _Empty) -
-                  sendBytesEncrypt sendChannel _encrypt 
+                  sendBytesEncrypt _sendChannel _encrypt 
                     _partialBytesAfterClientRequest
 
                 let _produce = do
@@ -128,15 +128,15 @@ local_TCP_RequestHandler aEnv
                                     _timeout
                                     _NoThrottle
                                     aSocket 
-                                    sendChannel 
+                                    _sendChannel 
                                     _encrypt
 
                 let _consume = do
                                   consumeLoop (_logId "L --> - Loop")
                                     _timeout
                                     _throttle
-                                    __remoteSocket 
-                                    sendChannel
+                                    _remoteSocket 
+                                    _sendChannel
                                     _obfuscation
                 finally
                   (
@@ -146,14 +146,14 @@ local_TCP_RequestHandler aEnv
                   pure ()
 
           let receiveThread = do
-                _decodeIV <- recv __remoteSocket (_cipherBox ^. ivLength)
+                _decodeIV <- recv _remoteSocket (_cipherBox ^. ivLength)
                 _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
 
                 let _produce = produceLoop (_logId "L <-- + Loop")
                                   _timeout
                                   _NoThrottle
-                                  __remoteSocket 
-                                  receiveChannel
+                                  _remoteSocket 
+                                  _receiveChannel
                                   _decrypt
 
                 let _consume = do
@@ -161,7 +161,7 @@ local_TCP_RequestHandler aEnv
                                     _timeout
                                     _NoThrottle
                                     aSocket 
-                                    receiveChannel
+                                    _receiveChannel
                                     False
                 finally 
                   (
@@ -212,9 +212,9 @@ remote_TCP_RequestHandler aEnv aSocket = do
     _log - "R T: " <> _msg
 
     let 
-        handleTarget __leftOverBytes __targetSocket = do
-          sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
-          receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
+        handleTarget _leftOverBytes __targetSocket = do
+          _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
+          _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
           let _logId x = x <> " " <> _msg
               -- let remote wait slightly longer, so local can timeout
@@ -228,21 +228,21 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
           let sendThread = do
                 when (_leftOverBytes & isn't _Empty) -
-                  atomically - writeTBQueue sendChannel - S.Just _leftOverBytes
+                  atomically - writeTBQueue _sendChannel - S.Just _leftOverBytes
 
                 let _produce = do
                                   produceLoop (_logId "R --> + Loop")
                                     _timeout
                                     _NoThrottle 
                                     aSocket
-                                    sendChannel
+                                    _sendChannel
                                     _decrypt
 
                 let _consume = consumeLoop (_logId "R --> - Loop")
                                   _timeout
                                   _NoThrottle
-                                  __targetSocket
-                                  sendChannel
+                                  _targetSocket
+                                  _sendChannel
                                   False
 
                 finally
@@ -255,14 +255,14 @@ remote_TCP_RequestHandler aEnv aSocket = do
           let receiveThread = do
                 _encodeIV <- _cipherBox ^. generateIV 
                 _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
-                sendBytes receiveChannel _encodeIV
+                sendBytes _receiveChannel _encodeIV
 
                 let _produce = do
                                   produceLoop (_logId "R <-- + Loop")
                                     _timeout
                                     _NoThrottle 
-                                    __targetSocket
-                                    receiveChannel
+                                    _targetSocket
+                                    _receiveChannel
                                     _encrypt
 
 
@@ -271,7 +271,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
                                     _timeout
                                     _throttle
                                     aSocket
-                                    receiveChannel
+                                    _receiveChannel
                                     _obfuscation
 
                 finally 
