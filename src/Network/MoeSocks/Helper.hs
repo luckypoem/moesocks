@@ -18,7 +18,7 @@ import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
-import Data.List (isPrefixOf)
+{-import Data.List (isPrefixOf)-}
 import Data.Time.Clock
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
@@ -259,7 +259,8 @@ send_ = sendAll
 
 sendAllRandom :: Socket -> ByteString -> IO ()
 sendAllRandom aSocket aBuffer = do
-  _lengthUpperBound <- randomRIO (1024, 4096)
+  {-_lengthUpperBound <- randomRIO (1024, 4096)-}
+  let _lengthUpperBound = 4096
   _loop _lengthUpperBound aBuffer
   where
     _loop _bound _buffer = do
