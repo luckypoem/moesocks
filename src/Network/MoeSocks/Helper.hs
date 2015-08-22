@@ -259,12 +259,10 @@ send_ = sendAll
 
 sendAllRandom :: Socket -> ByteString -> IO ()
 sendAllRandom aSocket aBuffer = do
-  {-_lengthUpperBound <- randomRIO (1024, 4096)-}
-  let _lengthUpperBound = 4096
+  _lengthUpperBound <- randomRIO (2048, 4096)
   _loop _lengthUpperBound aBuffer
   where
     _loop _bound _buffer = do
-      -- _lengthUpperBound <- randomRIO (1024, 4096)
       _randomLength <- randomRIO (0, _bound)
       {-_say - "randomLength: " <> show _randomLength-}
       let (_thisBuffer, _nextBuffer) = S.splitAt _randomLength _buffer
