@@ -33,6 +33,11 @@ showRequest _r =
                 <> ":"
                 <> show (_r ^. portNumber)
 
+addressType_To_Family :: AddressType -> Maybe Family
+addressType_To_Family (IPv4_address _) = Just AF_INET
+addressType_To_Family (IPv6_address _) = Just AF_INET6
+addressType_To_Family _ = Nothing
+
 initTarget :: ClientRequest -> IO (Socket, SockAddr)
 initTarget _clientRequest = do
   let 
@@ -47,6 +52,7 @@ initTarget _clientRequest = do
 
       _hostName = _clientRequest ^. addressType . to showAddressType
       _port = _clientRequest ^. portNumber
+      _family = _clientRequest ^. addressType . to addressType_To_Family
 
   
-  getSocket _hostName _port _socketType
+  getSocketWithHint _family _hostName _port _socketType

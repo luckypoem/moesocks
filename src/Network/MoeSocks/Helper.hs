@@ -197,7 +197,12 @@ connectMarket = waitBothDebug
 
 getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)
-getSocket aHost aPort aSocketType = do
+getSocket = getSocketWithHint Nothing
+
+getSocketWithHint :: (Integral i, Show i) => 
+                        Maybe Family -> Text -> i -> SocketType -> 
+                        IO (Socket, SockAddr)
+getSocketWithHint maybeFamily aHost aPort aSocketType = do
     {-puts - "getSocket: " <> show aHost <> ":" <> show aPort-}
 
     maybeAddrInfo <- firstOf folded <$>
@@ -227,10 +232,11 @@ getSocket aHost aPort aSocketType = do
           pure (_socket, address)
           
   where
+    _family = maybeFamily & fromMaybe AF_INET
     hints = defaultHints {
               addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]
             , addrSocketType = aSocketType
-            {-, addrFamily = AF_INET-}
+            , addrFamily = _family
             }
 
 builder_To_ByteString :: B.Builder -> ByteString
