@@ -18,7 +18,7 @@ defaultMoeConfig = MoeConfig
   , _tcpBufferSize = 256
   , _throttle = False
   , _throttleSpeed = 8000 -- in Kilobytes
-  , _obfuscationFlushBound = 2048
+  , _obfuscationFlushBound = 4096
   }
 
 
