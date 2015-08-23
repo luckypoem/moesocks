@@ -3,7 +3,6 @@
 
 module Network.MoeSocks.Type where
 
-import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -126,8 +125,5 @@ data Env = Env
 makeLenses ''Env
 
 
-
-
-type Queue = TBQueue (Maybe ByteString) 
 type MoeMonadT = ReaderT MoeOptions (ExceptT String IO)
 
