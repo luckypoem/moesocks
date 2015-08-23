@@ -75,6 +75,7 @@ local_TCP_RequestHandler aEnv
       _c = aEnv ^. config 
       _cipherBox = aEnv ^. cipherBox
       _obfuscation = aEnv ^. options . obfuscation
+      _flushBound = _c ^. obfuscationFlushBound
 
       _initSocket = 
           getSocket (_c ^. remote) (_c ^. remotePort) Stream 
@@ -138,6 +139,7 @@ local_TCP_RequestHandler aEnv
                                     _remoteSocket 
                                     _sendChannel
                                     _obfuscation
+                                    _flushBound
                 finally
                   (
                     connectMarket (Just - _logId "L --> +", _produce)
@@ -163,6 +165,7 @@ local_TCP_RequestHandler aEnv
                                     aSocket 
                                     _receiveChannel
                                     False
+                                    _flushBound
                 finally 
                   (
                     connectMarket (Just - _logId "L <-- +", _produce)
@@ -184,6 +187,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
         _obfuscation = aEnv ^. options . obfuscation
         _cipherBox = aEnv ^. cipherBox
         _c = aEnv ^. config
+        _flushBound = _c ^. obfuscationFlushBound
 
   _decodeIV <- recv aSocket (_cipherBox ^. ivLength)
   _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
@@ -244,6 +248,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
                                   _targetSocket
                                   _sendChannel
                                   False
+                                  _flushBound
 
                 finally
                   (
@@ -273,6 +278,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
                                     aSocket
                                     _receiveChannel
                                     _obfuscation
+                                    _flushBound
 
                 finally 
                   (

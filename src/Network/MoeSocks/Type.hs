@@ -60,6 +60,7 @@ data MoeConfig = MoeConfig
   , _tcpBufferSize :: Int -- in packets
   , _throttle :: Bool
   , _throttleSpeed :: Double
+  , _obfuscationFlushBound :: Int -- should be greater then MTU
   }
   deriving (Show, Eq, Generic)
 

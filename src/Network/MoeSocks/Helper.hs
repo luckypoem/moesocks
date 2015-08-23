@@ -260,20 +260,18 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
-sendAllRandom :: Socket -> ByteString -> IO ()
-sendAllRandom aSocket aBuffer = do
-  -- _lengthUpperBound <- randomRIO (1024, 4096)
-  _lengthUpperBound <- pure 2048
-  _loop _lengthUpperBound aBuffer
+sendAllRandom :: Int -> Socket -> ByteString -> IO ()
+sendAllRandom aFlushBound aSocket aBuffer = do
+  _loop aBuffer
   where
-    _loop _bound _buffer = do
-      _randomLength <- randomRIO (0, _bound)
+    _loop _buffer = do
+      _randomLength <- randomRIO (0, aFlushBound)
       {-_say - "randomLength: " <> show _randomLength-}
       let (_thisBuffer, _nextBuffer) = S.splitAt _randomLength _buffer
       sendAll aSocket _thisBuffer
       when (_nextBuffer & isn't _Empty) - do
         yield
-        _loop _bound _nextBuffer
+        _loop _nextBuffer
 
 sendBytes :: HQueue -> ByteString -> IO ()
 sendBytes _queue = atomically . writeTBQueue _queue . S.Just
@@ -373,8 +371,8 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
   
 
 consumeLoop :: String -> Timeout -> Maybe Double ->
-                Socket -> HQueue -> Bool -> IO ()
-consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize = do
+                Socket -> HQueue -> Bool -> Int -> IO ()
+consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
   _startTime <- getCurrentTime
   
   
@@ -411,7 +409,7 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize = do
           S.Nothing -> () <$ _shutdown
           S.Just _data -> do
                           let _send = if randomize 
-                                          then sendAllRandom
+                                          then sendAllRandom aBound
                                           else sendAll
                                                     
                           timeoutFor aID aTimeout - 
