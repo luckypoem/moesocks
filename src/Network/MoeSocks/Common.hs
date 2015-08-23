@@ -36,7 +36,7 @@ showRequest _r =
 addressType_To_Family :: AddressType -> Maybe Family
 addressType_To_Family (IPv4_address _) = Just AF_INET
 addressType_To_Family (IPv6_address _) = Just AF_INET6
-addressType_To_Family _ = Nothing
+addressType_To_Family _                = Nothing
 
 initTarget :: ClientRequest -> IO (Socket, SockAddr)
 initTarget _clientRequest = do
