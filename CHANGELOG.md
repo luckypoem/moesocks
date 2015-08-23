@@ -1,3 +1,8 @@
+0.1.0.24
+--------
+* Make obfuscation flush upper bound configurable in `config.json`
+* Fix a IPv6 name resolution bug in remote
+
 0.1.0.23
 ---------
 * Fix a bug to prevent a half closed connection to hold a file handle
