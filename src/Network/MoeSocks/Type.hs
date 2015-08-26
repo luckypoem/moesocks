@@ -91,8 +91,8 @@ data MoeOptions = MoeOptions
     _runningMode :: RunningMode
   , _configFile :: Maybe Text
   , _verbosity :: Priority
-  , _forwardTCP :: [Forward]
-  , _forwardUDP :: [Forward]
+  , _forward_TCP :: [Forward]
+  , _forward_UDP :: [Forward]
   , _disableSocks5 :: Bool
   , _obfuscation :: Bool
   , _forbidden_IP :: [IPRange]
@@ -109,7 +109,7 @@ type CipherBuilder = IV -> IO Cipher
 data CipherBox = CipherBox
   {
     _ivLength :: Int
-  , _generateIV :: IO IV
+  , _generate_IV :: IO IV
   , _encryptBuilder :: CipherBuilder
   , _decryptBuilder ::  CipherBuilder
   }

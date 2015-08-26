@@ -23,7 +23,7 @@ main :: IO ()
 main = do
   let _options = defaultMoeOptions 
                                     & configFile .~ Just "config.json"
-                                    & forwardUDP .~ 
+                                    & forward_UDP .~ 
                                                 [Forward 5301 "localhost" 53]
                                     {-& verbosity .~ INFO-}
                                     & obfuscation .~ True

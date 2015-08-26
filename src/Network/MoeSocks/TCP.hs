@@ -101,7 +101,7 @@ local_TCP_RequestHandler aEnv
     _log - "L T: " <> _msg
 
     let handleLocal _remoteSocket = do
-          _encodeIV <- _cipherBox ^. generateIV 
+          _encodeIV <- _cipherBox ^. generate_IV 
           _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
           
           let 
@@ -264,7 +264,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
                     pure ()
 
             let receiveThread = do
-                  _encodeIV <- _cipherBox ^. generateIV 
+                  _encodeIV <- _cipherBox ^. generate_IV 
                   _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
                   sendBytes _receiveChannel _encodeIV
 

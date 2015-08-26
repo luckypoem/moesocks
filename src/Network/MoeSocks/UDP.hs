@@ -63,7 +63,7 @@ local_UDP_ForwardRequestHandler aEnv aForwarding aMessage
     \(_remoteSocket, _remoteAddr) -> do
       connect _remoteSocket _remoteAddr
 
-      _encodeIV <- _cipherBox ^. generateIV 
+      _encodeIV <- _cipherBox ^. generate_IV 
       _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
 
       {-let (_encrypt, _decrypt) = (pure, pure)-}
@@ -133,7 +133,7 @@ remote_UDP_RequestHandler aEnv aMessage (aSocket, aSockAddr) = do
       {-puts - "R UDP <--: " <> show _r-}
 
       when (_r & isn't _Empty) - do
-        _encodeIV <- _cipherBox ^. generateIV 
+        _encodeIV <- _cipherBox ^. generate_IV 
         _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
         
         _encryptedMessage <- processAll _encrypt _r
