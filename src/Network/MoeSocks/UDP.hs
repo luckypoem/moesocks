@@ -111,24 +111,25 @@ remote_UDP_RequestHandler aEnv aMessage (aSocket, aSockAddr) = do
   {-puts - "R UDP: " <> show _clientRequest-}
   {-puts - "R UDP: " <> show _decryptedMessage-}
   
-  let _addr = _clientRequest ^. addressType
-  if checkForbidden_IP_List _addr - _options ^. forbidden_IP
-    then pute - showAddressType _addr ^. _Text 
-                <> " is in forbidden-ip list"
-    else
-    logSA "R UDP -->:" (initTarget _clientRequest) - \_r -> do
-      let (_clientSocket, _clientAddr) = _r
+  logSA "R UDP -->:" (initTarget _clientRequest) - \_r -> do
+    let (_targetSocket, _targetSocketAddress) = _r 
+        (_addr, _) = sockAddr_To_Pair _targetSocketAddress
 
-      {-puts - "R UDP clientSocket: " <> show _r-}
-      
+    {-puts - "R UDP targetSocket: " <> show _r-}
+
+    let _addr = _clientRequest ^. addressType
+    if checkForbidden_IP_List _addr - _options ^. forbidden_IP
+      then pute - showAddressType _addr ^. _Text 
+                  <> " is in forbidden-ip list"
+      else do
       let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
       _log - "R U: " <> _msg
 
-      connect _clientSocket _clientAddr
+      connect _targetSocket _targetSocketAddress
       
-      send_ _clientSocket _decryptedMessage
+      send_ _targetSocket _decryptedMessage
 
-      _r <- buildShadowSocksRequest _clientRequest <$> recv_ _clientSocket
+      _r <- buildShadowSocksRequest _clientRequest <$> recv_ _targetSocket
 
       {-puts - "R UDP <--: " <> show _r-}
 
