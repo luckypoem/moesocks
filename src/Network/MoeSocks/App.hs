@@ -66,31 +66,32 @@ parseConfig aOption = do
 
 
   let 
-      fixConfig :: Value -> Value
-      fixConfig (Object _obj) =
+      toParsableConfig :: Value -> Value
+      toParsableConfig (Object _obj) =
           Object - 
             _obj 
                 & H.toList 
                 & fromSS 
                 & over (mapped . _1) (T.cons '_')  
                 & H.fromList
-      fixConfig _ = Null
+      toParsableConfig _ = Null
   
 
-      formatConfig :: Value -> Value
-      formatConfig (Object _obj) =
+      toReadableConfig :: Value -> Value
+      toReadableConfig (Object _obj) =
           Object -
             _obj
                 & H.toList 
                 & over (mapped . _1) T.tail 
                 & H.fromList
-      formatConfig _ = Null
+
+      toReadableConfig _ = Null
 
       showConfig :: MoeConfig -> Text
       showConfig =    view utf8 
                     . toStrict 
                     . encode 
-                    . formatConfig 
+                    . toReadableConfig 
                     . toJSON 
 
       
@@ -105,15 +106,15 @@ parseConfig aOption = do
           
       filterEssentialConfig _ = Null
 
-      mergeConfigObject :: Value -> Value -> Value
-      mergeConfigObject (Object _x) (Object _y) =
+      insertConfig :: Value -> Value -> Value
+      insertConfig (Object _x) (Object _y) =
           Object - _x `H.union` _y
-      mergeConfigObject _ _ = Null
+      insertConfig _ _ = Null
 
-      mergeParams :: [(Text, Value)] -> Value -> Value
-      mergeParams xs (Object _x) =
+      insertParams :: [(Text, Value)] -> Value -> Value
+      insertParams xs (Object _x) =
           Object - H.fromList xs `H.union` _x
-      mergeParams _ _ = Null
+      insertParams _ _ = Null
 
 
       optionalConfig = filterEssentialConfig - toJSON defaultMoeConfig
@@ -121,9 +122,9 @@ parseConfig aOption = do
       _maybeConfig = _v
                       >>= decode 
                           . encode 
-                          . flip mergeConfigObject optionalConfig
-                          . mergeParams (aOption ^. params)
-                          . fixConfig 
+                          . flip insertConfig optionalConfig
+                          . insertParams (aOption ^. params)
+                          . toParsableConfig 
 
   case _maybeConfig of
     Nothing -> do
