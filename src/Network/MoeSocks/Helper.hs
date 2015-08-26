@@ -14,6 +14,7 @@ import Data.Attoparsec.ByteString hiding (try)
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
+import Data.IP
 import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
@@ -439,3 +440,17 @@ setSocketCloseOnExec aSocket =
 tryIO :: String -> IO a -> IO (Either IOException a)
 tryIO _ = try -- . logException aID
   
+maybeIPv4Range :: IPRange -> Maybe (AddrRange IPv4)
+maybeIPv4Range (IPv4Range x) = Just x
+maybeIPv4Range _ = Nothing
+
+maybeIPv6Range :: IPRange -> Maybe (AddrRange IPv6)
+maybeIPv6Range (IPv6Range x) = Just x
+maybeIPv6Range _ = Nothing
+
+_IPv4Range :: Prism' IPRange (AddrRange IPv4) 
+_IPv4Range = prism' IPv4Range maybeIPv4Range
+
+_IPv6Range :: Prism' IPRange (AddrRange IPv6)
+_IPv6Range = prism' IPv6Range maybeIPv6Range
+

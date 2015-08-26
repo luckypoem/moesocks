@@ -23,20 +23,6 @@ showAddressType (IPv6_address xs) = view (from _Text) -
                                       concat - L.intersperse ":" - 
                                       xs ^.. each . to show
 
-maybeIPv4Range :: IPRange -> Maybe (AddrRange IPv4)
-maybeIPv4Range (IPv4Range x) = Just x
-maybeIPv4Range _ = Nothing
-
-maybeIPv6Range :: IPRange -> Maybe (AddrRange IPv6)
-maybeIPv6Range (IPv6Range x) = Just x
-maybeIPv6Range _ = Nothing
-
-_IPv4Range :: Prism' IPRange (AddrRange IPv4) 
-_IPv4Range = prism' IPv4Range maybeIPv4Range
-
-_IPv6Range :: Prism' IPRange (AddrRange IPv6)
-_IPv6Range = prism' IPv6Range maybeIPv6Range
-
 checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
 checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
   let _ip = (read - showAddressType _address ^. _Text)
