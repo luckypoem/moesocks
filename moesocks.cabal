@@ -48,6 +48,7 @@ executable moesocks
                       , transformers
                       , unix
                       , unordered-containers
+                      , iproute
 
   hs-source-dirs:      src
   default-language:    Haskell2010

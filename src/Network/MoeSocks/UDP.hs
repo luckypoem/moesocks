@@ -8,7 +8,7 @@ import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.Attoparsec.ByteString
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as S
+import Data.Text.Lens
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
 import Network.MoeSocks.Helper
@@ -16,6 +16,7 @@ import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import Prelude hiding ((-), take)
+import qualified Data.ByteString as S
 import qualified Data.Strict as S
 
 
@@ -110,10 +111,11 @@ remote_UDP_RequestHandler aEnv aMessage (aSocket, aSockAddr) = do
   {-puts - "R UDP: " <> show _clientRequest-}
   {-puts - "R UDP: " <> show _decryptedMessage-}
   
-  let _requestAddr = showAddressType - _clientRequest ^. addressType
-  if (_requestAddr `elem` (_options ^. forbidden_IP))
-    then pute - show _requestAddr <> " is in forbidden-ip list"
-    else 
+  let _addr = _clientRequest ^. addressType
+  if checkForbidden_IP_List _addr - _options ^. forbidden_IP
+    then pute - showAddressType _addr ^. _Text 
+                <> " is in forbidden-ip list"
+    else
     logSA "R UDP -->:" (initTarget _clientRequest) - \_r -> do
       let (_clientSocket, _clientAddr) = _r
 

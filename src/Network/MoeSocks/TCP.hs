@@ -8,6 +8,7 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
+import Data.Text.Lens
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
 import Network.MoeSocks.Constant
@@ -200,18 +201,16 @@ remote_TCP_RequestHandler aEnv aSocket = do
                                           (shadowSocksRequestParser 
                                             TCP_IP_stream_connection)
                                           aSocket
-                                          
-
-  {-puts - "Remote get: " <> show _clientRequest-}
   
+  logSA "R target socket" (initTarget _clientRequest) - \_r -> do
+    let (_targetSocket, _targetSocketAddress) = _r 
+        (_addr, _) = sockAddr_To_Pair _targetSocketAddress
 
-  let _requestAddr = showAddressType - _clientRequest ^. addressType
-  if (_requestAddr `elem` (_options ^. forbidden_IP))
-    then pute - show _requestAddr <> " is in forbidden-ip list"
-    else 
-    logSA "R target socket" (initTarget _clientRequest) - \_r -> do
-      let (_targetSocket, _targetSocketAddress) = _r 
-
+    puts - "checking: " <> show _addr <> " ? " <> show (_options ^. forbidden_IP)
+    if checkForbidden_IP_List _addr - _options ^. forbidden_IP
+      then pute - showAddressType _addr ^. _Text 
+                  <> " is in forbidden-ip list"
+      else do
       connect _targetSocket _targetSocketAddress
 
       _remotePeerAddr <- getPeerName aSocket

@@ -9,6 +9,7 @@ import Control.Monad.Reader
 import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.Text (Text)
+import Data.IP
 import Data.Word
 import GHC.Generics
 import System.Log.Logger
@@ -94,7 +95,7 @@ data MoeOptions = MoeOptions
   , _forwardUDP :: [Forward]
   , _disableSocks5 :: Bool
   , _obfuscation :: Bool
-  , _forbidden_IP :: [Text]
+  , _forbidden_IP :: [IPRange]
   , _params :: [(Text, Value)]
   }
   deriving (Show, Eq)

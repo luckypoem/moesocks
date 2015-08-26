@@ -4,6 +4,8 @@ module Network.MoeSocks.Common where
 
 import Control.Lens
 import Control.Monad.Writer hiding (listen)
+import Data.IP
+import Data.Maybe
 import Data.Text (Text)
 import Data.Text.Lens
 import Network.MoeSocks.Helper
@@ -11,7 +13,6 @@ import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 import qualified Data.List as L
-
 
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 
@@ -21,6 +22,21 @@ showAddressType (Domain_name x)   = x
 showAddressType (IPv6_address xs) = view (from _Text) -
                                       concat - L.intersperse ":" - 
                                       map show - xs ^.. each
+
+matchAddressType :: AddressType -> IPRange -> Bool
+matchAddressType _address@(IPv4_address _) (IPv4Range _range) = 
+                (read - showAddressType _address ^. _Text)
+                `isMatchedTo` _range
+matchAddressType _address@(IPv6_address _) (IPv6Range _range) =
+                (read - showAddressType _address ^. _Text)
+                `isMatchedTo` _range
+matchAddressType _ _ = False
+
+checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
+checkForbidden_IP_List aAddress aForbidden_IP_List =
+  isJust - findOf folded (matchAddressType aAddress) - aForbidden_IP_List
+
+
 
 showConnectionType :: ConnectionType -> String
 showConnectionType TCP_IP_stream_connection = "TCP_Stream"

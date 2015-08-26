@@ -3,17 +3,18 @@
 module Network.MoeSocks.Options where
 
 import Control.Lens
-import Data.Text.Lens
 import Data.Aeson
+import Data.IP
 import Data.Maybe
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text.Lens
+import Network.MoeSocks.Config
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.MoeSocks.Config
 import Options.Applicative hiding (Parser)
 import Prelude hiding ((-), takeWhile)
 import System.Log.Logger
+import qualified Data.Text as T
 import qualified Options.Applicative as O
 import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace, 
                               parseOnly, many', choice)
@@ -194,15 +195,18 @@ optionParser =
                           long "forbidden-ip"
                       <>  metavar "IPLIST"
                       <>  defaultHelp (defaultMoeOptions ^. forbidden_IP
-                                        & T.intercalate ",")
+                                        & map show
+                                        & map (view - from _Text)
+                                        & T.intercalate ", ")
                                 (""
                                 <> "comma seperated IP list forbidden to "
                                 <> "connect"
                                 )
      
-      parseForbidden_IP :: Maybe Text -> [Text]
+      parseForbidden_IP :: Maybe Text -> [IPRange]
       parseForbidden_IP = maybe (defaultMoeOptions ^. forbidden_IP) 
-                                (map T.strip . T.splitOn ",")
+                                (map (read . view _Text . T.strip)
+                                 . T.splitOn ",")
 
       tag :: a -> O.Parser (Maybe b) -> O.Parser (Maybe (a, b))
       tag x = fmap . fmap - ((,) x)
