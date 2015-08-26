@@ -41,7 +41,6 @@ executable moesocks
                       , network
                       , optparse-applicative
                       , random
-                      , safe
                       , stm
                       , strict
                       , text

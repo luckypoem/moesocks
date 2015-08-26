@@ -15,7 +15,6 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket
 import Prelude hiding ((-), take)
-import Safe (readMay)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Prelude as P
@@ -70,7 +69,7 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
                                     in
 
                                     ( Domain_name - (_host & review _Text)
-                                    , fromMaybe 0 - readMay _port
+                                    , fromMaybe 0 - _port ^? _Show
                                     )
 
   x -> 

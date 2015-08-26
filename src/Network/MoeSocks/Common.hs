@@ -12,7 +12,6 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
-import Safe (readMay)
 import qualified Data.List as L
 
 showAddressType :: AddressType -> Text
@@ -28,13 +27,13 @@ checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
 checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
   isJust - 
     do
-      _ip <- readMay - showAddressType _address ^. _Text
+      _ip <- showAddressType _address ^. _Text ^? _Show
       findOf (each . _IPv4Range) (isMatchedTo _ip) aForbidden_IP_List
 
 checkForbidden_IP_List _address@(IPv6_address _) aForbidden_IP_List =
   isJust -
     do
-      _ip <- readMay - showAddressType _address ^. _Text
+      _ip <- showAddressType _address ^. _Text ^? _Show
       findOf (each . _IPv6Range) (isMatchedTo _ip) - aForbidden_IP_List
 
 checkForbidden_IP_List _ _ = False
