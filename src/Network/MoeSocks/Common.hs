@@ -23,18 +23,29 @@ showAddressType (IPv6_address xs) = view (from _Text) -
                                       concat - L.intersperse ":" - 
                                       map show - xs ^.. each
 
-matchAddressType :: AddressType -> IPRange -> Bool
-matchAddressType _address@(IPv4_address _) (IPv4Range _range) = 
-                (read - showAddressType _address ^. _Text)
-                `isMatchedTo` _range
-matchAddressType _address@(IPv6_address _) (IPv6Range _range) =
-                (read - showAddressType _address ^. _Text)
-                `isMatchedTo` _range
-matchAddressType _ _ = False
+maybeIPv4Range :: IPRange -> Maybe (AddrRange IPv4)
+maybeIPv4Range (IPv4Range x) = Just x
+maybeIPv4Range _ = Nothing
+
+maybeIPv6Range :: IPRange -> Maybe (AddrRange IPv6)
+maybeIPv6Range (IPv6Range x) = Just x
+maybeIPv6Range _ = Nothing
 
 checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
-checkForbidden_IP_List aAddress aForbidden_IP_List =
-  isJust - findOf folded (matchAddressType aAddress) - aForbidden_IP_List
+checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
+  let _ip = (read - showAddressType _address ^. _Text)
+      _ranges = aForbidden_IP_List & map maybeIPv4Range & catMaybes
+  in
+
+  isJust - findOf folded (isMatchedTo _ip) _ranges
+checkForbidden_IP_List _address@(IPv6_address _) aForbidden_IP_List =
+  let _ip = (read - showAddressType _address ^. _Text)
+      _ranges = aForbidden_IP_List & map maybeIPv6Range & catMaybes
+  in
+
+  isJust - findOf folded (isMatchedTo _ip) _ranges
+checkForbidden_IP_List _ _ = False
+
 
 
 
