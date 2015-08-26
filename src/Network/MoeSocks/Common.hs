@@ -29,15 +29,13 @@ checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
   isJust - 
     do
       _ip <- readMay - showAddressType _address ^. _Text
-      let _ranges = aForbidden_IP_List ^.. each . _IPv4Range
-      findOf folded (isMatchedTo _ip) _ranges
+      findOf (each . _IPv4Range) (isMatchedTo _ip) aForbidden_IP_List
 
 checkForbidden_IP_List _address@(IPv6_address _) aForbidden_IP_List =
   isJust -
     do
       _ip <- readMay - showAddressType _address ^. _Text
-      let _ranges = aForbidden_IP_List ^.. each . _IPv6Range
-      findOf folded (isMatchedTo _ip) _ranges
+      findOf (each . _IPv6Range) (isMatchedTo _ip) - aForbidden_IP_List
 
 checkForbidden_IP_List _ _ = False
 
