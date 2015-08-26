@@ -187,6 +187,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
         _obfuscation = aEnv ^. options . obfuscation
         _cipherBox = aEnv ^. cipherBox
         _c = aEnv ^. config
+        _options = aEnv ^. options
         _flushBound = _c ^. obfuscationFlushBound
 
   _decodeIV <- recv aSocket (_cipherBox ^. ivLength)
@@ -203,92 +204,98 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
   {-puts - "Remote get: " <> show _clientRequest-}
   
-  logSA "R target socket" (initTarget _clientRequest) - \_r -> do
-    let (_targetSocket, _targetSocketAddress) = _r 
 
-    connect _targetSocket _targetSocketAddress
+  let _requestAddr = showAddressType - _clientRequest ^. addressType
+  if (_requestAddr `elem` (_options ^. forbidden_IP))
+    then pute - show _requestAddr <> " is in forbidden-ip list"
+    else 
+    logSA "R target socket" (initTarget _clientRequest) - \_r -> do
+      let (_targetSocket, _targetSocketAddress) = _r 
 
-    _remotePeerAddr <- getPeerName aSocket
-    _targetPeerAddr <- getPeerName _targetSocket
+      connect _targetSocket _targetSocketAddress
 
-    let _msg = show _remotePeerAddr <> " -> " <> showRequest _clientRequest
+      _remotePeerAddr <- getPeerName aSocket
+      _targetPeerAddr <- getPeerName _targetSocket
 
-    _log - "R T: " <> _msg
+      let _msg = show _remotePeerAddr <> " -> " <> showRequest _clientRequest
 
-    let 
-        handleTarget _leftOverBytes __targetSocket = do
-          _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
-          _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
+      _log - "R T: " <> _msg
 
-          let _logId x = x <> " " <> _msg
-              -- let remote wait slightly longer, so local can timeout
-              -- and disconnect
-              _timeout = (_c ^. timeout + 30) * 1000 * 1000
-              
-              _throttle = 
-                if _c ^. throttle
-                  then Just - _c ^. throttleSpeed
-                  else Nothing
+      let 
+          handleTarget _leftOverBytes __targetSocket = do
+            _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
+            _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
-          let sendThread = do
-                when (_leftOverBytes & isn't _Empty) -
-                  atomically - writeTBQueue _sendChannel - S.Just _leftOverBytes
+            let _logId x = x <> " " <> _msg
+                -- let remote wait slightly longer, so local can timeout
+                -- and disconnect
+                _timeout = (_c ^. timeout + 30) * 1000 * 1000
+                
+                _throttle = 
+                  if _c ^. throttle
+                    then Just - _c ^. throttleSpeed
+                    else Nothing
 
-                let _produce = do
-                                  produceLoop (_logId "R --> + Loop")
+            let sendThread = do
+                  when (_leftOverBytes & isn't _Empty) -
+                    atomically - writeTBQueue _sendChannel - 
+                                  S.Just _leftOverBytes
+
+                  let _produce = do
+                                    produceLoop (_logId "R --> + Loop")
+                                      _timeout
+                                      _NoThrottle 
+                                      aSocket
+                                      _sendChannel
+                                      _decrypt
+
+                  let _consume = consumeLoop (_logId "R --> - Loop")
                                     _timeout
-                                    _NoThrottle 
-                                    aSocket
-                                    _sendChannel
-                                    _decrypt
-
-                let _consume = consumeLoop (_logId "R --> - Loop")
-                                  _timeout
-                                  _NoThrottle
-                                  _targetSocket
-                                  _sendChannel
-                                  False
-                                  _flushBound
-
-                finally
-                  (
-                    connectMarket (Just - _logId "R --> +", _produce)
-                                  (Just - _logId "R --> -", _consume)
-                  ) -
-                  pure ()
-
-          let receiveThread = do
-                _encodeIV <- _cipherBox ^. generateIV 
-                _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
-                sendBytes _receiveChannel _encodeIV
-
-                let _produce = do
-                                  produceLoop (_logId "R <-- + Loop")
-                                    _timeout
-                                    _NoThrottle 
+                                    _NoThrottle
                                     _targetSocket
-                                    _receiveChannel
-                                    _encrypt
-
-
-                let _consume = do
-                                  consumeLoop (_logId "R <-- - Loop")
-                                    _timeout
-                                    _throttle
-                                    aSocket
-                                    _receiveChannel
-                                    _obfuscation
+                                    _sendChannel
+                                    False
                                     _flushBound
 
-                finally 
-                  (
-                    connectMarket (Just - _logId "R <-- +", _produce)
-                                  (Just - _logId "R <-- -", _consume)
-                  ) -
-                  pure ()
+                  finally
+                    (
+                      connectMarket (Just - _logId "R --> +", _produce)
+                                    (Just - _logId "R --> -", _consume)
+                    ) -
+                    pure ()
 
-          connectTunnel
-            (Just - _logId "R -->", sendThread)
-            (Just - _logId "R <--", receiveThread)
-          
-    handleTarget _leftOverBytes _targetSocket
+            let receiveThread = do
+                  _encodeIV <- _cipherBox ^. generateIV 
+                  _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
+                  sendBytes _receiveChannel _encodeIV
+
+                  let _produce = do
+                                    produceLoop (_logId "R <-- + Loop")
+                                      _timeout
+                                      _NoThrottle 
+                                      _targetSocket
+                                      _receiveChannel
+                                      _encrypt
+
+
+                  let _consume = do
+                                    consumeLoop (_logId "R <-- - Loop")
+                                      _timeout
+                                      _throttle
+                                      aSocket
+                                      _receiveChannel
+                                      _obfuscation
+                                      _flushBound
+
+                  finally 
+                    (
+                      connectMarket (Just - _logId "R <-- +", _produce)
+                                    (Just - _logId "R <-- -", _consume)
+                    ) -
+                    pure ()
+
+            connectTunnel
+              (Just - _logId "R -->", sendThread)
+              (Just - _logId "R <--", receiveThread)
+            
+      handleTarget _leftOverBytes _targetSocket

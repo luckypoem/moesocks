@@ -97,6 +97,8 @@ remote_UDP_RequestHandler :: Env
                           -> IO ()
 remote_UDP_RequestHandler aEnv aMessage (aSocket, aSockAddr) = do
   let _cipherBox = aEnv ^. cipherBox
+      _options = aEnv ^. options
+
   let (_decodeIV, _eMsg) = S.splitAt (_cipherBox ^. ivLength) 
                                        aMessage 
 
@@ -108,25 +110,29 @@ remote_UDP_RequestHandler aEnv aMessage (aSocket, aSockAddr) = do
   {-puts - "R UDP: " <> show _clientRequest-}
   {-puts - "R UDP: " <> show _decryptedMessage-}
   
-  logSA "R UDP -->:" (initTarget _clientRequest) - \_r -> do
-    let (_clientSocket, _clientAddr) = _r
+  let _requestAddr = showAddressType - _clientRequest ^. addressType
+  if (_requestAddr `elem` (_options ^. forbidden_IP))
+    then pute - show _requestAddr <> " is in forbidden-ip list"
+    else 
+    logSA "R UDP -->:" (initTarget _clientRequest) - \_r -> do
+      let (_clientSocket, _clientAddr) = _r
 
-    {-puts - "R UDP clientSocket: " <> show _r-}
-    
-    let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
-    _log - "R U: " <> _msg
-
-    connect _clientSocket _clientAddr
-    
-    send_ _clientSocket _decryptedMessage
-
-    _r <- buildShadowSocksRequest _clientRequest <$> recv_ _clientSocket
-
-    {-puts - "R UDP <--: " <> show _r-}
-
-    when (_r & isn't _Empty) - do
-      _encodeIV <- _cipherBox ^. generateIV 
-      _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
+      {-puts - "R UDP clientSocket: " <> show _r-}
       
-      _encryptedMessage <- processAll _encrypt _r
-      sendAllTo aSocket (_encodeIV <> _encryptedMessage) aSockAddr
+      let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
+      _log - "R U: " <> _msg
+
+      connect _clientSocket _clientAddr
+      
+      send_ _clientSocket _decryptedMessage
+
+      _r <- buildShadowSocksRequest _clientRequest <$> recv_ _clientSocket
+
+      {-puts - "R UDP <--: " <> show _r-}
+
+      when (_r & isn't _Empty) - do
+        _encodeIV <- _cipherBox ^. generateIV 
+        _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
+        
+        _encryptedMessage <- processAll _encrypt _r
+        sendAllTo aSocket (_encodeIV <> _encryptedMessage) aSockAddr

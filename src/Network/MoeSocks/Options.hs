@@ -7,6 +7,7 @@ import Data.Text.Lens
 import Data.Aeson
 import Data.Maybe
 import Data.Text (Text)
+import qualified Data.Text as T
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.MoeSocks.Config
@@ -184,11 +185,22 @@ optionParser =
       forwardListParser = many' forwardParser
 
       parseForwarding :: Maybe Text -> [Forward]
-      parseForwarding Nothing = []
-      parseForwarding (Just x ) = 
-        x 
+      parseForwarding x = x ^. _Just
           & parseOnly forwardListParser 
           & toListOf (traverse . traverse)
+
+      _forbidden_IP :: O.Parser (Maybe Text)
+      _forbidden_IP = optional - textOption -
+                          long "forbidden-ip"
+                      <>  metavar "IPLIST"
+                      <>  help (""
+                                <> "comma seperated IP list forbidden to "
+                                <> "connect"
+                                )
+     
+      parseForbidden_IP :: Maybe Text -> [Text]
+      parseForbidden_IP = maybe (defaultMoeOptions ^. forbidden_IP) 
+                                (map T.strip . T.splitOn ",")
 
       tag :: a -> O.Parser (Maybe b) -> O.Parser (Maybe (a, b))
       tag x = fmap . fmap - ((,) x)
@@ -219,6 +231,7 @@ optionParser =
               <*> fmap parseForwarding _forwardUDP
               <*> _disableSocks5
               <*> _obfuscation
+              <*> fmap parseForbidden_IP _forbidden_IP
               <*> _params
 
 opts :: ParserInfo MoeOptions

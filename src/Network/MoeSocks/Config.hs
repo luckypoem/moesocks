@@ -32,5 +32,6 @@ defaultMoeOptions = MoeOptions
   , _forwardUDP = []
   , _disableSocks5 = False
   , _obfuscation = False
+  , _forbidden_IP = ["127.0.0.1"]
   , _params = []
   } 

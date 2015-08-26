@@ -1,3 +1,8 @@
+0.1.0.25
+--------
+* Add `forbidden-ip` option, which defaults to `127.0.0.1`, to prevent misuse
+  of remote. A feature ported from shadowsocks.
+
 0.1.0.24
 --------
 * Make obfuscation flush upper bound configurable in `config.json`

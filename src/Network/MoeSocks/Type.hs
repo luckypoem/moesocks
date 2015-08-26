@@ -94,6 +94,7 @@ data MoeOptions = MoeOptions
   , _forwardUDP :: [Forward]
   , _disableSocks5 :: Bool
   , _obfuscation :: Bool
+  , _forbidden_IP :: [Text]
   , _params :: [(Text, Value)]
   }
   deriving (Show, Eq)

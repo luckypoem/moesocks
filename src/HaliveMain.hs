@@ -27,6 +27,8 @@ main = do
                                                 [Forward 5301 "localhost" 53]
                                     {-& verbosity .~ INFO-}
                                     & obfuscation .~ True
+                                    & forbidden_IP .~ []
+
   r <- runExceptT - runReaderT moeApp _options
   case r of
     Left e -> pute e >> exitFailure
