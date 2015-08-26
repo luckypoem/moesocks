@@ -17,11 +17,11 @@ import qualified Data.List as L
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = view (from _Text) - 
                                       concat - L.intersperse "." - 
-                                      map show - xs ^.. each
+                                      xs ^.. each . to show
 showAddressType (Domain_name x)   = x 
 showAddressType (IPv6_address xs) = view (from _Text) -
                                       concat - L.intersperse ":" - 
-                                      map show - xs ^.. each
+                                      xs ^.. each . to show
 
 maybeIPv4Range :: IPRange -> Maybe (AddrRange IPv4)
 maybeIPv4Range (IPv4Range x) = Just x
@@ -40,13 +40,13 @@ _IPv6Range = prism' IPv6Range maybeIPv6Range
 checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
 checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
   let _ip = (read - showAddressType _address ^. _Text)
-      _ranges = aForbidden_IP_List ^.. traverse . _IPv4Range
+      _ranges = aForbidden_IP_List ^.. each . _IPv4Range
   in
 
   isJust - findOf folded (isMatchedTo _ip) _ranges
 checkForbidden_IP_List _address@(IPv6_address _) aForbidden_IP_List =
   let _ip = (read - showAddressType _address ^. _Text)
-      _ranges = aForbidden_IP_List ^.. traverse . _IPv6Range
+      _ranges = aForbidden_IP_List ^.. each . _IPv6Range
   in
 
   isJust - findOf folded (isMatchedTo _ip) _ranges
