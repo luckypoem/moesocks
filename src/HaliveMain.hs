@@ -11,13 +11,13 @@ import Data.Maybe
 import Network.MoeSocks.App
 import Network.MoeSocks.Config
 import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
 import Network.MoeSocks.Options
+import Network.MoeSocks.Type
 import Prelude ((.))
 import System.Exit
+import System.Log.Logger
 import System.Random
 import qualified Prelude as P
-import System.Log.Logger
 
 main :: IO ()
 main = do
