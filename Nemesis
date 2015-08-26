@@ -20,7 +20,7 @@ runP x = do
 
 run :: String -> IO ()
 run x = do
-  let cmd = "cabal run -- -o " <> x
+  let cmd = "cabal run -- " <> x
   puts cmd
   sh cmd
 
