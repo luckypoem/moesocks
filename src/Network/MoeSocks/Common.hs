@@ -31,16 +31,22 @@ maybeIPv6Range :: IPRange -> Maybe (AddrRange IPv6)
 maybeIPv6Range (IPv6Range x) = Just x
 maybeIPv6Range _ = Nothing
 
+_IPv4Range :: Prism IPRange IPRange (AddrRange IPv4) (AddrRange IPv4)
+_IPv4Range = prism' IPv4Range maybeIPv4Range
+
+_IPv6Range :: Prism IPRange IPRange (AddrRange IPv6) (AddrRange IPv6)
+_IPv6Range = prism' IPv6Range maybeIPv6Range
+
 checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
 checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
   let _ip = (read - showAddressType _address ^. _Text)
-      _ranges = aForbidden_IP_List & map maybeIPv4Range & catMaybes
+      _ranges = aForbidden_IP_List ^.. traverse . _IPv4Range
   in
 
   isJust - findOf folded (isMatchedTo _ip) _ranges
 checkForbidden_IP_List _address@(IPv6_address _) aForbidden_IP_List =
   let _ip = (read - showAddressType _address ^. _Text)
-      _ranges = aForbidden_IP_List & map maybeIPv6Range & catMaybes
+      _ranges = aForbidden_IP_List ^.. traverse . _IPv6Range
   in
 
   isJust - findOf folded (isMatchedTo _ip) _ranges
