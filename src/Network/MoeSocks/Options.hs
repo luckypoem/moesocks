@@ -193,7 +193,9 @@ optionParser =
       _forbidden_IP = optional - textOption -
                           long "forbidden-ip"
                       <>  metavar "IPLIST"
-                      <>  help (""
+                      <>  defaultHelp (defaultMoeOptions ^. forbidden_IP
+                                        & T.intercalate ", ")
+                                (""
                                 <> "comma seperated IP list forbidden to "
                                 <> "connect"
                                 )
