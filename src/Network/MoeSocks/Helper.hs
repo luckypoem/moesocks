@@ -234,7 +234,8 @@ getSocketWithHint maybeFamily aHost aPort aSocketType = do
           
   where
     _family = maybeFamily & fromMaybe AF_INET
-    hints = defaultHints {
+    hints = defaultHints 
+            {
               addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]
             , addrSocketType = aSocketType
             , addrFamily = _family
@@ -242,11 +243,6 @@ getSocketWithHint maybeFamily aHost aPort aSocketType = do
 
 builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
-
-
-
-fromWord8 :: forall t. Binary t => [Word8] -> t
-fromWord8 = decode . runPut . mapM_ put
 
 portPairToInt :: (Word8, Word8) -> Int
 portPairToInt = fromIntegral . portPairToWord16 
@@ -301,9 +297,20 @@ instance Show ParseException where
 
 instance Exception ParseException
 
+type Timeout = Int
+
+timeoutFor :: String -> Timeout -> IO a -> IO a
+timeoutFor aID aTimeout aIO = do
+  timeout aTimeout aIO >>= \case
+    Nothing -> throw - TimeoutException aID
+    Just _r -> pure _r
+
 parseSocket :: String -> ByteString -> HCipher ->
                   Parser a -> Socket -> IO (ByteString, a)
-parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
+parseSocket aID _partial _decrypt aParser aSocket = do
+  let _timeout = 5 * 1000 * 1000 -- 5 secs
+  timeoutFor aID _timeout - parseSocketWith aID (parse aParser) aSocket
+
   where
     parseSocketWith :: String -> (ByteString -> Result a) ->
                         Socket -> IO (ByteString, a)
@@ -318,13 +325,6 @@ parseSocket aID _partial _decrypt aParser = parseSocketWith aID - parse aParser
                     "Failed to parse " <> _id <> ": " <> msg
         Partial _p -> parseSocketWith _id _p _socket
 
-type Timeout = Int
-
-timeoutFor :: String -> Timeout -> IO a -> IO a
-timeoutFor aID aTimeout aIO = do
-  timeout aTimeout aIO >>= \case
-    Nothing -> throw - TimeoutException aID
-    Just _r -> pure _r
 
 -- throttle speed in kilobytes per second
 produceLoop :: String -> Timeout -> Maybe Double ->
