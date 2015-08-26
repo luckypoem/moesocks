@@ -43,8 +43,10 @@ local_UDP_ForwardRequestHandler :: Env
                                 -> ByteString 
                                 -> (Socket,SockAddr) 
                                 -> IO ()
-local_UDP_ForwardRequestHandler aEnv aForwarding aMessage 
-                                                    (aSocket, aSockAddr) = do
+local_UDP_ForwardRequestHandler aEnv 
+                                aForwarding
+                                aMessage 
+                                (aSocket, aSockAddr) = do
 
   let _c = aEnv ^. config
       _cipherBox = _cipherBox
@@ -96,7 +98,9 @@ remote_UDP_RequestHandler :: Env
                           -> ByteString 
                           -> (Socket, SockAddr) 
                           -> IO ()
-remote_UDP_RequestHandler aEnv aMessage (aSocket, aSockAddr) = do
+remote_UDP_RequestHandler aEnv 
+                          aMessage 
+                          (aSocket, aSockAddr) = do
   let _cipherBox = aEnv ^. cipherBox
       _options = aEnv ^. options
 

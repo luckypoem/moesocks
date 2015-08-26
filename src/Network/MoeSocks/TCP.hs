@@ -51,8 +51,7 @@ local_TCP_ForwardRequestHandler :: Env
                                 -> ByteString 
                                 -> (Socket, SockAddr) 
                                 -> IO ()
-local_TCP_ForwardRequestHandler aEnv aForwarding _ (aSocket,_) = 
-  do
+local_TCP_ForwardRequestHandler aEnv aForwarding _ (aSocket,_) = do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
                           (Domain_name - aForwarding ^. 
@@ -185,11 +184,11 @@ local_TCP_RequestHandler aEnv
 remote_TCP_RequestHandler :: Env -> Socket -> IO ()
 remote_TCP_RequestHandler aEnv aSocket = do
   let
-        _obfuscation = aEnv ^. options . obfuscation
-        _cipherBox = aEnv ^. cipherBox
-        _c = aEnv ^. config
-        _options = aEnv ^. options
-        _flushBound = _c ^. obfuscationFlushBound
+      _obfuscation = aEnv ^. options . obfuscation
+      _cipherBox = aEnv ^. cipherBox
+      _c = aEnv ^. config
+      _options = aEnv ^. options
+      _flushBound = _c ^. obfuscationFlushBound
 
   _decodeIV <- recv aSocket (_cipherBox ^. ivLength)
   _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV

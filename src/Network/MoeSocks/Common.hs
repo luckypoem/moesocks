@@ -15,13 +15,16 @@ import Prelude hiding ((-), take)
 import qualified Data.List as L
 
 showAddressType :: AddressType -> Text
-showAddressType (IPv4_address xs) = view (from _Text) - 
-                                      concat - L.intersperse "." - 
-                                      xs ^.. each . to show
+showAddressType (IPv4_address xs) = xs ^.. each . to show
+                                       ^.. folding (L.intersperse ".")
+                                       ^.. folding concat
+                                       ^. from _Text
+                                      
 showAddressType (Domain_name x)   = x 
-showAddressType (IPv6_address xs) = view (from _Text) -
-                                      concat - L.intersperse ":" - 
-                                      xs ^.. each . to show
+showAddressType (IPv6_address xs) = xs ^.. each . to show
+                                       ^.. folding (L.intersperse ":")
+                                       ^.. folding concat
+                                       ^. from _Text
 
 checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
 checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
