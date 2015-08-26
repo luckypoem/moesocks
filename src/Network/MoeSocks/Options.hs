@@ -14,6 +14,7 @@ import Network.MoeSocks.Type
 import Options.Applicative hiding (Parser)
 import Prelude hiding ((-), takeWhile)
 import System.Log.Logger
+import Safe (readMay)
 import qualified Data.Text as T
 import qualified Options.Applicative as O
 import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace, 
@@ -205,7 +206,8 @@ optionParser =
      
       parseForbidden_IP :: Maybe Text -> [IPRange]
       parseForbidden_IP = maybe (defaultMoeOptions ^. forbidden_IP) 
-                                (map (read . view _Text . T.strip)
+                                (catMaybes 
+                                 . map (readMay . view _Text . T.strip)
                                  . T.splitOn ",")
 
       tag :: a -> O.Parser (Maybe b) -> O.Parser (Maybe (a, b))
