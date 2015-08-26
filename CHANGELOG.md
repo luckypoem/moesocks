@@ -1,3 +1,7 @@
+0.1.0.26
+--------
+* enable CIDR format in `forbidden-ip`
+
 0.1.0.25
 --------
 * Add `forbidden-ip` option, which defaults to `127.0.0.1`, to prevent misuse
