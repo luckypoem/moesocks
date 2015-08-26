@@ -181,10 +181,6 @@ waitBothDebug x y = do
   puts - "All done for " <> _hID
   pure ()
 
-{-connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()-}
-{--- connectTunnel x y = finally (waitBothDebug x y) performGC-}
-{-connectTunnel = waitBothDebug-}
-
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 connectTunnel x y = 
   let _prolong _io = _io >> sleep 10
@@ -335,7 +331,6 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
 
   let _shutdown = do
                     tryIO aID - shutdown aSocket ShutdownReceive
-                    {-tryIO aID - close aSocket-}
                   
       _produce :: Int -> IO ()
       _produce _bytesReceived = flip onException (f S.Nothing) - do
@@ -385,7 +380,6 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
   
   let _shutdown = do
                     tryIO aID - shutdown aSocket ShutdownSend
-                    {-tryIO aID - close aSocket-}
 
       _consume :: Int -> IO ()
       _consume _allBytesSent = do
