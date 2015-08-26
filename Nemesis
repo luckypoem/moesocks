@@ -20,7 +20,7 @@ runP x = do
 
 run :: String -> IO ()
 run x = do
-  let cmd = "cabal run -- -o " <> x
+  let cmd = "cabal run -- " <> x
   puts cmd
   sh cmd
 
@@ -132,6 +132,10 @@ nemesis = do
   task "remote" - do
     run "-r remote -c dev.json"
   
+  desc "remote-o"
+  task "remote-o" - do
+    run "-r remote -o -c dev.json"
+  
   desc "local-profile"
   task "local-profile" - do
     runP "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
@@ -139,6 +143,10 @@ nemesis = do
   desc "local"
   task "local" - do
     run "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
+  
+  desc "local-o"
+  task "local-o" - do
+    run "-r local -o -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
 
   desc "local-obfs"
   task "local-obfs" - do
