@@ -205,9 +205,10 @@ remote_TCP_RequestHandler aEnv aSocket = do
   logSA "R target socket" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetSocketAddress) = _r 
         (_addr, _) = sockAddr_To_Pair _targetSocketAddress
+        _forbidden_IP = _options ^. forbidden_IP
 
-    puts - "checking: " <> show _addr <> " ? " <> show (_options ^. forbidden_IP)
-    if checkForbidden_IP_List _addr - _options ^. forbidden_IP
+    puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
+    if checkForbidden_IP_List _addr _forbidden_IP
       then pute - showAddressType _addr ^. _Text 
                   <> " is in forbidden-ip list"
       else do
