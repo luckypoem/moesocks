@@ -434,7 +434,7 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
 -- https://github.com/mzero/plush/blob/master/src/Plush/Server/Warp.hs
 setSocketCloseOnExec :: Socket -> IO ()
 setSocketCloseOnExec aSocket =
-    setFdOption (fromIntegral $ fdSocket aSocket) CloseOnExec True
+    setFdOption (fromIntegral - fdSocket aSocket) CloseOnExec True
 
 
 tryIO :: String -> IO a -> IO (Either IOException a)
