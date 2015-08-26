@@ -8,7 +8,6 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
-import Data.Text.Lens
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
 import Network.MoeSocks.Constant
@@ -207,10 +206,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
         _forbidden_IP = _options ^. forbidden_IP
 
     puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
-    if checkForbidden_IP_List _addr _forbidden_IP
-      then pute - showAddressType _addr ^. _Text 
-                  <> " is in forbidden-ip list"
-      else do
+    withCheckedForbidden_IP_List _addr _forbidden_IP - do
       connect _targetSocket _targetSocketAddress
 
       _remotePeerAddr <- getPeerName aSocket
