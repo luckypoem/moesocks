@@ -16,14 +16,12 @@ import qualified Data.List as L
 
 showAddressType :: AddressType -> Text
 showAddressType (IPv4_address xs) = xs ^.. each . to show
-                                       ^.. folding (L.intersperse ".")
-                                       ^.. folding concat
+                                       ^.. folding (concat . L.intersperse ".")
                                        ^. from _Text
                                       
 showAddressType (Domain_name x)   = x 
 showAddressType (IPv6_address xs) = xs ^.. each . to show
-                                       ^.. folding (L.intersperse ":")
-                                       ^.. folding concat
+                                       ^.. folding (concat . L.intersperse ":")
                                        ^. from _Text
 
 checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
@@ -56,30 +54,27 @@ showConnectionType UDP_port                 = "UDP       "
 
 showRequest :: ClientRequest -> String
 showRequest _r =  
-                   view _Text (showAddressType (_r ^. addressType))
+                   _r ^. addressType . to showAddressType . _Text
                 <> ":"
-                <> show (_r ^. portNumber)
+                <> _r ^. portNumber . to show
 
 addressType_To_Family :: AddressType -> Maybe Family
 addressType_To_Family (IPv4_address _) = Just AF_INET
 addressType_To_Family (IPv6_address _) = Just AF_INET6
 addressType_To_Family _                = Nothing
 
+connectionType_To_SocketType :: ConnectionType -> SocketType
+connectionType_To_SocketType TCP_IP_stream_connection = Stream
+connectionType_To_SocketType TCP_IP_port_binding = NoSocketType
+connectionType_To_SocketType UDP_port = Datagram
+
 initTarget :: ClientRequest -> IO (Socket, SockAddr)
 initTarget _clientRequest = do
-  let 
-      connectionType_To_SocketType :: ConnectionType -> SocketType
-      connectionType_To_SocketType TCP_IP_stream_connection = Stream
-      connectionType_To_SocketType TCP_IP_port_binding = NoSocketType
-      connectionType_To_SocketType UDP_port = Datagram
-         
-      _socketType = connectionType_To_SocketType -
-                      _clientRequest ^. connectionType
-
-
-      _hostName = _clientRequest ^. addressType . to showAddressType
-      _port = _clientRequest ^. portNumber
-      _family = _clientRequest ^. addressType . to addressType_To_Family
-
+  let
+      _socketType = _clientRequest ^. 
+                        connectionType . to connectionType_To_SocketType
+      _hostName   = _clientRequest ^. addressType . to showAddressType
+      _port       = _clientRequest ^. portNumber
+      _family     = _clientRequest ^. addressType . to addressType_To_Family
   
   getSocketWithHint _family _hostName _port _socketType

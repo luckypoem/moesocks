@@ -297,7 +297,7 @@ sendBuilderEncrypt _queue _encrypt =
 data ParseException = ParseException String
 
 instance Show ParseException where
-    show (ParseException s) = "Parse exception: " ++ s
+    show (ParseException s) = "Parse exception: " <> s
 
 instance Exception ParseException
 
