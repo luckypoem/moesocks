@@ -167,7 +167,7 @@ waitBoth x y = do
 data TimeoutException = TimeoutException String
 
 instance Show TimeoutException where
-    show (TimeoutException s) = "Timeout exception: " ++ s
+    show (TimeoutException s) = "Timeout: " ++ s
 
 instance Exception TimeoutException
 
