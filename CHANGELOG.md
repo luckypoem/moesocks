@@ -1,6 +1,12 @@
+0.1.0.27
+--------
+* Make local respect `forbidden-ip` as well, this reduce unnecessary connection
+  to the remote.
+* Clean up logging.
+
 0.1.0.26
 --------
-* enable CIDR format in `forbidden-ip`
+* Enable CIDR format in `forbidden-ip`.
 
 0.1.0.25
 --------
@@ -9,12 +15,12 @@
 
 0.1.0.24
 --------
-* Make obfuscation flush upper bound configurable in `config.json`
-* Fix an IPv6 name resolution bug in remote
+* Make obfuscation flush upper bound configurable in `config.json`.
+* Fix an IPv6 name resolution bug in remote.
 
 0.1.0.23
 ---------
-* Fix a bug to prevent a half closed connection to hold a file handle
+* Fix a bug to prevent a half closed connection to hold a file handle.
 
 0.1.0.22
 --------
@@ -27,28 +33,28 @@
 
 0.1.0.20
 --------
-* Rewrite Encrypt module, cache password hash
+* Rewrite Encrypt module, cache password hash.
 
 0.1.0.19
 --------
-* Fix a memory leak
+* Fix a memory leak.
 
 0.1.0.18
 --------
-* Add complete command line arguments
+* Add complete command line arguments.
 
 0.1.0.17
 --------
-* Add `--disable-socks5` flag to switch off the socks5 service on local
+* Add `--disable-socks5` flag to switch off the socks5 service on local.
 
 0.1.0.16
 --------
-* Add compatibility with shadowsocks for UDP port forwarding
+* Add compatibility with shadowsocks for UDP port forwarding.
 
 0.1.0.15
 --------
-* Add UDP port forwarding
+* Add UDP port forwarding.
 
 0.1.0.14
 --------
-* Add IPv6 support
+* Add IPv6 support.
