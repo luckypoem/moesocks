@@ -56,12 +56,12 @@ local_UDP_ForwardRequestHandler aEnv
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
   
-  {-puts - "L UDP: " <> show _clientRequest-}
+  {-debug_ - "L UDP: " <> show _clientRequest-}
 
   let _addr = _clientRequest ^. addressType
       _forbidden_IP = aEnv ^. options . forbidden_IP
 
-  puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
+  debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
   
   withCheckedForbidden_IP_List _addr _forbidden_IP - do
     _sa <- getSocket (_c ^. remote) (_c ^. remotePort) Datagram
@@ -77,10 +77,10 @@ local_UDP_ForwardRequestHandler aEnv
 
         let _bytes = buildShadowSocksRequest _clientRequest aMessage
 
-        {-puts - "L UDP: " <> show _bytes-}
+        {-debug_ - "L UDP: " <> show _bytes-}
 
         let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
-        _info - "LU: " <> _msg
+        info_ - "LU: " <> _msg
         
         _eMsg <- _encrypt (S.Just _bytes)
 
@@ -117,20 +117,20 @@ remote_UDP_RequestHandler aEnv
 
   (_decryptedMessage, _clientRequest) <- parseShadowSocksRequest _msg
   
-  {-puts - "R UDP: " <> show _clientRequest-}
-  {-puts - "R UDP: " <> show _decryptedMessage-}
+  {-debug_ - "R UDP: " <> show _clientRequest-}
+  {-debug_ - "R UDP: " <> show _decryptedMessage-}
   
   logSA "R UDP -->:" (initTarget _clientRequest) - \_r -> do
-    {-puts - "R UDP targetSocket: " <> show _r-}
+    {-debug_ - "R UDP targetSocket: " <> show _r-}
     
     let (_targetSocket, _targetSocketAddress) = _r 
         (_addr, _) = sockAddr_To_Pair _targetSocketAddress
         _forbidden_IP = _options ^. forbidden_IP
 
-    puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
+    debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
     withCheckedForbidden_IP_List _addr _forbidden_IP - do
       let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
-      _info - "RU: " <> _msg
+      info_ - "RU: " <> _msg
 
       connect _targetSocket _targetSocketAddress
       
@@ -138,7 +138,7 @@ remote_UDP_RequestHandler aEnv
 
       _r <- buildShadowSocksRequest _clientRequest <$> recv_ _targetSocket
 
-      {-puts - "R UDP <--: " <> show _r-}
+      {-debug_ - "R UDP <--: " <> show _r-}
 
       when (_r & isn't _Empty) - do
         _encodeIV <- _cipherBox ^. generate_IV 

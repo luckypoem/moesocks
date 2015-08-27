@@ -31,6 +31,6 @@ main = do
 
   r <- runExceptT - runReaderT moeApp _options
   case r of
-    Left e -> pute e >> exitFailure
+    Left e -> error_ e >> exitFailure
     Right _ -> pure ()
 

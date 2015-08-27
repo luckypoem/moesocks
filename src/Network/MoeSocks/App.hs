@@ -147,7 +147,7 @@ parseConfig aOption = do
 
     Just _config -> do
       let configStr = showConfig _config ^. _Text :: String
-      io - puts - "Using config: " <> configStr
+      io - debug_ - "Using config: " <> configStr
       pure - _config 
               
 
@@ -173,7 +173,7 @@ moeApp = do
   _options <- ask 
   io - initLogger - _options ^. verbosity
   
-  io - puts - show _options
+  io - debug_ - show _options
   
   _config <- parseConfig - _options
   let _c = _config
@@ -200,7 +200,7 @@ moeApp = do
           
           case aAppType of
             TCP_App -> do
-              _info - "LT: " <> aID <> " nyaa!"
+              info_ - "LT: " <> aID <> " nyaa!"
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -216,12 +216,12 @@ moeApp = do
               forever - handleLocal _localSocket
 
             UDP_App -> do
-              _info - "LU: " <> aID <> " nyaa!"
+              info_ - "LU: " <> aID <> " nyaa!"
               let handleLocal = do
                     (_msg, _sockAddr) <- 
                         recvFrom _localSocket _PacketLength
 
-                    puts - "L UDP: " <> show _msg
+                    debug_ - "L UDP: " <> show _msg
                     
                     let _s = (_localSocket, _sockAddr)
 
@@ -267,7 +267,7 @@ moeApp = do
   let remote_TCP_App :: (Socket, SockAddr) -> IO ()
       remote_TCP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _info - "RT: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
+          info_ - "RT: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
@@ -291,7 +291,7 @@ moeApp = do
   let remote_UDP_App :: (Socket, SockAddr) -> IO ()
       remote_UDP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _info - "RU: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
+          info_ - "RU: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
@@ -299,7 +299,7 @@ moeApp = do
           let handleRemote = do
                 (_msg, _sockAddr) <- recvFrom _remoteSocket _PacketLength
 
-                puts - "R UDP: " <> show _msg
+                debug_ - "R UDP: " <> show _msg
 
                 let _s = (_remoteSocket, _sockAddr)
 
@@ -358,7 +358,7 @@ moeApp = do
               then 
                 forever - sleep 1000
               else
-                pute "Nothing to run!"
+                error_ "Nothing to run!"
                 
           else _socks5App
 

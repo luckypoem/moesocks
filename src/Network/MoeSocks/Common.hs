@@ -42,7 +42,7 @@ checkForbidden_IP_List _ _ = False
 withCheckedForbidden_IP_List :: AddressType -> [IPRange] -> IO a -> IO ()
 withCheckedForbidden_IP_List aAddressType aForbidden_IP_List aIO = 
   if checkForbidden_IP_List aAddressType aForbidden_IP_List 
-    then pute - showAddressType aAddressType ^. _Text 
+    then error_ - showAddressType aAddressType ^. _Text 
                 <> " is in forbidden-ip list"
     else () <$ aIO
 

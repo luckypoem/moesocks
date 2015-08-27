@@ -73,7 +73,7 @@ local_TCP_RequestHandler aEnv
   let _addr = _clientRequest ^. addressType
       _forbidden_IP = aEnv ^. options . forbidden_IP
 
-  puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
+  debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
   withCheckedForbidden_IP_List _addr _forbidden_IP - do
     let 
         _c = aEnv ^. config 
@@ -84,7 +84,7 @@ local_TCP_RequestHandler aEnv
         _initSocket = 
             getSocket (_c ^. remote) (_c ^. remotePort) Stream 
 
-    puts - "L: " <> show _clientRequest
+    debug_ - "L: " <> show _clientRequest
     
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
@@ -101,7 +101,7 @@ local_TCP_RequestHandler aEnv
 
       let _msg = show _localPeerAddr <> " -> " <> showRequest _clientRequest
       
-      _info - "LT: " <> _msg
+      info_ - "LT: " <> _msg
 
       let handleLocal _remoteSocket = do
             _encodeIV <- _cipherBox ^. generate_IV 
@@ -113,7 +113,7 @@ local_TCP_RequestHandler aEnv
             _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
             _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
-            let _infoId x = x <> " " <> _msg
+            let info_Id x = x <> " " <> _msg
                 _timeout = _c ^. timeout * 1000 * 1000
                 _throttle = 
                   if _c ^. throttle
@@ -129,7 +129,7 @@ local_TCP_RequestHandler aEnv
                       _partialBytesAfterClientRequest
 
                   let _produce = do
-                                    produceLoop (_infoId "L --> + Loop")
+                                    produceLoop (info_Id "L --> + Loop")
                                       _timeout
                                       _NoThrottle
                                       aSocket 
@@ -137,7 +137,7 @@ local_TCP_RequestHandler aEnv
                                       _encrypt
 
                   let _consume = do
-                                    consumeLoop (_infoId "L --> - Loop")
+                                    consumeLoop (info_Id "L --> - Loop")
                                       _timeout
                                       _throttle
                                       _remoteSocket 
@@ -146,8 +146,8 @@ local_TCP_RequestHandler aEnv
                                       _flushBound
                   finally
                     (
-                      connectMarket (Just - _infoId "L --> +", _produce)
-                                    (Just - _infoId "L --> -", _consume)
+                      connectMarket (Just - info_Id "L --> +", _produce)
+                                    (Just - info_Id "L --> -", _consume)
                     ) -
                     pure ()
 
@@ -155,7 +155,7 @@ local_TCP_RequestHandler aEnv
                   _decodeIV <- recv _remoteSocket (_cipherBox ^. ivLength)
                   _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
 
-                  let _produce = produceLoop (_infoId "L <-- + Loop")
+                  let _produce = produceLoop (info_Id "L <-- + Loop")
                                     _timeout
                                     _NoThrottle
                                     _remoteSocket 
@@ -163,7 +163,7 @@ local_TCP_RequestHandler aEnv
                                     _decrypt
 
                   let _consume = do
-                                    consumeLoop (_infoId "L <-- - Loop")
+                                    consumeLoop (info_Id "L <-- - Loop")
                                       _timeout
                                       _NoThrottle
                                       aSocket 
@@ -172,14 +172,14 @@ local_TCP_RequestHandler aEnv
                                       _flushBound
                   finally 
                     (
-                      connectMarket (Just - _infoId "L <-- +", _produce)
-                                    (Just - _infoId "L <-- -", _consume)
+                      connectMarket (Just - info_Id "L <-- +", _produce)
+                                    (Just - info_Id "L <-- -", _consume)
                     ) -
                     pure ()
 
             connectTunnel
-              (Just - _infoId "L -->", sendThread)
-              (Just - _infoId "L <--", receiveThread)
+              (Just - info_Id "L -->", sendThread)
+              (Just - info_Id "L <--", receiveThread)
 
 
       handleLocal _remoteSocket
@@ -210,7 +210,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
         (_addr, _) = sockAddr_To_Pair _targetSocketAddress
         _forbidden_IP = _options ^. forbidden_IP
 
-    puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
+    debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
     withCheckedForbidden_IP_List _addr _forbidden_IP - do
       connect _targetSocket _targetSocketAddress
 
@@ -219,14 +219,14 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
       let _msg = show _remotePeerAddr <> " -> " <> showRequest _clientRequest
 
-      _info - "RT: " <> _msg
+      info_ - "RT: " <> _msg
 
       let 
           handleTarget _leftOverBytes __targetSocket = do
             _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
             _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
-            let _infoId x = x <> " " <> _msg
+            let info_Id x = x <> " " <> _msg
                 -- let remote wait slightly longer, so local can timeout
                 -- and disconnect
                 _timeout = (_c ^. timeout + 30) * 1000 * 1000
@@ -242,14 +242,14 @@ remote_TCP_RequestHandler aEnv aSocket = do
                                   S.Just _leftOverBytes
 
                   let _produce = do
-                                    produceLoop (_infoId "R --> + Loop")
+                                    produceLoop (info_Id "R --> + Loop")
                                       _timeout
                                       _NoThrottle 
                                       aSocket
                                       _sendChannel
                                       _decrypt
 
-                  let _consume = consumeLoop (_infoId "R --> - Loop")
+                  let _consume = consumeLoop (info_Id "R --> - Loop")
                                     _timeout
                                     _NoThrottle
                                     _targetSocket
@@ -259,8 +259,8 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
                   finally
                     (
-                      connectMarket (Just - _infoId "R --> +", _produce)
-                                    (Just - _infoId "R --> -", _consume)
+                      connectMarket (Just - info_Id "R --> +", _produce)
+                                    (Just - info_Id "R --> -", _consume)
                     ) -
                     pure ()
 
@@ -270,7 +270,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
                   sendBytes _receiveChannel _encodeIV
 
                   let _produce = do
-                                    produceLoop (_infoId "R <-- + Loop")
+                                    produceLoop (info_Id "R <-- + Loop")
                                       _timeout
                                       _NoThrottle 
                                       _targetSocket
@@ -279,7 +279,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
 
                   let _consume = do
-                                    consumeLoop (_infoId "R <-- - Loop")
+                                    consumeLoop (info_Id "R <-- - Loop")
                                       _timeout
                                       _throttle
                                       aSocket
@@ -289,13 +289,13 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
                   finally 
                     (
-                      connectMarket (Just - _infoId "R <-- +", _produce)
-                                    (Just - _infoId "R <-- -", _consume)
+                      connectMarket (Just - info_Id "R <-- +", _produce)
+                                    (Just - info_Id "R <-- -", _consume)
                     ) -
                     pure ()
 
             connectTunnel
-              (Just - _infoId "R -->", sendThread)
-              (Just - _infoId "R <--", receiveThread)
+              (Just - info_Id "R -->", sendThread)
+              (Just - info_Id "R <--", receiveThread)
             
       handleTarget _leftOverBytes _targetSocket

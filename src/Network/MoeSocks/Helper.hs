@@ -67,38 +67,23 @@ sync aIO = do
   {-aIO <* takeMVar syncLock-}
   aIO
 
-{-puts :: String -> IO ()-}
-{-puts = sync . debugM "moe" . ("😽  " <>)-}
+debug_ :: String -> IO ()
+debug_ = sync . debugM "moe" 
 
-{-pute :: String -> IO ()-}
-{-pute = sync . errorM "moe" . ("😾  " <>)-}
+error_ :: String -> IO ()
+error_ = sync . errorM "moe" 
 
-{-_warning :: String -> IO ()-}
-{-_warning = sync . warningM "moe" . ("😾  " <>)-}
+warning_ :: String -> IO ()
+warning_ = sync . warningM "moe" 
 
-{-_info :: String -> IO ()-}
-{-_info = sync . infoM "moe" . ("😺  " <>)-}
+info_ :: String -> IO ()
+info_ = sync . infoM "moe" 
 
-{-_notice :: String -> IO ()-}
-{-_notice = sync . noticeM "moe" . ("😼  " <>)-}
+notice_ :: String -> IO ()
+notice_ = sync . noticeM "moe" 
 
-puts :: String -> IO ()
-puts = sync . debugM "moe" 
-
-pute :: String -> IO ()
-pute = sync . errorM "moe" 
-
-_warning :: String -> IO ()
-_warning = sync . warningM "moe" 
-
-_info :: String -> IO ()
-_info = sync . infoM "moe" 
-
-_notice :: String -> IO ()
-_notice = sync . noticeM "moe" 
-
-puteT :: Text -> IO ()
-puteT = pute . view _Text
+error_T :: Text -> IO ()
+error_T = error_ . view _Text
 
 showBytes :: ByteString -> String
 showBytes = show . S.unpack
@@ -110,13 +95,13 @@ foreverRun :: IO a -> IO ()
 foreverRun _io = do
   forever - do
     _io
-    puts "foreverRun delay 1 second"
+    debug_ "foreverRun delay 1 second"
     sleep 1
 
 logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
   pure aID
-  puts - "Closing socket " <> aID
+  debug_ - "Closing socket " <> aID
   close aSocket 
 
 
@@ -125,7 +110,7 @@ logSocketWithAddress :: String -> IO (Socket, SockAddr) ->
 logSocketWithAddress aID _init f = do
   catch (bracket _init (logClose aID . fst) f) - 
       \(e :: SomeException) -> do
-      puts - "logSocket: Exception in " <> aID <> ": " <> show e
+      debug_ - "logSocket: Exception in " <> aID <> ": " <> show e
       throw e
 
 logSA:: String -> IO (Socket, SockAddr) -> 
@@ -135,31 +120,31 @@ logSA = logSocketWithAddress
 logSocket :: String -> IO Socket -> (Socket -> IO a) -> IO a
 logSocket aID _init f =
   catch (bracket _init (logClose aID) f) - \e -> do
-      puts - "Exception in " <> aID <> ": " <> show (e :: SomeException)
+      debug_ - "Exception in " <> aID <> ": " <> show (e :: SomeException)
       throw e
 
 catchExceptAsyncLog :: String -> IO a -> IO ()
 catchExceptAsyncLog aID aIO = catches (() <$ aIO) 
                 [ 
                   Handler - \(e :: AsyncException) -> do
-                            pute - "ASyncException in " 
+                            error_ - "ASyncException in " 
                                     <> aID
                                     <> " : " <> show e
                             throw e
                 , Handler - \(e :: SomeException) -> 
-                            pute - aID
+                            error_ - aID
                                     <> ": " <> show e
                 ]
 
 catchIO:: String -> IO a -> IO ()
 catchIO aID aIO = catch (() <$ aIO) - \e ->
-                pute - "IOError in " <> aID <> ": " 
+                error_ - "IOError in " <> aID <> ": " 
                   <> show (e :: IOException)
                 
 logException :: String -> IO a -> IO ()
 logException aID aIO = catch (() <$ aIO) - \e -> 
                         do
-                          puts - "Error in " <> aID <> ": " 
+                          debug_ - "Error in " <> aID <> ": " 
                             <> show (e :: SomeException)
                           throw e
 
@@ -168,7 +153,7 @@ logWaitIO x = do
   let _io = wrapIO x
       aID = x ^. _1 . _Just 
 
-  puts - "waiting for : " <> aID
+  debug_ - "waiting for : " <> aID
   _io
   
 wrapIO :: (Maybe String, IO c) -> IO ()
@@ -192,7 +177,7 @@ waitBothDebug x y = do
   let _xID = x ^. _1 . _Just 
       _yID = y ^. _1 . _Just
       _hID = _xID <> " / " <> _yID
-  puts - "All done for " <> _hID
+  debug_ - "All done for " <> _hID
   pure ()
 
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
@@ -214,7 +199,7 @@ getSocketWithHint :: (Integral i, Show i) =>
                         Maybe Family -> Text -> i -> SocketType -> 
                         IO (Socket, SockAddr)
 getSocketWithHint maybeFamily aHost aPort aSocketType = do
-    {-puts - "getSocket: " <> show aHost <> ":" <> show aPort-}
+    {-debug_ - "getSocket: " <> show aHost <> ":" <> show aPort-}
 
     maybeAddrInfo <- firstOf folded <$>
                   getAddrInfo (Just hints) 
@@ -236,9 +221,9 @@ getSocketWithHint maybeFamily aHost aPort aSocketType = do
           when (aSocketType == Stream) -
             setSocketOption _socket NoDelay 1 
 
-          puts - "Getting socket: " <> show addrInfo
-          {-puts - "Socket family: " <> show family-}
-          {-puts - "Socket protocol: " <> show protocol -}
+          debug_ - "Getting socket: " <> show addrInfo
+          {-debug_ - "Socket family: " <> show family-}
+          {-debug_ - "Socket protocol: " <> show protocol -}
 
           pure (_socket, address)
           
@@ -279,7 +264,7 @@ sendAllRandom aFlushBound aSocket aBuffer = do
   where
     _loop _buffer = do
       _randomLength <- randomRIO (0, aFlushBound)
-      {-_notice - "randomLength: " <> show _randomLength-}
+      {-notice_ - "randomLength: " <> show _randomLength-}
       let (_thisBuffer, _nextBuffer) = S.splitAt _randomLength _buffer
       sendAll aSocket _thisBuffer
       when (_nextBuffer & isn't _Empty) - do
@@ -326,7 +311,7 @@ parseSocket aID _partial _decrypt aParser aSocket = do
                         Socket -> IO (ByteString, a)
     parseSocketWith _id _parser _socket = do
       _rawBytes <- recv_ _socket
-      {-puts - "rawBytes: " <> show _rawBytes-}
+      {-debug_ - "rawBytes: " <> show _rawBytes-}
       _bytes <- _decrypt (S.Just _rawBytes)
 
       case _parser - _partial <> _bytes of
@@ -350,7 +335,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
       _produce _bytesReceived = flip onException (f S.Nothing) - do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
         {-when ("L" `isPrefixOf` aID) - do-}
-          {-_notice - "Get chunk: " <> (show - S.length _r) <> " " <> aID-}
+          {-notice_ - "Get chunk: " <> (show - S.length _r) <> " " <> aID-}
         
         if (_r & isn't _Empty) 
           then do
@@ -363,13 +348,13 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
 
               let _speed = _bytesK / _timeDiff
 
-              puts - "Produce speed is: " <> show (floor _speed :: Int) <> " K"
+              debug_ - "Produce speed is: " <> show (floor _speed :: Int) <> " K"
 
               when (_speed > _throttle) - do
                 let _sleepTime = ((_bytesK + (-_timeDiff * _throttle))
                                       / _throttle ) * 1000 * 1000
 
-                puts - "Produce sleeping for: " <> show _sleepTime 
+                debug_ - "Produce sleeping for: " <> show _sleepTime 
                         <> " miliseconds."
                 threadDelay - floor - _sleepTime
               
@@ -377,7 +362,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
             yield
             _produce (_bytesReceived + S.length _r)
           else do
-            puts -  "Half closed: " <> aID 
+            debug_ -  "Half closed: " <> aID 
             f S.Nothing >>= atomically . writeTBQueue aTBQueue . S.Just
             atomically - writeTBQueue aTBQueue S.Nothing
 
@@ -406,13 +391,13 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
 
           let _speed = _bytesK / _timeDiff
 
-          puts - "Consume speed is: " <> show (floor _speed :: Int) <> " K"
+          debug_ - "Consume speed is: " <> show (floor _speed :: Int) <> " K"
 
           when (_speed > _throttle) - do
             let _sleepTime = ((_bytesK + (-_timeDiff * _throttle))
                                   / _throttle ) * 1000 * 1000
 
-            puts - "Consume sleeping for: " <> show _sleepTime 
+            debug_ - "Consume sleeping for: " <> show _sleepTime 
                     <> " miliseconds."
             threadDelay - floor - _sleepTime
 
