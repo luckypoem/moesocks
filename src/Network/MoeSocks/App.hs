@@ -193,13 +193,13 @@ moeApp = do
                       -> IO ()
       localAppBuilder aAppType aID aHandler s = 
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
-          _say - "L " <> aID <> ": nyaa!"
             
           setSocketOption _localSocket ReuseAddr 1
           bindSocket _localSocket _localAddr
           
           case aAppType of
             TCP_App -> do
+              _say - "L T: " <> aID <> " nyaa!"
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -215,6 +215,7 @@ moeApp = do
               forever - handleLocal _localSocket
 
             UDP_App -> do
+              _say - "L U: " <> aID <> " nyaa!"
               let handleLocal = do
                     (_msg, _sockAddr) <- 
                         recvFrom _localSocket _PacketLength
@@ -260,7 +261,7 @@ moeApp = do
   let remote_TCP_App :: (Socket, SockAddr) -> IO ()
       remote_TCP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say "R TCP: nyaa!"
+          _say "R T: TCP forwarding nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
@@ -284,7 +285,7 @@ moeApp = do
   let remote_UDP_App :: (Socket, SockAddr) -> IO ()
       remote_UDP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say "R UDP: nyaa!"
+          _say "R U: UDP forwarding nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
