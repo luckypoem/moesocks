@@ -58,39 +58,45 @@ local_UDP_ForwardRequestHandler aEnv
   
   {-puts - "L UDP: " <> show _clientRequest-}
 
-  _sa <- getSocket (_c ^. remote) (_c ^. remotePort) Datagram
+  let _addr = _clientRequest ^. addressType
+      _forbidden_IP = aEnv ^. options . forbidden_IP
 
-  logSA "L UDP -->:" (pure _sa) - 
-    \(_remoteSocket, _remoteAddr) -> do
-      connect _remoteSocket _remoteAddr
+  puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
+  
+  withCheckedForbidden_IP_List _addr _forbidden_IP - do
+    _sa <- getSocket (_c ^. remote) (_c ^. remotePort) Datagram
 
-      _encodeIV <- _cipherBox ^. generate_IV 
-      _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
+    logSA "L UDP -->:" (pure _sa) - 
+      \(_remoteSocket, _remoteAddr) -> do
+        connect _remoteSocket _remoteAddr
 
-      {-let (_encrypt, _decrypt) = (pure, pure)-}
+        _encodeIV <- _cipherBox ^. generate_IV 
+        _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
 
-      let _bytes = buildShadowSocksRequest _clientRequest aMessage
+        {-let (_encrypt, _decrypt) = (pure, pure)-}
 
-      {-puts - "L UDP: " <> show _bytes-}
+        let _bytes = buildShadowSocksRequest _clientRequest aMessage
 
-      let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
-      _log - "L U: " <> _msg
-      
-      _eMsg <- _encrypt (S.Just _bytes)
+        {-puts - "L UDP: " <> show _bytes-}
 
-      send_ _remoteSocket - _encodeIV <> _eMsg
+        let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
+        _log - "L U: " <> _msg
+        
+        _eMsg <- _encrypt (S.Just _bytes)
 
-      _response <- recv_ _remoteSocket 
+        send_ _remoteSocket - _encodeIV <> _eMsg
 
-      let (_decodeIV, _responseMsg) = S.splitAt (_cipherBox ^. ivLength) 
-                                        _response
-      _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
-      
-      (_r, _) <- processAll _decrypt _responseMsg
-                                      >>= parseShadowSocksRequest
+        _response <- recv_ _remoteSocket 
 
-      when (_r & isn't _Empty) - do
-        sendAllTo aSocket _r aSockAddr
+        let (_decodeIV, _responseMsg) = S.splitAt (_cipherBox ^. ivLength) 
+                                          _response
+        _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
+        
+        (_r, _) <- processAll _decrypt _responseMsg
+                                        >>= parseShadowSocksRequest
+
+        when (_r & isn't _Empty) - do
+          sendAllTo aSocket _r aSockAddr
 
 
 remote_UDP_RequestHandler :: Env

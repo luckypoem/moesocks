@@ -70,114 +70,119 @@ local_TCP_RequestHandler :: Env
 local_TCP_RequestHandler aEnv
                         (_partialBytesAfterClientRequest, _clientRequest) 
                         shouldReplyClient aSocket = do
-  let 
-      _c = aEnv ^. config 
-      _cipherBox = aEnv ^. cipherBox
-      _obfuscation = aEnv ^. options . obfuscation
-      _flushBound = _c ^. obfuscationFlushBound
+  let _addr = _clientRequest ^. addressType
+      _forbidden_IP = aEnv ^. options . forbidden_IP
 
-      _initSocket = 
-          getSocket (_c ^. remote) (_c ^. remotePort) Stream 
+  puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
+  withCheckedForbidden_IP_List _addr _forbidden_IP - do
+    let 
+        _c = aEnv ^. config 
+        _cipherBox = aEnv ^. cipherBox
+        _obfuscation = aEnv ^. options . obfuscation
+        _flushBound = _c ^. obfuscationFlushBound
 
-  puts - "L: " <> show _clientRequest
-  
-  logSA "L remote socket" _initSocket - 
-    \(_remoteSocket, _remoteAddress) -> do
-    connect _remoteSocket _remoteAddress
+        _initSocket = 
+            getSocket (_c ^. remote) (_c ^. remotePort) Stream 
 
-
-    _localPeerAddr <- getPeerName aSocket
-    _remoteSocketName <- getSocketName _remoteSocket
+    puts - "L: " <> show _clientRequest
     
-    when shouldReplyClient - do
-      let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
-      send_ aSocket - builder_To_ByteString _connectionReplyBuilder
-    
+    logSA "L remote socket" _initSocket - 
+      \(_remoteSocket, _remoteAddress) -> do
+      connect _remoteSocket _remoteAddress
 
-    let _msg = show _localPeerAddr <> " -> " <> showRequest _clientRequest
-    
-    _log - "L T: " <> _msg
 
-    let handleLocal _remoteSocket = do
-          _encodeIV <- _cipherBox ^. generate_IV 
-          _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
-          
-          let 
-              _header = shadowSocksRequestBuilder _clientRequest
-          
-          _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
-          _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
+      _localPeerAddr <- getPeerName aSocket
+      _remoteSocketName <- getSocketName _remoteSocket
+      
+      when shouldReplyClient - do
+        let _connectionReplyBuilder = connectionReplyBuilder _remoteSocketName
+        send_ aSocket - builder_To_ByteString _connectionReplyBuilder
+      
 
-          let _logId x = x <> " " <> _msg
-              _timeout = _c ^. timeout * 1000 * 1000
-              _throttle = 
-                if _c ^. throttle
-                  then Just - _c ^. throttleSpeed
-                  else Nothing
+      let _msg = show _localPeerAddr <> " -> " <> showRequest _clientRequest
+      
+      _log - "L T: " <> _msg
 
-          let sendThread = do
-                sendBytes _sendChannel _encodeIV
-                sendBuilderEncrypt _sendChannel _encrypt _header
+      let handleLocal _remoteSocket = do
+            _encodeIV <- _cipherBox ^. generate_IV 
+            _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
+            
+            let 
+                _header = shadowSocksRequestBuilder _clientRequest
+            
+            _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
+            _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
-                when (_partialBytesAfterClientRequest & isn't _Empty) -
-                  sendBytesEncrypt _sendChannel _encrypt 
-                    _partialBytesAfterClientRequest
+            let _logId x = x <> " " <> _msg
+                _timeout = _c ^. timeout * 1000 * 1000
+                _throttle = 
+                  if _c ^. throttle
+                    then Just - _c ^. throttleSpeed
+                    else Nothing
 
-                let _produce = do
-                                  produceLoop (_logId "L --> + Loop")
+            let sendThread = do
+                  sendBytes _sendChannel _encodeIV
+                  sendBuilderEncrypt _sendChannel _encrypt _header
+
+                  when (_partialBytesAfterClientRequest & isn't _Empty) -
+                    sendBytesEncrypt _sendChannel _encrypt 
+                      _partialBytesAfterClientRequest
+
+                  let _produce = do
+                                    produceLoop (_logId "L --> + Loop")
+                                      _timeout
+                                      _NoThrottle
+                                      aSocket 
+                                      _sendChannel 
+                                      _encrypt
+
+                  let _consume = do
+                                    consumeLoop (_logId "L --> - Loop")
+                                      _timeout
+                                      _throttle
+                                      _remoteSocket 
+                                      _sendChannel
+                                      _obfuscation
+                                      _flushBound
+                  finally
+                    (
+                      connectMarket (Just - _logId "L --> +", _produce)
+                                    (Just - _logId "L --> -", _consume)
+                    ) -
+                    pure ()
+
+            let receiveThread = do
+                  _decodeIV <- recv _remoteSocket (_cipherBox ^. ivLength)
+                  _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
+
+                  let _produce = produceLoop (_logId "L <-- + Loop")
                                     _timeout
                                     _NoThrottle
-                                    aSocket 
-                                    _sendChannel 
-                                    _encrypt
-
-                let _consume = do
-                                  consumeLoop (_logId "L --> - Loop")
-                                    _timeout
-                                    _throttle
                                     _remoteSocket 
-                                    _sendChannel
-                                    _obfuscation
-                                    _flushBound
-                finally
-                  (
-                    connectMarket (Just - _logId "L --> +", _produce)
-                                  (Just - _logId "L --> -", _consume)
-                  ) -
-                  pure ()
-
-          let receiveThread = do
-                _decodeIV <- recv _remoteSocket (_cipherBox ^. ivLength)
-                _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
-
-                let _produce = produceLoop (_logId "L <-- + Loop")
-                                  _timeout
-                                  _NoThrottle
-                                  _remoteSocket 
-                                  _receiveChannel
-                                  _decrypt
-
-                let _consume = do
-                                  consumeLoop (_logId "L <-- - Loop")
-                                    _timeout
-                                    _NoThrottle
-                                    aSocket 
                                     _receiveChannel
-                                    False
-                                    _flushBound
-                finally 
-                  (
-                    connectMarket (Just - _logId "L <-- +", _produce)
-                                  (Just - _logId "L <-- -", _consume)
-                  ) -
-                  pure ()
+                                    _decrypt
 
-          connectTunnel
-            (Just - _logId "L -->", sendThread)
-            (Just - _logId "L <--", receiveThread)
+                  let _consume = do
+                                    consumeLoop (_logId "L <-- - Loop")
+                                      _timeout
+                                      _NoThrottle
+                                      aSocket 
+                                      _receiveChannel
+                                      False
+                                      _flushBound
+                  finally 
+                    (
+                      connectMarket (Just - _logId "L <-- +", _produce)
+                                    (Just - _logId "L <-- -", _consume)
+                    ) -
+                    pure ()
+
+            connectTunnel
+              (Just - _logId "L -->", sendThread)
+              (Just - _logId "L <--", receiveThread)
 
 
-    handleLocal _remoteSocket
+      handleLocal _remoteSocket
 
 
 remote_TCP_RequestHandler :: Env -> Socket -> IO ()
