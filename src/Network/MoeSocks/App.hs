@@ -229,10 +229,14 @@ moeApp = do
 
               forever handleLocal
               
+  let
+      showWrapped :: (Show a) => a -> String
+      showWrapped x = "[" <> show x <> "]"
 
   let localSocks5App :: (Socket, SockAddr) -> IO ()
-      localSocks5App = localAppBuilder TCP_App "socks5" - 
-                            local_Socks5_RequestHandler _env
+      localSocks5App _s = localAppBuilder TCP_App 
+                            ("Socks5 proxy " <> showWrapped (_s ^. _2))  
+                            (local_Socks5_RequestHandler _env) - _s
 
       showForwarding :: Forward -> String
       showForwarding (Forward _localPort _remoteHost _remotePort) =
@@ -244,24 +248,25 @@ moeApp = do
                       <> show _remotePort
                       <> "]"
 
+
       forward_TCP_App :: Forward -> (Socket, SockAddr) -> IO ()
       forward_TCP_App _f _s = do
         let _m = showForwarding _f
-        localAppBuilder TCP_App  ("TCP forwarding " <> _m)
+        localAppBuilder TCP_App  ("TCP port forwarding " <> _m)
                                 (local_TCP_ForwardRequestHandler _env _f) 
                                 _s
 
       forward_UDP_App :: Forward -> (Socket, SockAddr) -> IO ()
       forward_UDP_App _f _s = do
         let _m = showForwarding _f 
-        localAppBuilder UDP_App  ("UDP forwarding " <> _m)
+        localAppBuilder UDP_App  ("UDP port forwarding " <> _m)
                                 (local_UDP_ForwardRequestHandler _env _f) 
                                 _s
       
   let remote_TCP_App :: (Socket, SockAddr) -> IO ()
       remote_TCP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say "R T: TCP forwarding nyaa!"
+          _say - "R T: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
@@ -285,7 +290,7 @@ moeApp = do
   let remote_UDP_App :: (Socket, SockAddr) -> IO ()
       remote_UDP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say "R U: UDP forwarding nyaa!"
+          _say - "R U: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
