@@ -213,3 +213,7 @@ nemesis = do
     desc "local"
     task "local" - do
       sh "angel angel/local.conf"
+    
+    desc "local2"
+    task "local2" - do
+      sh "angel angel/local2.conf"
