@@ -205,6 +205,11 @@ nemesis = do
     sh - "evince " <> newPath
 
 
-  desc "angel remote"
-  task "angel-remote" - do
-    sh "angel angel/moesocks-remote.conf"
+  namespace "angel" - do
+    desc "remote"
+    task "remote" - do
+      sh "angel angel/remote.conf"
+    
+    desc "local"
+    task "local" - do
+      sh "angel angel/local.conf"
