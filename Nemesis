@@ -203,3 +203,8 @@ nemesis = do
     sh - "mv moesocks.ps " <> newPath
     sh - "rm moesocks.aux"
     sh - "evince " <> newPath
+
+
+  desc "angel remote"
+  task "angel-remote" - do
+    sh "angel angel/moesocks-remote.conf"
