@@ -1,6 +1,6 @@
 0.1.0.27
 --------
-* Make local respect `forbidden-ip` as well, this reduce unnecessary connection
+* Make local respect `forbidden-ip` as well, this reduce unnecessary connections
   to the remote.
 * Clean up logging.
 
