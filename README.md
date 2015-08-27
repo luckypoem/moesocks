@@ -54,7 +54,7 @@ Usage
 
 * You might want to run `moesocks` under some kind of a supervising daemon to
   auto restart the program if it crashes. Yes, it will likely to core dump after
-  some random period of time; On the positive side, there is no memory leak!
+  some random period of time (yes, I'm working on it); On the positive side, there is no memory leak!
 
 
 Features
