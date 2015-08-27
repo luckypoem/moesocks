@@ -80,7 +80,7 @@ local_UDP_ForwardRequestHandler aEnv
         {-puts - "L UDP: " <> show _bytes-}
 
         let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
-        _log - "L U: " <> _msg
+        _log - "LU: " <> _msg
         
         _eMsg <- _encrypt (S.Just _bytes)
 
@@ -130,7 +130,7 @@ remote_UDP_RequestHandler aEnv
     puts - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
     withCheckedForbidden_IP_List _addr _forbidden_IP - do
       let _msg = show aSockAddr <> " -> " <> showRequest _clientRequest
-      _log - "R U: " <> _msg
+      _log - "RU: " <> _msg
 
       connect _targetSocket _targetSocketAddress
       

@@ -101,7 +101,7 @@ local_TCP_RequestHandler aEnv
 
       let _msg = show _localPeerAddr <> " -> " <> showRequest _clientRequest
       
-      _log - "L T: " <> _msg
+      _log - "LT: " <> _msg
 
       let handleLocal _remoteSocket = do
             _encodeIV <- _cipherBox ^. generate_IV 
@@ -219,7 +219,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
       let _msg = show _remotePeerAddr <> " -> " <> showRequest _clientRequest
 
-      _log - "R T: " <> _msg
+      _log - "RT: " <> _msg
 
       let 
           handleTarget _leftOverBytes __targetSocket = do
