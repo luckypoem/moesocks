@@ -156,7 +156,8 @@ initLogger aLevel = do
   stdoutHandler <- streamHandler IO.stdout DEBUG
   let formattedHandler = 
           LogHandler.setFormatter stdoutHandler -
-            simpleLogFormatter "$time $msg"
+            --"[$time : $loggername : $prio]
+            simpleLogFormatter "$time $prio\t $msg"
 
   updateGlobalLogger rootLoggerName removeHandler
 
@@ -199,7 +200,7 @@ moeApp = do
           
           case aAppType of
             TCP_App -> do
-              _say - "LT: " <> aID <> " nyaa!"
+              _info - "LT: " <> aID <> " nyaa!"
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -215,7 +216,7 @@ moeApp = do
               forever - handleLocal _localSocket
 
             UDP_App -> do
-              _say - "LU: " <> aID <> " nyaa!"
+              _info - "LU: " <> aID <> " nyaa!"
               let handleLocal = do
                     (_msg, _sockAddr) <- 
                         recvFrom _localSocket _PacketLength
@@ -266,7 +267,7 @@ moeApp = do
   let remote_TCP_App :: (Socket, SockAddr) -> IO ()
       remote_TCP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say - "RT: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
+          _info - "RT: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
@@ -290,7 +291,7 @@ moeApp = do
   let remote_UDP_App :: (Socket, SockAddr) -> IO ()
       remote_UDP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say - "RU: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
+          _info - "RU: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr

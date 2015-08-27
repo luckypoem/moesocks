@@ -67,20 +67,35 @@ sync aIO = do
   {-aIO <* takeMVar syncLock-}
   aIO
 
+{-puts :: String -> IO ()-}
+{-puts = sync . debugM "moe" . ("😽  " <>)-}
+
+{-pute :: String -> IO ()-}
+{-pute = sync . errorM "moe" . ("😾  " <>)-}
+
+{-_warning :: String -> IO ()-}
+{-_warning = sync . warningM "moe" . ("😾  " <>)-}
+
+{-_info :: String -> IO ()-}
+{-_info = sync . infoM "moe" . ("😺  " <>)-}
+
+{-_notice :: String -> IO ()-}
+{-_notice = sync . noticeM "moe" . ("😼  " <>)-}
+
 puts :: String -> IO ()
-puts = sync . debugM "moe" . ("😽  " <>)
+puts = sync . debugM "moe" 
 
 pute :: String -> IO ()
-pute = sync . errorM "moe" . ("😾  " <>)
+pute = sync . errorM "moe" 
 
-putw :: String -> IO ()
-putw = sync . warningM "moe" . ("😾  " <>)
+_warning :: String -> IO ()
+_warning = sync . warningM "moe" 
 
-_log :: String -> IO ()
-_log = sync . infoM "moe" . ("😺  " <>)
+_info :: String -> IO ()
+_info = sync . infoM "moe" 
 
-_say :: String -> IO ()
-_say = sync . noticeM "moe" . ("😼  " <>)
+_notice :: String -> IO ()
+_notice = sync . noticeM "moe" 
 
 puteT :: Text -> IO ()
 puteT = pute . view _Text
@@ -264,7 +279,7 @@ sendAllRandom aFlushBound aSocket aBuffer = do
   where
     _loop _buffer = do
       _randomLength <- randomRIO (0, aFlushBound)
-      {-_say - "randomLength: " <> show _randomLength-}
+      {-_notice - "randomLength: " <> show _randomLength-}
       let (_thisBuffer, _nextBuffer) = S.splitAt _randomLength _buffer
       sendAll aSocket _thisBuffer
       when (_nextBuffer & isn't _Empty) - do
@@ -335,7 +350,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
       _produce _bytesReceived = flip onException (f S.Nothing) - do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
         {-when ("L" `isPrefixOf` aID) - do-}
-          {-_say - "Get chunk: " <> (show - S.length _r) <> " " <> aID-}
+          {-_notice - "Get chunk: " <> (show - S.length _r) <> " " <> aID-}
         
         if (_r & isn't _Empty) 
           then do
