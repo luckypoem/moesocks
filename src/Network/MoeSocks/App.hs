@@ -208,7 +208,7 @@ moeApp = do
                     -- send immediately!
                     setSocketOption _socket NoDelay 1 
                     
-                    forkIO - catchExceptAsyncLog "L TCP thread" - 
+                    forkIO - catchExceptAsyncLog "L T" - 
                               logSA "L TCP client socket" (pure _s) -
                                 aHandler ""
 
@@ -223,7 +223,7 @@ moeApp = do
                     
                     let _s = (_localSocket, _sockAddr)
 
-                    forkIO - catchExceptAsyncLog "L UDP thread" - 
+                    forkIO - catchExceptAsyncLog "L U" - 
                                 aHandler _msg _s
 
               forever handleLocal
@@ -275,7 +275,7 @@ moeApp = do
                 -- send immediately!
                 setSocketOption _socket NoDelay 1 
                 
-                forkIO - catchExceptAsyncLog "R thread" - 
+                forkIO - catchExceptAsyncLog "R T" - 
                             logSocket "R remote socket" (pure _newSocket) -
                               remote_TCP_RequestHandler _env 
 
@@ -297,7 +297,7 @@ moeApp = do
                 let _s = (_remoteSocket, _sockAddr)
 
 
-                forkIO - catchExceptAsyncLog "R thread" - 
+                forkIO - catchExceptAsyncLog "R U" - 
                             remote_UDP_RequestHandler _env _msg _s
 
                 
