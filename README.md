@@ -48,6 +48,10 @@ Usage
 * Shadowsocks compatible obfuscation can be turned on with the `-o` flag to make
   statistical analysis on packet length a bit more confusing.
 
+* You might want to run `moesocks` under some kind of a supervising daemon to
+  auto restart the program if it crashes. Yes, it will likely to core dump after
+  some random period of time. On the positive side, there is no memory leak!
+
 * See more options:
 
         moesocks --help
