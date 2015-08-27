@@ -199,7 +199,7 @@ moeApp = do
           
           case aAppType of
             TCP_App -> do
-              _say - "L T: " <> aID <> " nyaa!"
+              _say - "LT: " <> aID <> " nyaa!"
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -208,14 +208,14 @@ moeApp = do
                     -- send immediately!
                     setSocketOption _socket NoDelay 1 
                     
-                    forkIO - catchExceptAsyncLog "L T" - 
+                    forkIO - catchExceptAsyncLog "LT" - 
                               logSA "L TCP client socket" (pure _s) -
                                 aHandler ""
 
               forever - handleLocal _localSocket
 
             UDP_App -> do
-              _say - "L U: " <> aID <> " nyaa!"
+              _say - "LU: " <> aID <> " nyaa!"
               let handleLocal = do
                     (_msg, _sockAddr) <- 
                         recvFrom _localSocket _PacketLength
@@ -224,7 +224,7 @@ moeApp = do
                     
                     let _s = (_localSocket, _sockAddr)
 
-                    forkIO - catchExceptAsyncLog "L U" - 
+                    forkIO - catchExceptAsyncLog "LU" - 
                                 aHandler _msg _s
 
               forever handleLocal
@@ -266,7 +266,7 @@ moeApp = do
   let remote_TCP_App :: (Socket, SockAddr) -> IO ()
       remote_TCP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say - "R T: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
+          _say - "RT: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
@@ -281,7 +281,7 @@ moeApp = do
                 -- send immediately!
                 setSocketOption _socket NoDelay 1 
                 
-                forkIO - catchExceptAsyncLog "R T" - 
+                forkIO - catchExceptAsyncLog "RT" - 
                             logSocket "R remote socket" (pure _newSocket) -
                               remote_TCP_RequestHandler _env 
 
@@ -290,7 +290,7 @@ moeApp = do
   let remote_UDP_App :: (Socket, SockAddr) -> IO ()
       remote_UDP_App s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
-          _say - "R U: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
+          _say - "RU: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
@@ -303,7 +303,7 @@ moeApp = do
                 let _s = (_remoteSocket, _sockAddr)
 
 
-                forkIO - catchExceptAsyncLog "R U" - 
+                forkIO - catchExceptAsyncLog "RU" - 
                             remote_UDP_RequestHandler _env _msg _s
 
                 
