@@ -99,7 +99,7 @@ local_TCP_RequestHandler aEnv
         send_ aSocket - builder_To_ByteString _connectionReplyBuilder
       
 
-      let _msg = show _localPeerAddr <> " -> " <> showRequest _clientRequest
+      let _msg = showRelay _localPeerAddr _clientRequest
       
       info_ - "LT: " <> _msg
 
@@ -217,7 +217,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
       _remotePeerAddr <- getPeerName aSocket
       _targetPeerAddr <- getPeerName _targetSocket
 
-      let _msg = show _remotePeerAddr <> " -> " <> showRequest _clientRequest
+      let _msg = showRelay _remotePeerAddr _clientRequest
 
       info_ - "RT: " <> _msg
 

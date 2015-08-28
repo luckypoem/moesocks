@@ -58,6 +58,10 @@ showRequest _r =
                 <> ":"
                 <> _r ^. portNumber . to show
 
+showRelay :: SockAddr -> ClientRequest -> String
+showRelay aSockAddr aClientRequest = 
+      show aSockAddr <> " -> " <> showRequest aClientRequest
+
 addressType_To_Family :: AddressType -> Maybe Family
 addressType_To_Family (IPv4_address _) = Just AF_INET
 addressType_To_Family (IPv6_address _) = Just AF_INET6
