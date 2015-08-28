@@ -53,9 +53,7 @@ Usage
         moesocks --help
 
 * You might want to run `moesocks` under some kind of a supervising daemon to
-  auto restart the program if it crashes. Yes, it will likely to core dump after
-  some random period of time (yes, I'm working on it); On the positive side,
-  there is no memory leak!
+  auto restart the program if it crashes, likely due to [#10590].
 
 
 Features
@@ -107,5 +105,5 @@ limitations under the License.
 [shadowsocks-go]:https://github.com/shadowsocks/shadowsocks-go
 [shadowsocks-haskell]:https://github.com/rnons/shadowsocks-haskell
 [config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json
-
+[#10590]:https://ghc.haskell.org/trac/ghc/ticket/10590
 
