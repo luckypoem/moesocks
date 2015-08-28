@@ -5,7 +5,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Network.MoeSocks.Encrypt where
+module Network.MoeSocks.Encrypt 
+(
+  initCipherBox
+, identityCipher
+)
+where
 
 import Control.Lens
 import Control.Monad.Except
@@ -79,9 +84,6 @@ hashKey aPassword aKeyLen a_IV_len = loop mempty mempty
                     loop _new - _accumHashedBytes <> _new
 
 
-ssl :: IO a -> IO a
-ssl = withOpenSSL
-
 eitherToMaybe :: Either a b -> Maybe b
 eitherToMaybe (Left _) = Nothing
 eitherToMaybe (Right x) = Just x
@@ -102,39 +104,39 @@ initCipherBox aMethod aPassword
                         in
                         pure - Just (0, pure mempty, constCipher, constCipher)
 
-  | otherwise =
+  | otherwise = withOpenSSL - 
       fmap eitherToMaybe - runExceptT - initCipherBox' aMethod aPassword
 
 initCipherBox' :: Text -> Text -> MaybeT_IO CipherBox
 initCipherBox' aMethod aPassword = do
-  _method <- mio - ssl - getCipherByName - aMethod ^. _Text
+  _method <- mio - getCipherByName - aMethod ^. _Text
 
   (_keyLength, _IV_Length) <- getMaybe - methods ^? ix aMethod
 
   let _hashed = hashKey (review utf8 aPassword) _keyLength _IV_Length
-      _IV_Maker = ssl - randBytes _IV_Length
+      _IV_Maker = randBytes _IV_Length
 
       _encryptBuilder :: CipherBuilder
       _encryptBuilder _iv = do
-          _ctx <- ssl - E.cipherInitBS _method _hashed _iv Encrypt
+          _ctx <- E.cipherInitBS _method _hashed _iv Encrypt
 
           let _encrypt :: Cipher
               _encrypt = \case
-                  S.Nothing -> ssl - E.cipherFinalBS _ctx
+                  S.Nothing -> E.cipherFinalBS _ctx
                   S.Just _bytes -> do
-                    ssl - E.cipherUpdateBS _ctx _bytes
+                    E.cipherUpdateBS _ctx _bytes
 
           pure _encrypt
 
       _decryptBuilder :: CipherBuilder 
       _decryptBuilder _iv = do
-          _ctx <- ssl - E.cipherInitBS _method _hashed _iv Decrypt
+          _ctx <- E.cipherInitBS _method _hashed _iv Decrypt
 
           let _decrypt :: Cipher
               _decrypt = \case
-                  S.Nothing -> ssl - E.cipherFinalBS _ctx
+                  S.Nothing -> E.cipherFinalBS _ctx
                   S.Just _bytes -> do
-                    ssl - E.cipherUpdateBS _ctx _bytes 
+                    E.cipherUpdateBS _ctx _bytes 
           
           pure _decrypt
           
