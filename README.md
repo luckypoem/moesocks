@@ -53,7 +53,8 @@ Usage
         moesocks --help
 
 * You might want to run `moesocks` under some kind of a supervising daemon to
-  auto restart the program if it crashes, likely due to [#10590].
+  auto restart the program if it crashes, likely due to [#10590] which was not
+  included in the `7.10.2` release.
 
 
 Features
