@@ -9,6 +9,7 @@ module Network.MoeSocks.Encrypt
 (
   initCipherBox
 , identityCipher
+, ssl
 )
 where
 
@@ -84,6 +85,9 @@ hashKey aPassword aKeyLen a_IV_len = loop mempty mempty
                     loop _new - _accumHashedBytes <> _new
 
 
+ssl :: IO a -> IO a
+ssl = withOpenSSL
+
 eitherToMaybe :: Either a b -> Maybe b
 eitherToMaybe (Left _) = Nothing
 eitherToMaybe (Right x) = Just x
@@ -104,7 +108,7 @@ initCipherBox aMethod aPassword
                         in
                         pure - Just (0, pure mempty, constCipher, constCipher)
 
-  | otherwise = withOpenSSL - 
+  | otherwise = ssl - 
       fmap eitherToMaybe - runExceptT - initCipherBox' aMethod aPassword
 
 initCipherBox' :: Text -> Text -> MaybeT_IO CipherBox

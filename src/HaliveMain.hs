@@ -10,6 +10,7 @@ import Data.ByteString.Lens
 import Data.Maybe
 import Network.MoeSocks.App
 import Network.MoeSocks.Config
+import Network.MoeSocks.Encrypt
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Options
 import Network.MoeSocks.Type
@@ -20,7 +21,7 @@ import System.Random
 import qualified Prelude as P
 
 main :: IO ()
-main = do
+main = ssl - do
   let _options = defaultMoeOptions 
                                     & configFile .~ Just "config.json"
                                     & forward_UDP .~ 
