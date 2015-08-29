@@ -27,7 +27,6 @@ sendBufToWithFlag :: Socket            -- (possibly) bound/connected Socket
 sendBufToWithFlag 
   sock@(MkSocket s _family _stype _protocol _status) ptr nbytes addr flags = do
    withSockAddr addr $ \p_addr sz -> do
-    {-debug_ - "sendto flag: " <> show flags-}
     liftM fromIntegral $
       throwSocketErrorWaitWrite sock "sendTo" $
         c_sendto s ptr (fromIntegral $ nbytes) (fromIntegral flags)
@@ -47,7 +46,6 @@ sendAllFastOpenTo :: Socket      -- ^ Socket
           -> SockAddr    -- ^ Recipient address
           -> IO ()
 sendAllFastOpenTo sock xs addr = do
-    {-debug_ - "sendFast " <> show addr <> ": " <> show xs-}
     let _MSG_FASTOPEN  = 0x20000000  
     sent <- sendToWithFlag sock xs addr _MSG_FASTOPEN
     when (sent < S.length xs) $ sendAllTo sock (S.drop sent xs) addr
