@@ -5,14 +5,12 @@ module Network.MoeSocks.Internal.Socket where
 import Control.Monad
 import Data.ByteString (ByteString)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
-import Data.Monoid
 import Foreign.C.Types
 import Foreign.Ptr (Ptr)
 import Network.Socket
 import Network.Socket.ByteString
 import Network.Socket.Internal (throwSocketErrorWaitWrite, withSockAddr)
 import qualified Data.ByteString as S
-import qualified Data.Strict as S
 
 foreign import ccall unsafe "sendto" c_sendto ::
   CInt -> Ptr a -> CSize -> CInt -> Ptr SockAddr -> CInt -> IO CInt

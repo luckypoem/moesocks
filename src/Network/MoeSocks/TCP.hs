@@ -17,6 +17,7 @@ import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString (recv)
 import Prelude hiding ((-), take)
+import qualified Data.ByteString as S
 import qualified Data.Strict as S
 
 local_Socks5_RequestHandler :: Env
@@ -88,7 +89,7 @@ local_TCP_RequestHandler aEnv
     
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
-      connect _remoteSocket _remoteAddress
+      {-connect _remoteSocket _remoteAddress-}
       setSocketSendFast _remoteSocket
 
       _localPeerAddr <- getPeerName aSocket
@@ -122,7 +123,11 @@ local_TCP_RequestHandler aEnv
 
             _eHeader <- _encrypt - S.Just - builder_To_ByteString _header
             _ePartial <- _encrypt - S.Just _partialBytesAfterClientRequest 
-            let _initBytes = _encodeIV <> _eHeader <> _ePartial
+            let _padding = S.length (_eHeader <> _ePartial)
+
+            _eInit <- _encrypt . S.Just =<< recv aSocket (4096 + (-_padding))
+
+            let _initBytes = _encodeIV <> _eHeader <> _ePartial <> _eInit
 
             sendFast_ _remoteSocket _initBytes _remoteAddress
 
