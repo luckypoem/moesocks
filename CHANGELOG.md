@@ -1,3 +1,7 @@
+0.1.1.0
+-------
+* Use TCP_NOTSENT_LOWAT option to reduce latency
+
 0.1.0.27
 --------
 * Make local respect `forbidden-ip` as well, this reduce unnecessary connections
