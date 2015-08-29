@@ -223,3 +223,9 @@ nemesis = do
     desc "local2"
     task "local2" - do
       sh "angel angel/local2.conf"
+
+
+
+  desc "tcp metrics"
+  task "metrics" - do
+    sh "ip tcp_metrics | grep fo_cookie"
