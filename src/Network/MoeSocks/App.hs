@@ -271,14 +271,11 @@ moeApp = do
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
 
-          {-let _maximum_number_of_queued_connection = 1 :: Int-}
-
           listen _remoteSocket maxListenQueue
 
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
                 setSocketCloseOnExec _newSocket
-                -- send immediately!
                 setSocketSendFast _socket
                 
                 forkIO - catchExceptAsyncLog "RT" - 
@@ -305,8 +302,6 @@ moeApp = do
 
                 forkIO - catchExceptAsyncLog "RU" - 
                             remote_UDP_RequestHandler _env _msg _s
-
-                
 
           forever handleRemote
 

@@ -434,6 +434,7 @@ setSocketSendFast aSocket = do
   setSocketOption aSocket NoDelay 1 
   setSocket_TCP_NOTSENT_LOWAT aSocket
 
+
 -- Copied and slightly modified from: 
 -- https://github.com/mzero/plush/blob/master/src/Plush/Server/Warp.hs
 setSocketCloseOnExec :: Socket -> IO ()
