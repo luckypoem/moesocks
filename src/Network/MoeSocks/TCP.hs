@@ -224,13 +224,16 @@ remote_TCP_RequestHandler aEnv aSocket = do
       setSocketSendFast _targetSocket
 
       let _initBytes = _leftOverBytes
-      if _c ^. fastOpen
-        then
-          sendFast_ _targetSocket _initBytes _targetAddress
-        else do
-          connect _targetSocket _targetAddress
-          send_ _targetSocket _initBytes
+      {-if _c ^. fastOpen-}
+        {-then-}
+          {-sendFast_ _targetSocket _initBytes _targetAddress-}
+        {-else do-}
+          {-connect _targetSocket _targetAddress-}
+          {-send_ _targetSocket _initBytes-}
       
+      connect _targetSocket _targetAddress
+      send_ _targetSocket _initBytes
+
       _remotePeerAddr <- getPeerName aSocket
       _targetPeerAddr <- getPeerName _targetSocket
 
