@@ -56,6 +56,7 @@ parseConfig aOption = do
               , ("server_port", "remotePort")
               , ("local_address", "local")
               , ("local_port", "localPort")
+              , ("fast_open", "fastOpen")
               ]
 
         in

@@ -1,3 +1,7 @@
+0.1.1.10
+-------
+* Add TCP Fast Open in option
+
 0.1.1.0
 -------
 * Use TCP_NOTSENT_LOWAT option to reduce latency

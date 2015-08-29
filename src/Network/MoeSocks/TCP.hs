@@ -129,7 +129,12 @@ local_TCP_RequestHandler aEnv
 
             let _initBytes = _encodeIV <> _eHeader <> _ePartial <> _eInit
 
-            sendFast_ _remoteSocket _initBytes _remoteAddress
+            if _c ^. fastOpen
+              then
+                sendFast_ _remoteSocket _initBytes _remoteAddress
+              else do
+                connect _remoteSocket _remoteAddress
+                send_ _remoteSocket _initBytes
 
             let sendThread = do
 

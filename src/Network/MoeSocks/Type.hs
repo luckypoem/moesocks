@@ -61,6 +61,7 @@ data MoeConfig = MoeConfig
   , _throttle :: Bool
   , _throttleSpeed :: Double
   , _obfuscationFlushBound :: Int -- should be greater then MTU
+  , _fastOpen :: Bool
   }
   deriving (Show, Eq, Generic)
 

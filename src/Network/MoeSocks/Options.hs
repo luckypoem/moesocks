@@ -31,6 +31,13 @@ textParam = optional . fmap toJSON . textOption
 intParam :: O.Mod O.OptionFields Int -> O.Parser (Maybe Value)
 intParam = optional . fmap toJSON . option auto
 
+bool_To_Maybe :: Bool -> Maybe Bool
+bool_To_Maybe False = Nothing
+bool_To_Maybe True = Just True
+
+boolParam :: O.Mod O.FlagFields Bool -> O.Parser (Maybe Value)
+boolParam = (fmap . fmap) toJSON . fmap bool_To_Maybe . switch
+
 optionParser :: O.Parser MoeOptions
 optionParser = 
   let _c = defaultMoeConfig
@@ -118,6 +125,10 @@ optionParser =
                                         & view (from _Text))
                                     "timeout connection in seconds"
                         
+      _fastOpen = boolParam -
+                        long "fast-open"
+                    <>  help ("use TCP_FASTOPEN, requires Linux 3.7+")
+      
       _obfuscation :: O.Parser Bool 
       _obfuscation = switch -
                           short 'o'
@@ -126,6 +137,7 @@ optionParser =
                                <> "being compatible with "
                                <> "shadowsocks protocol, at the cost of "
                                <> "about 10-20% performance degradation.")
+
 
       _verbosity :: O.Parser Priority 
       _verbosity = flag INFO DEBUG -
@@ -226,6 +238,7 @@ optionParser =
         , tag "_method"         _method 
         , tag "_timeout"        _timeout
         , tag "_tcpBufferSize"  _tcpBufferSize
+        , tag "_fastOpen"       _fastOpen
         ]
         & sequenceA
         & fmap catMaybes
