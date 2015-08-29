@@ -128,7 +128,9 @@ initCipherBox' aMethod aPassword = do
               _encrypt = \case
                   S.Nothing -> E.cipherFinalBS _ctx
                   S.Just _bytes -> do
-                    E.cipherUpdateBS _ctx _bytes
+                    if (_bytes & isn't _Empty)
+                      then E.cipherUpdateBS _ctx _bytes
+                      else pure mempty
 
           pure _encrypt
 
@@ -140,7 +142,9 @@ initCipherBox' aMethod aPassword = do
               _decrypt = \case
                   S.Nothing -> E.cipherFinalBS _ctx
                   S.Just _bytes -> do
-                    E.cipherUpdateBS _ctx _bytes 
+                    if (_bytes & isn't _Empty)
+                      then E.cipherUpdateBS _ctx _bytes 
+                      else pure mempty
           
           pure _decrypt
           

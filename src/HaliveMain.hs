@@ -26,7 +26,8 @@ main = ssl - do
                                     & configFile .~ Just "config.json"
                                     & forward_UDP .~ 
                                                 [Forward 5301 "localhost" 53]
-                                    & verbosity .~ INFO
+                                    {-& verbosity .~ INFO-}
+                                    & verbosity .~ DEBUG
                                     & obfuscation .~ True
                                     & forbidden_IP .~ []
 

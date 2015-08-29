@@ -120,13 +120,13 @@ local_TCP_RequestHandler aEnv
                     then Just - _c ^. throttleSpeed
                     else Nothing
 
-            let sendThread = do
-                  sendBytes _sendChannel _encodeIV
-                  sendBuilderEncrypt _sendChannel _encrypt _header
+            _eHeader <- _encrypt - S.Just - builder_To_ByteString _header
+            _ePartial <- _encrypt - S.Just _partialBytesAfterClientRequest 
+            let _initBytes = _encodeIV <> _eHeader <> _ePartial
 
-                  when (_partialBytesAfterClientRequest & isn't _Empty) -
-                    sendBytesEncrypt _sendChannel _encrypt 
-                      _partialBytesAfterClientRequest
+            sendFast_ _remoteSocket _initBytes _remoteAddress
+
+            let sendThread = do
 
                   let _produce = do
                                     produceLoop (info_Id "L --> + Loop")
@@ -151,6 +151,7 @@ local_TCP_RequestHandler aEnv
                     ) -
                     pure ()
 
+            
             let receiveThread = do
                   _decodeIV <- recv _remoteSocket (_cipherBox ^. ivLength)
                   _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
