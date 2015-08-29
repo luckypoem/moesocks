@@ -1,6 +1,10 @@
+0.1.1.20
+--------
+* Implement TFO in remote
+
 0.1.1.10
 --------
-* Add TCP Fast Open capability. It can be turned on by adding a 
+* Add TCP Fast Open (TFO) capability. It can be turned on by adding a 
   `"fast_open":true` field in `config.json` or specifying a `--fast-open` flag
   in the command line arguments.
 
