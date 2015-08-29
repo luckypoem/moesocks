@@ -89,7 +89,6 @@ local_TCP_RequestHandler aEnv
     
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
-      {-connect _remoteSocket _remoteAddress-}
       setSocketSendFast _remoteSocket
 
       _localPeerAddr <- getPeerName aSocket
@@ -137,7 +136,6 @@ local_TCP_RequestHandler aEnv
                 send_ _remoteSocket _initBytes
 
             let sendThread = do
-
                   let _produce = do
                                     produceLoop (info_Id "L --> + Loop")
                                       _timeout
@@ -217,24 +215,31 @@ remote_TCP_RequestHandler aEnv aSocket = do
                                           aSocket
   
   logSA "R target socket" (initTarget _clientRequest) - \_r -> do
-    let (_targetSocket, _targetSocketAddress) = _r 
-        (_addr, _) = sockAddr_To_Pair _targetSocketAddress
+    let (_targetSocket, _targetAddress) = _r 
+        (_addr, _) = sockAddr_To_Pair _targetAddress
         _forbidden_IP = _options ^. forbidden_IP
 
     debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
     withCheckedForbidden_IP_List _addr _forbidden_IP - do
-      connect _targetSocket _targetSocketAddress
       setSocketSendFast _targetSocket
 
+      let _initBytes = _leftOverBytes
+      if _c ^. fastOpen
+        then
+          sendFast_ _targetSocket _initBytes _targetAddress
+        else do
+          connect _targetSocket _targetAddress
+          send_ _targetSocket _initBytes
+      
       _remotePeerAddr <- getPeerName aSocket
       _targetPeerAddr <- getPeerName _targetSocket
 
       let _msg = showRelay _remotePeerAddr _clientRequest
 
       info_ - "RT: " <> _msg
-
+      
       let 
-          handleTarget _leftOverBytes __targetSocket = do
+          handleTarget __targetSocket = do
             _sendChannel <- newTBQueueIO - _c ^. tcpBufferSize
             _receiveChannel <- newTBQueueIO - _c ^. tcpBufferSize
 
@@ -249,10 +254,6 @@ remote_TCP_RequestHandler aEnv aSocket = do
                     else Nothing
 
             let sendThread = do
-                  when (_leftOverBytes & isn't _Empty) -
-                    atomically - writeTBQueue _sendChannel - 
-                                  S.Just _leftOverBytes
-
                   let _produce = do
                                     produceLoop (info_Id "R --> + Loop")
                                       _timeout
@@ -310,4 +311,4 @@ remote_TCP_RequestHandler aEnv aSocket = do
               (Just - info_Id "R -->", sendThread)
               (Just - info_Id "R <--", receiveThread)
             
-      handleTarget _leftOverBytes _targetSocket
+      handleTarget _targetSocket
