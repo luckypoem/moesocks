@@ -9,7 +9,7 @@ import Foreign.C.Types
 import Foreign.Ptr (Ptr)
 import Network.Socket
 import Network.Socket.ByteString
-import Network.Socket.Internal (throwSocketErrorWaitWrite, withSockAddr)
+import Network.Socket.Internal (withSockAddr)
 import qualified Data.ByteString as S
 
 foreign import ccall unsafe "sendto" c_sendto ::
@@ -25,10 +25,9 @@ sendBufToWithFlag :: Socket            -- (possibly) bound/connected Socket
           -> Int
           -> IO Int            -- Number of Bytes sent
 sendBufToWithFlag 
-  sock@(MkSocket s _family _stype _protocol _status) ptr nbytes addr flags = do
+  (MkSocket s _family _stype _protocol _status) ptr nbytes addr flags = do
    withSockAddr addr $ \p_addr sz -> do
     liftM fromIntegral $
-      throwSocketErrorWaitWrite sock "sendTo" $
         c_sendto s ptr (fromIntegral $ nbytes) (fromIntegral flags)
                           p_addr (fromIntegral sz)
 
