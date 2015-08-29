@@ -125,9 +125,9 @@ optionParser =
                                         & view (from _Text))
                                     "timeout connection in seconds"
                         
-      _fastOpen = boolParam -
-                        long "fast-open"
-                    <>  help ("use TCP_FASTOPEN, requires Linux 3.7+")
+      {-_fastOpen = boolParam --}
+                        {-long "fast-open"-}
+                    {-<>  help ("use TCP_FASTOPEN, requires Linux 3.7+")-}
       
       _obfuscation :: O.Parser Bool 
       _obfuscation = switch -
@@ -238,7 +238,7 @@ optionParser =
         , tag "_method"         _method 
         , tag "_timeout"        _timeout
         , tag "_tcpBufferSize"  _tcpBufferSize
-        , tag "_fastOpen"       _fastOpen
+        {-, tag "_fastOpen"       _fastOpen-}
         ]
         & sequenceA
         & fmap catMaybes

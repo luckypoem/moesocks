@@ -20,7 +20,7 @@ runP = run . ("--forbidden-ip '' " <>)
 
 run :: String -> IO ()
 run x = do
-  let cmd = "cabal run -- --fast-open " <> x
+  let cmd = "cabal run -- " <> x
   puts cmd
   sh cmd
 
@@ -144,6 +144,10 @@ nemesis = do
   desc "local"
   task "local" - do
     run "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
+  
+  desc "local-fast"
+  task "local-fast" - do
+    run "--fast-open -r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
   
   desc "local-o"
   task "local-o" - do
