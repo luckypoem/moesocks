@@ -90,7 +90,7 @@ local_TCP_RequestHandler aEnv
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
       {-connect _remoteSocket _remoteAddress-}
-      {-setSocketSendFast _remoteSocket-}
+      setSocketSendFast _remoteSocket
 
       _localPeerAddr <- getPeerName aSocket
       _remoteSocketName <- getSocketName _remoteSocket
@@ -129,17 +129,12 @@ local_TCP_RequestHandler aEnv
 
             let _initBytes = _encodeIV <> _eHeader <> _ePartial <> _eInit
 
-            {-if _c ^. fastOpen-}
-              {-then-}
-                {-sendFast_ _remoteSocket _initBytes _remoteAddress-}
-              {-else do-}
-                {-connect _remoteSocket _remoteAddress-}
-                {-setSocketSendFast _remoteSocket-}
-                {-send_ _remoteSocket _initBytes-}
-
-            connect _remoteSocket _remoteAddress
-            setSocketSendFast _remoteSocket
-            send_ _remoteSocket _initBytes
+            if _c ^. fastOpen
+              then
+                sendFast_ _remoteSocket _initBytes _remoteAddress
+              else do
+                connect _remoteSocket _remoteAddress
+                send_ _remoteSocket _initBytes
 
             let sendThread = do
 

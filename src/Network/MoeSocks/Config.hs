@@ -19,7 +19,7 @@ defaultMoeConfig = MoeConfig
   , _throttle = False
   , _throttleSpeed = 8000 -- in Kilobytes
   , _obfuscationFlushBound = 4096
-  {-, _fastOpen = False-}
+  , _fastOpen = False
   }
 
 
