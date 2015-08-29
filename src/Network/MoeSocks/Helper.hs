@@ -422,6 +422,17 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
   pure ()
 
 
+setSocket_TCP_NOTSENT_LOWAT :: Socket -> IO ()
+setSocket_TCP_NOTSENT_LOWAT aSocket = 
+  let _TCP_NOTSENT_LOWAT = 25
+      _TCP_Option = 6
+  in
+  setSocketOption aSocket (CustomSockOpt (_TCP_Option, _TCP_NOTSENT_LOWAT)) 1 
+
+setSocketSendFast :: Socket -> IO ()
+setSocketSendFast aSocket = do
+  setSocketOption aSocket NoDelay 1 
+  setSocket_TCP_NOTSENT_LOWAT aSocket
 
 -- Copied and slightly modified from: 
 -- https://github.com/mzero/plush/blob/master/src/Plush/Server/Warp.hs

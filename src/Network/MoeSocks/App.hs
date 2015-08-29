@@ -206,8 +206,7 @@ moeApp = do
               let handleLocal _socket = do
                     _s@(_newSocket, _newSockAddr) <- accept _socket
                     setSocketCloseOnExec _newSocket
-                    -- send immediately!
-                    setSocketOption _socket NoDelay 1 
+                    setSocketSendFast _socket
                     
                     forkIO - catchExceptAsyncLog "LT" - 
                               logSA "L TCP client socket" (pure _s) -
@@ -280,7 +279,7 @@ moeApp = do
                 (_newSocket, _) <- accept _socket
                 setSocketCloseOnExec _newSocket
                 -- send immediately!
-                setSocketOption _socket NoDelay 1 
+                setSocketSendFast _socket
                 
                 forkIO - catchExceptAsyncLog "RT" - 
                             logSocket "R remote socket" (pure _newSocket) -

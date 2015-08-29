@@ -89,7 +89,7 @@ local_TCP_RequestHandler aEnv
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
       connect _remoteSocket _remoteAddress
-
+      setSocketSendFast _remoteSocket
 
       _localPeerAddr <- getPeerName aSocket
       _remoteSocketName <- getSocketName _remoteSocket
@@ -213,6 +213,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
     debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IP
     withCheckedForbidden_IP_List _addr _forbidden_IP - do
       connect _targetSocket _targetSocketAddress
+      setSocketSendFast _targetSocket
 
       _remotePeerAddr <- getPeerName aSocket
       _targetPeerAddr <- getPeerName _targetSocket
