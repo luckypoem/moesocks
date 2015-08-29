@@ -2,7 +2,7 @@
 --------
 * Add TCP Fast Open capability. It can be turned on by adding a 
   `"fast_open":true` field in `config.json` or specifying a `--fast-open` flag
-  in the command line argument.
+  in the command line arguments.
 
 0.1.1.0
 -------
