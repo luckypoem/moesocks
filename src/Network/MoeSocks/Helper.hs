@@ -1,5 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
 
 module Network.MoeSocks.Helper where
 
@@ -21,6 +22,7 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Data.Time.Clock
 import Network.Socket hiding (send, recv)
+import Network.Socket.Internal (throwSocketErrorWaitWrite, withSockAddr)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.IO.Unsafe (unsafePerformIO)
@@ -32,6 +34,10 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Strict as S
+import Foreign.C.Types
+import Foreign.Ptr (Ptr)
+import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
+
 {-import Data.List (isPrefixOf)-}
 
 
@@ -258,6 +264,47 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
+foreign import ccall unsafe "sendto" c_sendto ::
+  CInt -> Ptr a -> CSize -> CInt -> Ptr SockAddr -> CInt -> IO CInt
+
+-- | Send data to the socket.  The recipient can be specified
+-- explicitly, so the socket need not be in a connected state.
+-- Returns the number of bytes sent.  Applications are responsible for
+-- ensuring that all data has been sent.
+sendBufToWithFlag :: Socket            -- (possibly) bound/connected Socket
+          -> Ptr a -> Int  -- Data to send
+          -> SockAddr
+          -> Int
+          -> IO Int            -- Number of Bytes sent
+sendBufToWithFlag 
+  sock@(MkSocket s _family _stype _protocol _status) ptr nbytes addr flags = do
+   withSockAddr addr $ \p_addr sz -> do
+     liftM fromIntegral $
+       throwSocketErrorWaitWrite sock "sendTo" $
+          c_sendto s ptr (fromIntegral $ nbytes) (fromIntegral flags)
+                          p_addr (fromIntegral sz)
+sendToWithFlag :: Socket      -- ^ Socket
+       -> ByteString  -- ^ Data to send
+       -> SockAddr    -- ^ Recipient address
+       -> Int
+       -> IO Int      -- ^ Number of bytes sent
+sendToWithFlag sock xs addr flags =
+    unsafeUseAsCStringLen xs $ \(str, len) -> 
+      sendBufToWithFlag sock str len addr flags
+
+sendAllFastOpenTo :: Socket      -- ^ Socket
+          -> ByteString  -- ^ Data to send
+          -> SockAddr    -- ^ Recipient address
+          -> IO ()
+sendAllFastOpenTo sock xs addr = do
+    let _MSG_FASTOPEN  = 0x20000000
+    sent <- sendToWithFlag sock xs addr _MSG_FASTOPEN
+    when (sent < S.length xs) $ sendAllTo sock (S.drop sent xs) addr
+
+sendFast_ :: Socket -> ByteString -> SockAddr -> IO ()
+sendFast_ = sendAllFastOpenTo
+
+
 sendAllRandom :: Int -> Socket -> ByteString -> IO ()
 sendAllRandom aFlushBound aSocket aBuffer = do
   _loop aBuffer
@@ -421,6 +468,13 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
   _consume 0 `onException` _shutdown
   pure ()
 
+
+setSocket_TCP_FAST_OPEN:: Socket -> IO ()
+setSocket_TCP_FAST_OPEN aSocket = 
+  let _TCP_FASTOPEN = 23
+      _TCP_Option = 6
+  in
+  setSocketOption aSocket (CustomSockOpt (_TCP_Option, _TCP_FASTOPEN)) 1 
 
 setSocket_TCP_NOTSENT_LOWAT :: Socket -> IO ()
 setSocket_TCP_NOTSENT_LOWAT aSocket = 

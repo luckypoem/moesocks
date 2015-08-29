@@ -195,12 +195,14 @@ moeApp = do
       localAppBuilder aAppType aID aHandler s = 
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
             
-          setSocketOption _localSocket ReuseAddr 1
           bindSocket _localSocket _localAddr
+          setSocketOption _localSocket ReuseAddr 1
           
           case aAppType of
             TCP_App -> do
               info_ - "LT: " <> aID <> " nyaa!"
+
+              setSocket_TCP_FAST_OPEN _localSocket
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -268,9 +270,11 @@ moeApp = do
         \(_remoteSocket, _remoteAddr) -> do
           info_ - "RT: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
-          setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
 
+          setSocketOption _remoteSocket ReuseAddr 1
+          setSocket_TCP_FAST_OPEN _remoteSocket
+          
           listen _remoteSocket maxListenQueue
 
           let handleRemote _socket = do
@@ -289,8 +293,8 @@ moeApp = do
         \(_remoteSocket, _remoteAddr) -> do
           info_ - "RU: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
-          setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
+          setSocketOption _remoteSocket ReuseAddr 1
 
           let handleRemote = do
                 (_msg, _sockAddr) <- recvFrom _remoteSocket _PacketLength

@@ -11,6 +11,9 @@ main = N.run nemesis
 ping = do
         sh "curl -x socks5://localhost:1090 'http://localhost:8080'; exit 0"
 
+pingNone = do
+        sh "curl -x socks5://localhost:1090 'http://localhost:8081'; exit 0"
+
 runP :: String -> IO ()
 runP = run . ("--forbidden-ip '' " <>)
 
@@ -122,6 +125,9 @@ nemesis = do
 
   desc "ping"
   task "ping" - ping
+  
+  desc "ping-none"
+  task "ping-none" - pingNone
   
   desc "remote"
   task "remote" - do
