@@ -102,6 +102,12 @@ will carry the initial data with it. An example command is:
 
     tcpdump port 8388 -i any -X -v
 
+## Benefit
+
+Both local and remote will use TFO when instructed. If your browser and the
+website your are visiting both support TFO, you can enjoy TFO all the way
+through. This could lead to a huge reduction of latency.
+
 Credits
 =======
 
