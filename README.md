@@ -88,7 +88,7 @@ This could lead to a huge reduction of latency.
 
 ## Enable TFO in your OS runtime. 
 
-On Linux 3.7+, to check the availability of TFO using:
+On Linux 3.7+, to check the availability of TFO:
 
     cat /proc/sys/net/ipv4/tcp_fastopen
 
