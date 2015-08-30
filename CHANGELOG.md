@@ -1,6 +1,6 @@
 0.1.1.20
 --------
-* Implement TFO in remote
+* Implement TFO in remote.
 
 0.1.1.10
 --------
