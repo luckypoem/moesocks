@@ -77,8 +77,8 @@ Drawbacks
   20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method)
 
 
-A Note on TCP Fast Open (TFO)
-=============================
+TCP Fast Open (TFO)
+====================
 
 ## Enable TFO in your OS runtime. 
 
