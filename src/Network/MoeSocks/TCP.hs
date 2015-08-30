@@ -223,26 +223,19 @@ remote_TCP_RequestHandler aEnv aSocket = do
     withCheckedForbidden_IP_List _addr _forbidden_IP - do
       setSocketSendFast _targetSocket
 
-      let _initBytes = _leftOverBytes
-      let _connectNormal = do
-            connect _targetSocket _targetAddress
-            send_ _targetSocket _initBytes
-
-      if _c ^. fastOpen
-        then
-          sendFast_ _targetSocket _initBytes _targetAddress
-           {-`onException` -}
-            {-( do-}
-              {-error_ - "TCP Fast Open not availabe for: " <> show _targetSocket-}
-              {-_connectNormal-}
-            {-)-}
-        else do
-          _connectNormal
-      
       _remotePeerAddr <- getPeerName aSocket
       let _msg = showRelay _remotePeerAddr _clientRequest
 
       info_ - "RT: " <> _msg
+      
+      let _initBytes = _leftOverBytes
+
+      if _c ^. fastOpen
+        then
+          sendFast_ _targetSocket _initBytes _targetAddress
+        else do
+          connect _targetSocket _targetAddress
+          send_ _targetSocket _initBytes
       
       let 
           handleTarget __targetSocket = do

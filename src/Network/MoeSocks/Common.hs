@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Network.MoeSocks.Common where
 
@@ -23,6 +24,9 @@ showAddressType (Domain_name x)   = x
 showAddressType (IPv6_address xs) = xs ^.. each . to show
                                        ^.. folding (concat . L.intersperse ":")
                                        ^. from _Text
+
+
+makePrisms ''IPRange
 
 checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
 checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
