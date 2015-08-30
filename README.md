@@ -77,6 +77,24 @@ Planning features
 ------------------
 * None
 
+A Note on TCP Fast Open (TFO)
+-----------------------------
+
+### Enable TFO in your OS runtime. 
+
+On Linux, you could check availability using:
+
+    cat /proc/sys/net/ipv4/tcp_fastopen
+
+To enable TFO (as root):
+
+    echo 3 > /proc/sys/net/ipv4/tcp_fastopen
+
+### Enable TFO in moesocks
+
+TFO can be turned on by adding a `"fast_open":true` field in `config.json` or
+specifying a `--fast-open` flag in the command line arguments.
+
 Credits
 -------
 * [shadowsocks] greatly inspired MoeSocks.
