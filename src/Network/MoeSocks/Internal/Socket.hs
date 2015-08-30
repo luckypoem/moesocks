@@ -40,11 +40,11 @@ sendToWithFlagNoRetry sock xs addr flags =
     unsafeUseAsCStringLen xs $ \(str, len) -> 
       sendBufToWithFlagNoRetry sock str len addr flags
 
-sendAllFastOpenTo :: Socket      -- ^ Socket
+sendAllToFastOpen :: Socket      -- ^ Socket
           -> ByteString  -- ^ Data to send
           -> SockAddr    -- ^ Recipient address
           -> IO ()
-sendAllFastOpenTo sock xs addr = do
+sendAllToFastOpen sock xs addr = do
     let _MSG_FASTOPEN  = 0x20000000  
     sent <- sendToWithFlagNoRetry sock xs addr _MSG_FASTOPEN
     when (sent < S.length xs) $ sendAll sock (S.drop sent xs)

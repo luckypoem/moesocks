@@ -19,7 +19,7 @@ import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Time.Clock
-import Network.MoeSocks.Internal.Socket (sendAllFastOpenTo)
+import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
@@ -259,7 +259,7 @@ send_ = sendAll
 
 
 sendFast_ :: Socket -> ByteString -> SockAddr -> IO ()
-sendFast_ = sendAllFastOpenTo
+sendFast_ = sendAllToFastOpen
 
 
 sendAllRandom :: Int -> Socket -> ByteString -> IO ()
