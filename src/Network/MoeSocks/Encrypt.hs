@@ -24,6 +24,7 @@ import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
 import OpenSSL (withOpenSSL)
 import OpenSSL.EVP.Cipher (getCipherByName, CryptoMode(..))
+import OpenSSL.EVP.Internal (cipherIvLength)
 import OpenSSL.Random (randBytes)
 import Prelude hiding ((-))
 import qualified Data.ByteString as S
@@ -53,21 +54,21 @@ type CipherBox = (IV_Length, IO IV, EncryptBuilder, DecryptBuilder)
 
 type MaybeT_IO = ExceptT () IO
 
-methods :: Map Text (KeyLength, IV_Length)
+methods :: Map Text KeyLength
 methods = fromList
-    [ ("aes-128-cfb", (16, 16))
-    , ("aes-192-cfb", (24, 16))
-    , ("aes-256-cfb", (32, 16))
-    , ("bf-cfb", (16, 8))
-    , ("camellia-128-cfb", (16, 16))
-    , ("camellia-192-cfb", (24, 16))
-    , ("camellia-256-cfb", (32, 16))
-    , ("cast5-cfb", (16, 8))
-    , ("des-cfb", (8, 8))
-    , ("idea-cfb", (16, 8))
-    , ("rc2-cfb", (16, 8))
-    , ("rc4", (16, 0))
-    , ("seed-cfb", (16, 16))
+    [ ("aes-128-cfb"      , 16)
+    , ("aes-192-cfb"      , 24)
+    , ("aes-256-cfb"      , 32)
+    , ("bf-cfb"           , 16)
+    , ("camellia-128-cfb" , 16)
+    , ("camellia-192-cfb" , 24)
+    , ("camellia-256-cfb" , 32)
+    , ("cast5-cfb"        , 16)
+    , ("des-cfb"          , 8 )
+    , ("idea-cfb"         , 16)
+    , ("rc2-cfb"          , 16)
+    , ("rc4"              , 16)
+    , ("seed-cfb"         , 16)
     ]
 
 
@@ -114,8 +115,9 @@ initCipherBox aMethod aPassword
 initCipherBox' :: Text -> Text -> MaybeT_IO CipherBox
 initCipherBox' aMethod aPassword = do
   _method <- mio - getCipherByName - aMethod ^. _Text
+  let _IV_Length = cipherIvLength _method
 
-  (_keyLength, _IV_Length) <- getMaybe - methods ^? ix aMethod
+  _keyLength  <- getMaybe - methods ^? ix aMethod
 
   let _hashed = hashKey (review utf8 aPassword) _keyLength _IV_Length
       _IV_Maker = randBytes _IV_Length
