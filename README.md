@@ -80,7 +80,7 @@ Drawbacks
 TCP Fast Open (TFO)
 ====================
 
-## Benefit
+## TFO = lower initial delay 
 
 Both local and remote will use TFO when instructed. If your browser and the
 website your are visiting both support TFO, you can enjoy TFO all the way
