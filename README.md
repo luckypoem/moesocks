@@ -35,15 +35,15 @@ Usage
 * Edit `config.json` to fit your setup (at least the `remote` and `password`
   fields)
 
-* Start a remote node outside the firewall: 
+* Start a remote node outside a firewall: 
           
         moesocks --role remote -c config.json
 
-* Start a local node inside the firewall: 
+* Start a local node inside a firewall: 
     
         moesocks --role local -c config.json
 
-* Now you have a socks5 proxy running inside the firewall using port 
+* Now you have a socks5 proxy running inside a firewall using port 
   `localPort`.
 
 * Shadowsocks compatible obfuscation can be turned on with the `-o` flag to make
