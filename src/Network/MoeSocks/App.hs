@@ -55,7 +55,7 @@ parseConfig aOption = do
       toReadableConfig = asList - each . _1 %~ T.tail 
 
       showConfig :: MoeConfig -> Text
-      showConfig =  view _JSON
+      showConfig =  review _JSON
                     . toReadableConfig 
                     . review _JSON 
 
