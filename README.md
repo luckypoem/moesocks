@@ -98,7 +98,7 @@ On Linux 3.7+, to enable TFO (as root):
 
 ## Enable TFO in MoeSocks
 
-TFO can be turned on by adding a `"fast_open":true` field in `config.json` or
+TFO can be turned on by adding a `"fastOpen":true` field in `config.json` or
 specifying a `--fast-open` flag in the command line arguments.
 
 ## Verify
