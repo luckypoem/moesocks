@@ -6,7 +6,7 @@ A socks5 proxy using the client / server architecture.
 MoeSocks is greatly inspired by [shadowsocks] and can be used in place of it.
 
 Installation
-------------
+============
 
 * Need `GHC 7.10.2` and `cabal-install`.
       
@@ -28,7 +28,8 @@ Installation
 * Add `~/.cabal/bin` to your `$PATH`, if you haven't already.
 
 Usage
------
+=====
+
 * Download a sample [config.json] to your current path
 
 * Edit `config.json` to fit your setup (at least the `remote` and `password`
@@ -58,7 +59,8 @@ Usage
 
 
 Features
---------
+========
+
 * Socks5 proxy service, obviously
 * TCP port forwarding
 * UDP port forwarding, for example `-U 5300:8.8.8.8:53`
@@ -67,20 +69,18 @@ remote)
 * Socks5 service on local can be turned off
 * Understand shadowsocks' configuration file
 
-Not working
------------
+Drawbacks
+==========
+
 * UDP over Socks5 is not implemented
 * More then 2 times slower then the original Python implementation (measured at
   20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method)
 
-Planning features
-------------------
-* None
 
 A Note on TCP Fast Open (TFO)
------------------------------
+=============================
 
-### Enable TFO in your OS runtime. 
+## Enable TFO in your OS runtime. 
 
 On Linux 3.7+, you could check the availability of TFO using:
 
@@ -90,12 +90,12 @@ On Linux 3.7+, to enable TFO (as root):
 
     echo 3 > /proc/sys/net/ipv4/tcp_fastopen
 
-### Enable TFO in MoeSocks
+## Enable TFO in MoeSocks
 
 TFO can be turned on by adding a `"fast_open":true` field in
 `config.json` or specifying a `--fast-open` flag in the command line arguments.
 
-### Verify
+## Verify
 
 Use `tcpdump` on the `remotePort`, you should see that the first packet `SYN`
 will carry the initial data with it. An example command is:
@@ -103,7 +103,8 @@ will carry the initial data with it. An example command is:
     tcpdump port 8388 -i any -X -v
 
 Credits
--------
+=======
+
 * [shadowsocks] greatly inspired MoeSocks.
   Shadowsocks introduced a ground breaking design and implementation to bypass
   Internet censorship in China. 
@@ -112,7 +113,8 @@ Credits
   the internal of shadowsocks was gained by reading rnons's implementation.
 
 License
---------
+=======
+
 Copyright 2015 Jinjing Wang
 
 Licensed under the Apache License, Version 2.0 (the "License");
