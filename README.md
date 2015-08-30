@@ -82,7 +82,7 @@ A Note on TCP Fast Open (TFO)
 
 ### Enable TFO in your OS runtime. 
 
-On Linux, you could check availability using:
+On Linux, you could check the availability of TFO using:
 
     cat /proc/sys/net/ipv4/tcp_fastopen
 
@@ -94,6 +94,13 @@ To enable TFO (as root):
 
 TFO can be turned on by adding a `"fast_open":true` field in `config.json` or
 specifying a `--fast-open` flag in the command line arguments.
+
+### Verify
+
+Use `tcpdump` on the `remotePort`, you should see that the first `SYN` will
+carry the initial data with it. An example command is:
+
+    tcpdump port 8388 -i any -X -v
 
 Credits
 -------
