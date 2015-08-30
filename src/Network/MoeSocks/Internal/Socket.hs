@@ -47,4 +47,4 @@ sendAllFastOpenTo :: Socket      -- ^ Socket
 sendAllFastOpenTo sock xs addr = do
     let _MSG_FASTOPEN  = 0x20000000  
     sent <- sendToWithFlagNoRetry sock xs addr _MSG_FASTOPEN
-    when (sent < S.length xs) $ sendAllTo sock (S.drop sent xs) addr
+    when (sent < S.length xs) $ sendAll sock (S.drop sent xs)
