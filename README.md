@@ -90,10 +90,10 @@ To enable TFO (as root):
 
     echo 3 > /proc/sys/net/ipv4/tcp_fastopen
 
-### Enable TFO in moesocks
+### Enable TFO in MoeSocks
 
-TFO can be turned on by adding a `"fast_open":true` field in `config.json` or
-specifying a `--fast-open` flag in the command line arguments.
+TFO can be turned on by adding a `"fast_open":true` field in
+`config.json` or specifying a `--fast-open` flag in the command line arguments.
 
 ### Verify
 
