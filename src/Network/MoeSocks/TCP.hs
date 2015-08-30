@@ -91,7 +91,6 @@ local_TCP_RequestHandler aEnv
       \(_remoteSocket, _remoteAddress) -> do
       setSocketSendFast _remoteSocket
 
-      _localPeerAddr <- getPeerName aSocket
       _remoteSocketName <- getSocketName _remoteSocket
       
       when shouldReplyClient - do
@@ -99,6 +98,7 @@ local_TCP_RequestHandler aEnv
         send_ aSocket - builder_To_ByteString _connectionReplyBuilder
       
 
+      _localPeerAddr <- getPeerName aSocket
       let _msg = showRelay _localPeerAddr _clientRequest
       
       info_ - "LT: " <> _msg
@@ -240,8 +240,6 @@ remote_TCP_RequestHandler aEnv aSocket = do
           _connectNormal
       
       _remotePeerAddr <- getPeerName aSocket
-      _targetPeerAddr <- getPeerName _targetSocket
-
       let _msg = showRelay _remotePeerAddr _clientRequest
 
       info_ - "RT: " <> _msg
