@@ -19,12 +19,12 @@ foreign import ccall unsafe "sendto" c_sendto ::
 -- explicitly, so the socket need not be in a connected state.
 -- Returns the number of bytes sent.  Applications are responsible for
 -- ensuring that all data has been sent.
-sendBufToWithFlag :: Socket            -- (possibly) bound/connected Socket
+sendBufToWithFlagNoRetry :: Socket    -- (possibly) bound/connected Socket
           -> Ptr a -> Int  -- Data to send
           -> SockAddr
           -> Int
           -> IO Int            -- Number of Bytes sent
-sendBufToWithFlag 
+sendBufToWithFlagNoRetry 
   (MkSocket s _family _stype _protocol _status) ptr nbytes addr flags = do
    withSockAddr addr $ \p_addr sz -> do
     liftM fromIntegral $
@@ -38,7 +38,7 @@ sendToWithFlag :: Socket      -- ^ Socket
        -> IO Int      -- ^ Number of bytes sent
 sendToWithFlag sock xs addr flags =
     unsafeUseAsCStringLen xs $ \(str, len) -> 
-      sendBufToWithFlag sock str len addr flags
+      sendBufToWithFlagNoRetry sock str len addr flags
 
 sendAllFastOpenTo :: Socket      -- ^ Socket
           -> ByteString  -- ^ Data to send
