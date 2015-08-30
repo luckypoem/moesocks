@@ -14,7 +14,6 @@ import Data.Attoparsec.ByteString hiding (try)
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
-import Data.IP
 import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
@@ -33,7 +32,6 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Strict as S
-{-import Data.List (isPrefixOf)-}
 
 
 -- BEGIN backports
