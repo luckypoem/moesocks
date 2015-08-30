@@ -12,6 +12,7 @@ import Control.Monad.Writer hiding (listen)
 import Data.Aeson hiding (Result)
 import Data.Aeson.Lens
 import Data.ByteString (ByteString)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Lens
 import Network.MoeSocks.Config
@@ -28,12 +29,11 @@ import System.Log.Formatter
 import System.Log.Handler.Simple
 import System.Log.Logger
 import qualified Data.HashMap.Strict as H
+import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
-import Data.Maybe (fromMaybe)
-import qualified Data.Map as Map
 
 
 parseConfig :: MoeOptions -> MoeMonadT MoeConfig
