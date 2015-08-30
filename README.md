@@ -82,11 +82,11 @@ A Note on TCP Fast Open (TFO)
 
 ### Enable TFO in your OS runtime. 
 
-On Linux, you could check the availability of TFO using:
+On Linux 3.7+, you could check the availability of TFO using:
 
     cat /proc/sys/net/ipv4/tcp_fastopen
 
-On Linux, to enable TFO (as root):
+On Linux 3.7+, to enable TFO (as root):
 
     echo 3 > /proc/sys/net/ipv4/tcp_fastopen
 
