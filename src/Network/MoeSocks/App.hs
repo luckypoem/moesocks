@@ -39,7 +39,7 @@ parseConfig aOption = do
   let _maybeFilePath = aOption ^. configFile 
 
   _v <- case _maybeFilePath of
-          Nothing -> pure - Just - Null
+          Nothing -> pure - Just - Object mempty
           Just _filePath -> fmap (preview _JSON) - 
                             io - TIO.readFile - _filePath ^. _Text
 
