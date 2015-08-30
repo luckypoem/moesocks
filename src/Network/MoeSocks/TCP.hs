@@ -224,16 +224,21 @@ remote_TCP_RequestHandler aEnv aSocket = do
       setSocketSendFast _targetSocket
 
       let _initBytes = _leftOverBytes
-      {-if _c ^. fastOpen-}
-        {-then-}
-          {-sendFast_ _targetSocket _initBytes _targetAddress-}
-        {-else do-}
-          {-connect _targetSocket _targetAddress-}
-          {-send_ _targetSocket _initBytes-}
-      
-      connect _targetSocket _targetAddress
-      send_ _targetSocket _initBytes
+      let _connectNormal = do
+            connect _targetSocket _targetAddress
+            send_ _targetSocket _initBytes
 
+      if _c ^. fastOpen
+        then
+          sendFast_ _targetSocket _initBytes _targetAddress
+           `onException` 
+            ( do
+              debug_ - "TCP Fast Open not availabe for: " <> show _targetSocket
+              _connectNormal
+            )
+        else do
+          _connectNormal
+      
       _remotePeerAddr <- getPeerName aSocket
       _targetPeerAddr <- getPeerName _targetSocket
 
