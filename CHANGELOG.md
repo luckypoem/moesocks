@@ -1,6 +1,6 @@
 0.1.1.20
 --------
-* Implement TFO in remote. If your browser and the website your are visiting to
+* Implement TFO in remote. If your browser and the website your are visiting 
   both support TFO, you can enjoy TFO all the way through. This could lead to a
   huge reduction of latency.
 

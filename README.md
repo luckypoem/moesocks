@@ -83,7 +83,7 @@ TCP Fast Open (TFO)
 ## [TFO] means faster response in this case
 
 Both local and remote will use TFO when instructed. If your browser and the
-website your are visiting to both support TFO, you can enjoy TFO all the way
+website your are visiting both support TFO, you can enjoy TFO all the way
 through. This could lead to a huge reduction of latency.
 
 ## Enable TFO in your OS runtime. 
