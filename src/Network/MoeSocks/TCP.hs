@@ -231,11 +231,11 @@ remote_TCP_RequestHandler aEnv aSocket = do
       if _c ^. fastOpen
         then
           sendFast_ _targetSocket _initBytes _targetAddress
-           `onException` 
-            ( do
-              error_ - "TCP Fast Open not availabe for: " <> show _targetSocket
-              _connectNormal
-            )
+           {-`onException` -}
+            {-( do-}
+              {-error_ - "TCP Fast Open not availabe for: " <> show _targetSocket-}
+              {-_connectNormal-}
+            {-)-}
         else do
           _connectNormal
       
