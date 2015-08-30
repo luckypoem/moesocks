@@ -86,7 +86,7 @@ On Linux, you could check the availability of TFO using:
 
     cat /proc/sys/net/ipv4/tcp_fastopen
 
-To enable TFO (as root):
+On Linux, to enable TFO (as root):
 
     echo 3 > /proc/sys/net/ipv4/tcp_fastopen
 
