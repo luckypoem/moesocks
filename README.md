@@ -103,8 +103,9 @@ TFO can be turned on by adding a `"fast_open":true` field in
 
 ## Verify
 
-Use `tcpdump` on the `remotePort`, you should see that the first packet `SYN`
-will carry the initial data with it. An example command is:
+Use `tcpdump` on the `remotePort`, you should observe that the first packet
+`SYN` will carry the initial data with it(, but not for the very first). An
+example command is:
 
     tcpdump port 8388 -i any -X -v
 
