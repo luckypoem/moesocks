@@ -10,18 +10,17 @@ import Control.Monad.Except
 import Control.Monad.Reader hiding (local)
 import Control.Monad.Writer hiding (listen)
 import Data.Aeson hiding (Result)
+import Data.Aeson.Lens
 import Data.ByteString (ByteString)
-import Data.ByteString.Lazy (toStrict)
 import Data.Text (Text)
 import Data.Text.Lens
-import Data.Text.Strict.Lens (utf8)
 import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
+import Network.MoeSocks.Encrypt (initCipherBox)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
 import Network.MoeSocks.UDP
-import Network.MoeSocks.Encrypt (initCipherBox)
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import Prelude hiding ((-), take)
@@ -41,89 +40,48 @@ parseConfig aOption = do
 
   _v <- case _maybeFilePath of
           Nothing -> pure - Just - Object mempty
-          Just _filePath -> do
-                              _data <- io - TIO.readFile - _filePath ^. _Text
-                              pure -
-                                (decodeStrict - review utf8 _data 
-                                    :: Maybe Value)
+          Just _filePath -> fmap (preview _JSON) - 
+                            io - TIO.readFile - _filePath ^. _Text
 
   let 
-      fromShadowSocksConfig :: [(Text, Value)] -> [(Text, Value)]
-      fromShadowSocksConfig _configList = 
-        let fixes =
-              [
-                ("server", "remote")
-              , ("server_port", "remotePort")
-              , ("local_address", "local")
-              , ("local_port", "localPort")
-              , ("fast_open", "fastOpen")
-              ]
 
-        in
-        foldl (flip duplicateKey) _configList fixes
-
-      fromSS :: [(Text, Value)] -> [(Text, Value)]
-      fromSS = fromShadowSocksConfig
-
-
-  let 
+      asList :: ([(Text, Value)] -> [(Text, Value)]) -> Value -> Value
+      asList f = over _Object - H.fromList . f . H.toList 
+      
       toParsableConfig :: Value -> Value
-      toParsableConfig (Object _obj) =
-          Object - 
-            _obj 
-                & H.toList 
-                & fromSS 
-                & over (mapped . _1) (T.cons '_')  
-                & H.fromList
-      toParsableConfig _ = Null
-  
+      toParsableConfig = asList - each . _1 %~ (T.cons '_' . toCamelCase)  
 
       toReadableConfig :: Value -> Value
-      toReadableConfig (Object _obj) =
-          Object -
-            _obj
-                & H.toList 
-                & over (mapped . _1) T.tail 
-                & H.fromList
-
-      toReadableConfig _ = Null
+      toReadableConfig = asList - each . _1 %~ T.tail 
 
       showConfig :: MoeConfig -> Text
-      showConfig =    view utf8 
-                    . toStrict 
-                    . encode 
+      showConfig =  view _JSON
                     . toReadableConfig 
-                    . toJSON 
-
-      
+                    . review _JSON 
 
       filterEssentialConfig :: Value -> Value
-      filterEssentialConfig (Object _obj) =
-          Object -
-            foldl (flip H.delete) _obj - 
-              [
-                "_password"
-              ]
+      filterEssentialConfig = over _Object - \_obj ->
+                                foldl (flip H.delete) _obj - 
+                                  [
+                                    "_password"
+                                  ]
           
-      filterEssentialConfig _ = Null
-
       insertConfig :: Value -> Value -> Value
-      insertConfig (Object _x) (Object _y) =
-          Object - _x `H.union` _y
-      insertConfig _ _ = Null
+      insertConfig (Object _from) = over _Object (_from `H.union`)
+      insertConfig _ = const Null
 
       insertParams :: [(Text, Value)] -> Value -> Value
-      insertParams xs (Object _x) =
-          Object - H.fromList xs `H.union` _x
-      insertParams _ _ = Null
+      insertParams _from = over _Object (H.fromList _from `H.union`)
 
+      fallbackConfig :: Value -> Value -> Value
+      fallbackConfig = flip insertConfig
 
       optionalConfig = filterEssentialConfig - toJSON defaultMoeConfig
       
       _maybeConfig = _v
                       >>= decode 
                           . encode 
-                          . flip insertConfig optionalConfig
+                          . fallbackConfig optionalConfig
                           . insertParams (aOption ^. params)
                           . toParsableConfig 
 

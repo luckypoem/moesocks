@@ -17,6 +17,7 @@ import Data.ByteString (ByteString)
 import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Text.Lens
 import Data.Time.Clock
 import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
@@ -456,3 +457,8 @@ setSocketCloseOnExec aSocket =
 tryIO :: String -> IO a -> IO (Either IOException a)
 tryIO _ = try -- . logException aID
 
+toCamelCase :: Text -> Text
+toCamelCase x = x 
+                  & T.split (`elem` ['_', '-'])
+                  & over (_tail . traversed) T.toTitle
+                  & T.concat
