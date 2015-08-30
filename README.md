@@ -80,7 +80,7 @@ Drawbacks
 TCP Fast Open (TFO)
 ====================
 
-## TFO = lower initial delay 
+## [TFO] = a lot faster in this case
 
 Both local and remote will use TFO when instructed. If your browser and the
 website your are visiting both support TFO, you can enjoy TFO all the way
@@ -141,4 +141,4 @@ limitations under the License.
 [shadowsocks-haskell]:https://github.com/rnons/shadowsocks-haskell
 [config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json
 [#10590]:https://ghc.haskell.org/trac/ghc/ticket/10590
-
+[TFO]:https://en.wikipedia.org/wiki/TCP_Fast_Open
