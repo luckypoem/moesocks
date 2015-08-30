@@ -80,7 +80,7 @@ Drawbacks
 TCP Fast Open (TFO)
 ====================
 
-## [TFO] = a lot faster in this case
+## [TFO] means faster response in this case
 
 Both local and remote will use TFO when instructed. If your browser and the
 website your are visiting both support TFO, you can enjoy TFO all the way
