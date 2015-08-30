@@ -82,13 +82,13 @@ TCP Fast Open (TFO)
 
 ## [TFO] means faster response in this case
 
-Both local and remote will use TFO when instructed. If your browser and the
-website your are visiting both support TFO, you can enjoy TFO all the way
-through. This could lead to a huge reduction of latency.
+Both local and remote will use TFO when instructed. If thebrowser in use and the
+website to visit both support TFO, you can enjoy TFO all the way through. This
+could lead to a huge reduction of latency.
 
 ## Enable TFO in your OS runtime. 
 
-On Linux 3.7+, you could check the availability of TFO using:
+On Linux 3.7+, to check the availability of TFO using:
 
     cat /proc/sys/net/ipv4/tcp_fastopen
 
@@ -98,12 +98,12 @@ On Linux 3.7+, to enable TFO (as root):
 
 ## Enable TFO in MoeSocks
 
-TFO can be turned on by adding a `"fast_open":true` field in
-`config.json` or specifying a `--fast-open` flag in the command line arguments.
+TFO can be turned on by adding a `"fast_open":true` field in `config.json` or
+specifying a `--fast-open` flag in the command line arguments.
 
 ## Verify
 
-Use `tcpdump` on the `remotePort`, you should observe that `SYN` starts to carry
+Use `tcpdump` on the `remotePort`, check for that `SYN` should start to carry
 payload. An example command is:
 
     tcpdump port 8388 -i any -X -v
