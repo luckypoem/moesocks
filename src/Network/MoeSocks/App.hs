@@ -32,6 +32,8 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
+import Data.Maybe (fromMaybe)
+import qualified Data.Map as Map
 
 
 parseConfig :: MoeOptions -> MoeMonadT MoeConfig
@@ -48,8 +50,24 @@ parseConfig aOption = do
       asList :: ([(Text, Value)] -> [(Text, Value)]) -> Value -> Value
       asList f = over _Object - H.fromList . f . H.toList 
       
+      fromShadowSocksConfig :: Text -> Text
+      fromShadowSocksConfig x = 
+        let fixes = Map.fromList
+              [
+                ("server", "remote")
+              , ("server_port", "remotePort")
+              , ("local_address", "local")
+              ]
+
+        in
+        fixes ^? ix x & fromMaybe x
+
       toParsableConfig :: Value -> Value
-      toParsableConfig = asList - each . _1 %~ (T.cons '_' . toCamelCase)  
+      toParsableConfig = asList - each . _1 %~  (
+                                                  T.cons '_' 
+                                                . toCamelCase
+                                                . fromShadowSocksConfig
+                                                )  
 
       toReadableConfig :: Value -> Value
       toReadableConfig = asList - each . _1 %~ T.tail 
