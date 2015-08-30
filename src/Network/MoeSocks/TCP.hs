@@ -233,7 +233,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
           sendFast_ _targetSocket _initBytes _targetAddress
            `onException` 
             ( do
-              debug_ - "TCP Fast Open not availabe for: " <> show _targetSocket
+              error_ - "TCP Fast Open not availabe for: " <> show _targetSocket
               _connectNormal
             )
         else do
