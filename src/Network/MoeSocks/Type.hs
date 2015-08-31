@@ -50,9 +50,9 @@ makeLenses ''ClientRequest
 
 data Config = Config
   {
-    _remote :: Text
+    _remoteAddress :: Text
   , _remotePort :: Int
-  , _local :: Text
+  , _localAddress :: Text
   , _localPort :: Int
   , _password :: Text
   , _method :: Text
@@ -129,8 +129,8 @@ makePrisms ''LocalRelayType
 data LocalRelay = LocalRelay
   {
     _localRelayType :: LocalRelayType
-  , _localRelayLocal :: Text
-  , _localRelayRemote :: Text
+  , _localRelayAddress :: Text
+  , _localRelayRemoteAddress :: Text
   , _localRelayRemotePort :: Int
   }
   deriving (Show, Eq)
@@ -147,6 +147,7 @@ makePrisms ''RemoteRelayType
 data RemoteRelay = RemoreRelay
   {
     _remoteRelayType :: RemoteRelayType
+  , _remoteRelayHost :: Text
   , _remoteRelayPort :: Int
   }
   deriving (Show, Eq)

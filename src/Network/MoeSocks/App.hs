@@ -7,7 +7,7 @@ import Control.Concurrent
 import Control.Lens
 import Control.Monad
 import Control.Monad.Except
-import Control.Monad.Reader hiding (local)
+import Control.Monad.Reader hiding (localAddress)
 import Control.Monad.Writer hiding (listen)
 import Data.Aeson hiding (Result)
 import Data.Aeson.Lens
@@ -71,9 +71,9 @@ parseConfig aOption = do
       fromShadowSocksConfig x = 
         let fixes = Map.fromList
               [
-                ("server", "remote")
+                ("server", "remoteAddress")
               , ("server_port", "remotePort")
-              , ("local_address", "local")
+              , ("local_address", "localAddress")
               ]
 
         in
@@ -306,12 +306,14 @@ moeApp = do
   let 
       runRemote :: IO ()
       runRemote = do
+        {-let build_remote_TCP_Relay :: -}
+
         let _TCP_Relay = foreverRun - catchExceptAsyncLog "R TCP Relay" - do
-              getSocket (_c ^. remote) (_c ^. remotePort) Stream
+              getSocket (_c ^. remoteAddress) (_c ^. remotePort) Stream
                 >>= remote_TCP_Relay 
 
         let _UDP_Relay = foreverRun - catchExceptAsyncLog "R UDP Relay" - do
-              getSocket (_c ^. remote) (_c ^. remotePort) Datagram
+              getSocket (_c ^. remoteAddress) (_c ^. remotePort) Datagram
                 >>= remote_UDP_Relay 
 
         waitBoth _TCP_Relay _UDP_Relay
@@ -323,7 +325,7 @@ moeApp = do
         let _localForward_TCPs = do
               forM_ (_options ^. forward_TCPs) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L TCP_Forwarding" - do
-                    getSocket (_c ^. local) 
+                    getSocket (_c ^. localAddress) 
                       (forwarding ^. forwardLocalPort) 
                       Stream
                     >>= localForward_TCP forwarding
@@ -331,13 +333,13 @@ moeApp = do
         let _localForward_UDPs = do
               forM_ (_options ^. forward_UDPs) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L UDP_Forwarding" - do
-                    getSocket (_c ^. local) 
+                    getSocket (_c ^. localAddress) 
                       (forwarding ^. forwardLocalPort) 
                       Datagram
                     >>= localForward_UDP forwarding
         
         let _local_SOCKS5 = foreverRun - catchExceptAsyncLog "L SOCKS5" - do
-              getSocket (_c ^. local) (_c ^. localPort) Stream
+              getSocket (_c ^. localAddress) (_c ^. localPort) Stream
                 >>= local_SOCKS5 
 
         _localForward_TCPs

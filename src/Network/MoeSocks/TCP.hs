@@ -83,7 +83,7 @@ local_TCP_RequestHandler aEnv
         _flushBound = _c ^. obfuscationFlushBound
 
         _initSocket = 
-            getSocket (_c ^. remote) (_c ^. remotePort) Stream 
+            getSocket (_c ^. remoteAddress) (_c ^. remotePort) Stream 
 
     debug_ - "L: " <> show _clientRequest
     
