@@ -58,29 +58,29 @@ boolToMaybe :: Bool -> Maybe ()
 boolToMaybe True = Just ()
 boolToMaybe False = Nothing
 
-syncLock :: MVar ()
-syncLock = unsafePerformIO - newEmptyMVar
+{-syncLock :: MVar ()-}
+{-syncLock = unsafePerformIO - newEmptyMVar-}
 
-sync :: IO a -> IO a
-sync aIO = do
-  {-putMVar syncLock ()-}
-  {-aIO <* takeMVar syncLock-}
-  aIO
+{-sync :: IO a -> IO a-}
+{-sync aIO = do-}
+  {-[>putMVar syncLock ()<]-}
+  {-[>aIO <* takeMVar syncLock<]-}
+  {-aIO-}
 
 debug_ :: String -> IO ()
-debug_ = sync . debugM "moe" 
+debug_ = debugM "moe" 
 
 error_ :: String -> IO ()
-error_ = sync . errorM "moe" 
+error_ = errorM "moe" 
 
 warning_ :: String -> IO ()
-warning_ = sync . warningM "moe" 
+warning_ = warningM "moe" 
 
 info_ :: String -> IO ()
-info_ = sync . infoM "moe" 
+info_ = infoM "moe" 
 
 notice_ :: String -> IO ()
-notice_ = sync . noticeM "moe" 
+notice_ = noticeM "moe" 
 
 error_T :: Text -> IO ()
 error_T = error_ . view _Text
