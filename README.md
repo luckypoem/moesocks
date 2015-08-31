@@ -8,24 +8,7 @@ MoeSocks is greatly inspired by [shadowsocks] and can be used in place of it.
 Installation
 ============
 
-* Need `GHC 7.10.2` and `cabal-install`.
-
-  Installing [haskell-platform](https://www.haskell.org/platform/) should be
-  sufficient. (Linux users should pick the *Generic* distribution, since
-  it's the most up to date)
-
-* Repeat, you need `GHC 7.10.2` exactly, not `7.10.1` or anything else, since
-  remote only runs well in `7.10.2`.
-
-* Update packages
-
-        cabal update
-
-* Install
-
-        cabal install moesocks
-
-* Add `~/.cabal/bin` to your `$PATH`, if you haven't already.
+* Need `GHC 7.10.2`.
 
 Usage
 =====
