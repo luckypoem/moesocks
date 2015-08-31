@@ -207,11 +207,11 @@ optionParser =
           & parseOnly forwardListParser 
           & toListOf (traverse . traverse)
 
-      _forbidden_IP :: O.Parser (Maybe Text)
-      _forbidden_IP = optional - textOption -
+      _forbidden_IPs :: O.Parser (Maybe Text)
+      _forbidden_IPs = optional - textOption -
                           long "forbidden-ip"
                       <>  metavar "IPLIST"
-                      <>  defaultHelp (defaultMoeOptions ^. forbidden_IP
+                      <>  defaultHelp (defaultMoeOptions ^. forbidden_IPs
                                         & map show
                                         & map (view - from _Text)
                                         & T.intercalate ", ")
@@ -221,7 +221,7 @@ optionParser =
                                 )
      
       parseForbidden_IP :: Maybe Text -> [IPRange]
-      parseForbidden_IP = maybe (defaultMoeOptions ^. forbidden_IP) -
+      parseForbidden_IP = maybe (defaultMoeOptions ^. forbidden_IPs) -
                                 (toListOf - each 
                                           . to T.strip 
                                           . _Text 
@@ -259,7 +259,7 @@ optionParser =
               <*> fmap parseForwarding _forwardUDP
               <*> _disable_SOCKS5
               <*> _obfuscation
-              <*> fmap parseForbidden_IP _forbidden_IP
+              <*> fmap parseForbidden_IP _forbidden_IPs
               <*> _listMethods
               <*> _params
 

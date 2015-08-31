@@ -29,11 +29,11 @@ defaultMoeOptions = MoeOptions
     _runningMode = DebugMode
   , _configFile = Nothing
   , _verbosity = DEBUG
-  , _forward_TCP = []
-  , _forward_UDP = []
+  , _forward_TCPs = []
+  , _forward_UDPs = []
   , _disable_SOCKS5 = False
   , _obfuscation = False
-  , _forbidden_IP = ["127.0.0.1", "0.0.0.0", "::1"]
+  , _forbidden_IPs = ["127.0.0.1", "0.0.0.0", "::1"]
   , _listMethods = False
   , _params = []
   } 

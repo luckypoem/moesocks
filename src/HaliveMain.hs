@@ -21,12 +21,12 @@ main :: IO ()
 main = do
   let _options = defaultMoeOptions 
                                     & configFile .~ Just "config.json"
-                                    & forward_UDP .~ 
+                                    & forward_UDPs .~ 
                                                 [Forward 5301 "localhost" 53]
                                     {-& verbosity .~ INFO-}
                                     & verbosity .~ DEBUG
                                     & obfuscation .~ True
-                                    & forbidden_IP .~ []
+                                    & forbidden_IPs .~ []
                                     {-& listMethods .~ True-}
 
   withGateOptions _options - do

@@ -92,11 +92,11 @@ data MoeOptions = MoeOptions
     _runningMode :: RunningMode
   , _configFile :: Maybe Text
   , _verbosity :: Priority
-  , _forward_TCP :: [Forward]
-  , _forward_UDP :: [Forward]
+  , _forward_TCPs :: [Forward]
+  , _forward_UDPs :: [Forward]
   , _disable_SOCKS5 :: Bool
   , _obfuscation :: Bool
-  , _forbidden_IP :: [IPRange]
+  , _forbidden_IPs :: [IPRange]
   , _listMethods :: Bool
   , _params :: [(Text, Value)]
   }

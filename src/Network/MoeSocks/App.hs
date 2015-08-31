@@ -321,7 +321,7 @@ moeApp = do
       runLocal :: IO ()
       runLocal = do
         let _localForward_TCPs = do
-              forM_ (_options ^. forward_TCP) - \forwarding -> forkIO - do
+              forM_ (_options ^. forward_TCPs) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L TCP_Forwarding" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
@@ -329,7 +329,7 @@ moeApp = do
                     >>= localForward_TCP forwarding
           
         let _localForward_UDPs = do
-              forM_ (_options ^. forward_UDP) - \forwarding -> forkIO - do
+              forM_ (_options ^. forward_UDPs) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L UDP_Forwarding" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
@@ -344,8 +344,8 @@ moeApp = do
         _localForward_UDPs
         if (_options ^. disable_SOCKS5) 
           then 
-            if (_options ^. forward_TCP & isn't _Empty)
-                    || (_options ^. forward_UDP & isn't _Empty)
+            if (_options ^. forward_TCPs & isn't _Empty)
+                    || (_options ^. forward_UDPs & isn't _Empty)
               then 
                 forever - sleep 1000
               else
