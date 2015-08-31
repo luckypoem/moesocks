@@ -23,7 +23,6 @@ import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
-import System.IO.Unsafe (unsafePerformIO)
 import System.Log.Logger
 import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import System.Random
