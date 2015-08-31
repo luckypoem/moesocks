@@ -1,7 +1,7 @@
 MoeSocks
 ========
 
-A socks5 proxy using the client / server architecture.
+A SOCKS5 proxy using the client / server architecture.
 
 MoeSocks is greatly inspired by [shadowsocks] and can be used in place of it.
 
@@ -43,7 +43,7 @@ Usage
     
         moesocks --role local -c config.json
 
-* Now you have a socks5 proxy running inside a firewall using port 
+* Now you have a SOCKS5 proxy running inside a firewall using port 
   `localPort`.
 
 * Shadowsocks compatible obfuscation can be turned on with the `-o` flag to make

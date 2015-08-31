@@ -56,10 +56,10 @@ optionParser =
         | x == "debug" = DebugMode
         | otherwise = DebugMode
 
-      _disableSocks5 :: O.Parser Bool
-      _disableSocks5 = switch -
+      _disable_SOCKS5 :: O.Parser Bool
+      _disable_SOCKS5 = switch -
                       long "disable-socks5"
-                  <>  help ("Do not start a socks5 server on local. It can be "
+                  <>  help ("Do not start a SOCKS5 server on local. It can be "
                           <> "useful to run moesocks only as a secure tunnel")
       
       _listMethods :: O.Parser Bool
@@ -257,7 +257,7 @@ optionParser =
               <*> _verbosity
               <*> fmap parseForwarding _forwardTCP
               <*> fmap parseForwarding _forwardUDP
-              <*> _disableSocks5
+              <*> _disable_SOCKS5
               <*> _obfuscation
               <*> fmap parseForbidden_IP _forbidden_IP
               <*> _listMethods
@@ -266,6 +266,6 @@ optionParser =
 opts :: ParserInfo MoeOptions
 opts = info (helper <*> optionParser) - 
         fullDesc
-    <>  progDesc "A socks5 proxy using the client / server architecture"
+    <>  progDesc "A SOCKS5 proxy using the client / server architecture"
     <>  header "A functional firewall killer"
 

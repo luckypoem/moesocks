@@ -158,7 +158,7 @@ initLogger aLevel = do
   updateGlobalLogger "moe" - addHandler formattedHandler
   updateGlobalLogger "moe" - setLevel aLevel
 
-data AppType = TCP_App | UDP_App 
+data RelayType = TCP_Relay | UDP_Relay 
   deriving (Show, Eq)
 
 moeApp:: MoeMonadT ()
@@ -180,19 +180,19 @@ moeApp = do
   
   let _env = Env _options _config _cipherBox
 
-  let dispatchLocalApp :: AppType 
+  let dispatchLocalApp :: RelayType 
                       -> String 
                       -> (ByteString -> (Socket, SockAddr) -> IO ()) 
                       -> (Socket, SockAddr) 
                       -> IO ()
-      dispatchLocalApp aAppType aID aHandler s = 
+      dispatchLocalApp aRelayType aID aHandler s = 
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
             
           setSocketOption _localSocket ReuseAddr 1
           bindSocket _localSocket _localAddr
           
-          case aAppType of
-            TCP_App -> do
+          case aRelayType of
+            TCP_Relay -> do
               info_ - "LT: " <> aID <> " nyaa!"
 
               setSocket_TCP_FAST_OPEN _localSocket
@@ -209,7 +209,7 @@ moeApp = do
 
               forever - handleLocal _localSocket
 
-            UDP_App -> do
+            UDP_Relay -> do
               info_ - "LU: " <> aID <> " nyaa!"
               let handleLocal = do
                     (_msg, _sockAddr) <- 
@@ -228,10 +228,10 @@ moeApp = do
       showWrapped :: (Show a) => a -> String
       showWrapped x = "[" <> show x <> "]"
 
-  let localSocks5App :: (Socket, SockAddr) -> IO ()
-      localSocks5App _s = dispatchLocalApp TCP_App 
-                            ("Socks5 proxy " <> showWrapped (_s ^. _2))  
-                            (local_Socks5_RequestHandler _env) - _s
+  let local_SOCKS5 :: (Socket, SockAddr) -> IO ()
+      local_SOCKS5 _s = dispatchLocalApp TCP_Relay 
+                            ("SOCKS5 proxy " <> showWrapped (_s ^. _2))  
+                            (local_SOCKS5_RequestHandler _env) - _s
 
       showForwarding :: Forward -> String
       showForwarding (Forward _localPort _remoteHost _remotePort) =
@@ -244,22 +244,22 @@ moeApp = do
                       <> "]"
 
 
-      forward_TCP_App :: Forward -> (Socket, SockAddr) -> IO ()
-      forward_TCP_App _f _s = do
+      localForward_TCP :: Forward -> (Socket, SockAddr) -> IO ()
+      localForward_TCP _f _s = do
         let _m = showForwarding _f
-        dispatchLocalApp TCP_App  ("TCP port forwarding " <> _m)
+        dispatchLocalApp TCP_Relay  ("TCP port forwarding " <> _m)
                                 (local_TCP_ForwardRequestHandler _env _f) 
                                 _s
 
-      forward_UDP_App :: Forward -> (Socket, SockAddr) -> IO ()
-      forward_UDP_App _f _s = do
+      localForward_UDP :: Forward -> (Socket, SockAddr) -> IO ()
+      localForward_UDP _f _s = do
         let _m = showForwarding _f 
-        dispatchLocalApp UDP_App  ("UDP port forwarding " <> _m)
+        dispatchLocalApp UDP_Relay  ("UDP port forwarding " <> _m)
                                 (local_UDP_ForwardRequestHandler _env _f) 
                                 _s
       
-  let remote_TCP_App :: (Socket, SockAddr) -> IO ()
-      remote_TCP_App s = logSA "R loop" (pure s) -
+  let remote_TCP_Relay :: (Socket, SockAddr) -> IO ()
+      remote_TCP_Relay s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
           info_ - "RT: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
@@ -281,8 +281,8 @@ moeApp = do
 
           forever - handleRemote _remoteSocket
 
-  let remote_UDP_App :: (Socket, SockAddr) -> IO ()
-      remote_UDP_App s = logSA "R loop" (pure s) -
+  let remote_UDP_Relay :: (Socket, SockAddr) -> IO ()
+      remote_UDP_Relay s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
           info_ - "RU: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
@@ -306,43 +306,43 @@ moeApp = do
   let 
       runRemote :: IO ()
       runRemote = do
-        let __TCP_App = foreverRun - catchExceptAsyncLog "R TCP app" - do
+        let _TCP_Relay = foreverRun - catchExceptAsyncLog "R TCP app" - do
               getSocket (_c ^. remote) (_c ^. remotePort) Stream
-                >>= remote_TCP_App 
+                >>= remote_TCP_Relay 
 
-        let __UDP_App = foreverRun - catchExceptAsyncLog "R UDP app" - do
+        let _UDP_Relay = foreverRun - catchExceptAsyncLog "R UDP app" - do
               getSocket (_c ^. remote) (_c ^. remotePort) Datagram
-                >>= remote_UDP_App 
+                >>= remote_UDP_Relay 
 
-        waitBoth __TCP_App __UDP_App
+        waitBoth _TCP_Relay _UDP_Relay
 
           
         
       runLocal :: IO ()
       runLocal = do
-        let _forward_TCP_Apps = do
+        let _localForward_TCPs = do
               forM_ (_options ^. forward_TCP) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L TCPForwarding app" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
                       Stream
-                    >>= forward_TCP_App forwarding
+                    >>= localForward_TCP forwarding
           
-        let _forward_UDP_Apps = do
+        let _localForward_UDPs = do
               forM_ (_options ^. forward_UDP) - \forwarding -> forkIO - do
                   foreverRun - catchExceptAsyncLog "L UDPForwarding app" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
                       Datagram
-                    >>= forward_UDP_App forwarding
+                    >>= localForward_UDP forwarding
         
         let _socks5App = foreverRun - catchExceptAsyncLog "L socks5 app" - do
               getSocket (_c ^. local) (_c ^. localPort) Stream
-                >>= localSocks5App 
+                >>= local_SOCKS5 
 
-        _forward_TCP_Apps
-        _forward_UDP_Apps
-        if (_options ^. disableSocks5) 
+        _localForward_TCPs
+        _localForward_UDPs
+        if (_options ^. disable_SOCKS5) 
           then 
             if (_options ^. forward_TCP & isn't _Empty)
                     || (_options ^. forward_UDP & isn't _Empty)

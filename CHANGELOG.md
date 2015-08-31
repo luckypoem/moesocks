@@ -66,7 +66,7 @@
 
 0.1.0.17
 --------
-* Add `--disable-socks5` flag to switch off the socks5 service on local.
+* Add `--disable-socks5` flag to switch off the SOCKS5 service on local.
 
 0.1.0.16
 --------

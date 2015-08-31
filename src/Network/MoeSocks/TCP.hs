@@ -20,11 +20,11 @@ import Prelude hiding ((-), take)
 import qualified Data.ByteString as S
 import qualified Data.Strict as S
 
-local_Socks5_RequestHandler :: Env
+local_SOCKS5_RequestHandler :: Env
                             -> ByteString 
                             -> (Socket, SockAddr) 
                             -> IO ()
-local_Socks5_RequestHandler aEnv _ (aSocket,_) = do
+local_SOCKS5_RequestHandler aEnv _ (aSocket,_) = do
   (_partialBytesAfterGreeting, _r) <- 
       parseSocket "clientGreeting" mempty identityCipher
         greetingParser aSocket

@@ -94,7 +94,7 @@ data MoeOptions = MoeOptions
   , _verbosity :: Priority
   , _forward_TCP :: [Forward]
   , _forward_UDP :: [Forward]
-  , _disableSocks5 :: Bool
+  , _disable_SOCKS5 :: Bool
   , _obfuscation :: Bool
   , _forbidden_IP :: [IPRange]
   , _listMethods :: Bool
