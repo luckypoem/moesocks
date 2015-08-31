@@ -52,7 +52,7 @@ local_UDP_ForwardRequestHandler aEnv
 
   let _clientRequest = ClientRequest
                           UDP_port
-                          (Domain_name - aForwarding ^. 
+                          (DomainName - aForwarding ^. 
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
   

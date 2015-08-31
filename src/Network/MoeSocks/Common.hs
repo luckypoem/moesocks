@@ -16,12 +16,12 @@ import Prelude hiding ((-), take)
 import qualified Data.List as L
 
 showAddressType :: AddressType -> Text
-showAddressType (IPv4_address xs) = xs ^.. each . to show
+showAddressType (IPv4_Address xs) = xs ^.. each . to show
                                        ^.. folding (concat . L.intersperse ".")
                                        ^. from _Text
                                       
-showAddressType (Domain_name x)   = x 
-showAddressType (IPv6_address xs) = xs ^.. each . to show
+showAddressType (DomainName x)   = x 
+showAddressType (IPv6_Address xs) = xs ^.. each . to show
                                        ^.. folding (concat . L.intersperse ":")
                                        ^. from _Text
 
@@ -29,13 +29,13 @@ showAddressType (IPv6_address xs) = xs ^.. each . to show
 makePrisms ''IPRange
 
 checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
-checkForbidden_IP_List _address@(IPv4_address _) aForbidden_IP_List =
+checkForbidden_IP_List _address@(IPv4_Address _) aForbidden_IP_List =
   isJust - 
     do
       _ip <- showAddressType _address ^. _Text ^? _Show
       findOf (each . _IPv4Range) (isMatchedTo _ip) aForbidden_IP_List
 
-checkForbidden_IP_List _address@(IPv6_address _) aForbidden_IP_List =
+checkForbidden_IP_List _address@(IPv6_Address _) aForbidden_IP_List =
   isJust -
     do
       _ip <- showAddressType _address ^. _Text ^? _Show
@@ -67,8 +67,8 @@ showRelay aSockAddr aClientRequest =
       show aSockAddr <> " -> " <> showRequest aClientRequest
 
 addressType_To_Family :: AddressType -> Maybe Family
-addressType_To_Family (IPv4_address _) = Just AF_INET
-addressType_To_Family (IPv6_address _) = Just AF_INET6
+addressType_To_Family (IPv4_Address _) = Just AF_INET
+addressType_To_Family (IPv6_Address _) = Just AF_INET6
 addressType_To_Family _                = Nothing
 
 connectionType_To_SocketType :: ConnectionType -> SocketType

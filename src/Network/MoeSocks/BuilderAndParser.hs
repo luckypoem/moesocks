@@ -44,7 +44,7 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
                                           :: (Word8, Word8, Word8, Word8)
                                     in
 
-                                    ( IPv4_address - flip4 _r
+                                    ( IPv4_Address - flip4 _r
                                     , fromIntegral _port
                                     )
 
@@ -56,7 +56,7 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
                                               , Word16, Word16, Word16, Word16)
                                     in
 
-                                    ( IPv6_address - _r ^.. each
+                                    ( IPv6_Address - _r ^.. each
                                     , fromIntegral _port
                                     )
 
@@ -68,7 +68,7 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
                                                   & reverse
                                     in
 
-                                    ( Domain_name - (_host & review _Text)
+                                    ( DomainName - (_host & review _Text)
                                     , fromMaybe 0 - _port ^? _Show
                                     )
 
@@ -97,15 +97,15 @@ connectionReplyBuilder aSockAddr =
 addressTypeBuilder :: AddressType -> B.Builder
 addressTypeBuilder aAddressType = 
   case aAddressType of
-    IPv4_address _address -> 
+    IPv4_Address _address -> 
                           B.word8 1
                        <> foldMapOf each B.word8 _address
-    Domain_name x ->   
+    DomainName x ->   
                           B.word8 3
                        <> B.word8 (fromIntegral (S.length (review utf8 x)))
                        <> B.byteString (review utf8 x)
 
-    IPv6_address _address ->  
+    IPv6_Address _address ->  
                           B.word8 4
                        <> foldMapOf each B.word16BE _address
 
@@ -189,7 +189,7 @@ anyWord16 = do
 addressTypeParser :: Parser AddressType
 addressTypeParser = choice
   [
-    IPv4_address <$>  do
+    IPv4_Address <$>  do
                         word8 1
                         _a <- anyWord8
                         _b <- anyWord8
@@ -197,12 +197,12 @@ addressTypeParser = choice
                         _d <- anyWord8 
                         pure - (_a, _b, _c, _d)
   
-  , Domain_name <$>   do 
+  , DomainName <$>   do 
                         word8 3
                         _nameLength <- anyWord8
                         view utf8 <$> (take - fromIntegral _nameLength)
 
-  , IPv6_address <$>  do
+  , IPv6_Address <$>  do
                         word8 4 
                         _r <- count 8 anyWord16
                         {-pure - trace ("parsed IPv6: " <> show _r) _r-}

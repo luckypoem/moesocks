@@ -54,7 +54,7 @@ local_TCP_ForwardRequestHandler :: Env
 local_TCP_ForwardRequestHandler aEnv aForwarding _ (aSocket,_) = do
   let _clientRequest = ClientRequest
                           TCP_IP_stream_connection
-                          (Domain_name - aForwarding ^. 
+                          (DomainName - aForwarding ^. 
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
               
