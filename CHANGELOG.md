@@ -1,3 +1,8 @@
+0.1.1.30
+--------
+* Add more encryption methods from OpenSSL
+* Add a `--list-method` flag to show all supported encryption methods
+
 0.1.1.20
 --------
 * Implement TFO in remote. If your browser and the website your are visiting 

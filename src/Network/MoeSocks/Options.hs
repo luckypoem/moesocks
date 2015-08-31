@@ -61,6 +61,11 @@ optionParser =
                       long "disable-socks5"
                   <>  help ("Do not start a socks5 server on local. It can be "
                           <> "useful to run moesocks only as a secure tunnel")
+      
+      _listMethods :: O.Parser Bool
+      _listMethods = switch -
+                      long "list-methods"
+                  <>  help "show supported encryption methods"
                   
       _tcpBufferSize = intParam -
                               long "tcp-buffer-size"
@@ -255,6 +260,7 @@ optionParser =
               <*> _disableSocks5
               <*> _obfuscation
               <*> fmap parseForbidden_IP _forbidden_IP
+              <*> _listMethods
               <*> _params
 
 opts :: ParserInfo MoeOptions

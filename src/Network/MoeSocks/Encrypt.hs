@@ -10,6 +10,8 @@ module Network.MoeSocks.Encrypt
   initCipherBox
 , identityCipher
 , ssl
+, safeMethods
+, unsafeMethods
 )
 where
 
@@ -54,23 +56,58 @@ type CipherBox = (IV_Length, IO IV, EncryptBuilder, DecryptBuilder)
 
 type MaybeT_IO = ExceptT () IO
 
-methods :: Map Text KeyLength
-methods = fromList
-    [ ("aes-128-cfb"      , 16)
-    , ("aes-192-cfb"      , 24)
-    , ("aes-256-cfb"      , 32)
-    , ("bf-cfb"           , 16)
-    , ("camellia-128-cfb" , 16)
-    , ("camellia-192-cfb" , 24)
-    , ("camellia-256-cfb" , 32)
-    , ("cast5-cfb"        , 16)
-    , ("des-cfb"          , 8 )
-    , ("idea-cfb"         , 16)
-    , ("rc2-cfb"          , 16)
-    , ("rc4"              , 16)
-    , ("seed-cfb"         , 16)
-    ]
+type Method = Map Text KeyLength
 
+safeMethods :: Method
+safeMethods = fromList - 
+  [ 
+    ("aes-128-cfb"        , 16)
+  , ("aes-192-cfb"        , 24)
+  , ("aes-256-cfb"        , 32)
+  , ("aes-128-ofb"        , 16)
+  , ("aes-192-ofb"        , 24)
+  , ("aes-256-ofb"        , 32)
+  , ("aes-128-ctr"        , 16)
+  , ("aes-192-ctr"        , 24)
+  , ("aes-256-ctr"        , 32)
+  , ("aes-128-cfb8"       , 16)
+  , ("aes-192-cfb8"       , 24)
+  , ("aes-256-cfb8"       , 32)
+  , ("aes-128-cfb1"       , 16)
+  , ("aes-192-cfb1"       , 24)
+  , ("aes-256-cfb1"       , 32)
+  , ("aes-128-gcm"        , 16)
+  , ("aes-192-gcm"        , 24)
+  , ("aes-256-gcm"        , 32)
+  , ("bf-cfb"             , 16)
+  , ("camellia-128-cfb"   , 16)
+  , ("camellia-192-cfb"   , 24)
+  , ("camellia-256-cfb"   , 32)
+  , ("camellia-128-ofb"   , 16)
+  , ("camellia-192-ofb"   , 24)
+  , ("camellia-256-ofb"   , 32)
+  , ("camellia-128-cfb8"  , 16)
+  , ("camellia-192-cfb8"  , 24)
+  , ("camellia-256-cfb8"  , 32)
+  , ("camellia-128-cfb1"  , 16)
+  , ("camellia-192-cfb1"  , 24)
+  , ("camellia-256-cfb1"  , 32)
+  , ("cast5-cfb"          , 16)
+  , ("des-cfb"            , 8 )
+  {-, ("idea-cfb"           , 16)-}
+  , ("seed-cfb"           , 16)
+  ]
+
+
+unsafeMethods :: Method
+unsafeMethods = fromList - 
+  [
+    ("rc2-cfb"            , 16) -- unsafe
+  , ("rc4"                , 16) -- unsafe
+  ]
+
+methods :: Method
+methods = safeMethods <> unsafeMethods
 
 hashKey :: ByteString -> KeyLength -> IV_Length -> ByteString
 hashKey aPassword aKeyLen a_IV_len = loop mempty mempty 

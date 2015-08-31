@@ -30,9 +30,11 @@ main = ssl - do
                                     & verbosity .~ DEBUG
                                     & obfuscation .~ True
                                     & forbidden_IP .~ []
+                                    & listMethods .~ True
 
-  r <- runExceptT - runReaderT moeApp _options
-  case r of
-    Left e -> error_ e >> exitFailure
-    Right _ -> pure ()
+  withGateOptions _options - do
+    r <- runExceptT - runReaderT moeApp _options
+    case r of
+      Left e -> error_ e >> exitFailure
+      Right _ -> pure ()
 

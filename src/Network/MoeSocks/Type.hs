@@ -97,6 +97,7 @@ data MoeOptions = MoeOptions
   , _disableSocks5 :: Bool
   , _obfuscation :: Bool
   , _forbidden_IP :: [IPRange]
+  , _listMethods :: Bool
   , _params :: [(Text, Value)]
   }
   deriving (Show, Eq)

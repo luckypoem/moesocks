@@ -206,7 +206,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
   _decodeIV <- recv aSocket (_cipherBox ^. ivLength)
   _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
 
-  (_leftOverBytes, _clientRequest) <- parseSocket 
+  (_partialBytesAfterRequest, _clientRequest) <- parseSocket 
                                           "clientRequest"
                                           mempty
                                           _decrypt
@@ -228,7 +228,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
       info_ - "RT: " <> _msg
       
-      let _initBytes = _leftOverBytes
+      let _initBytes = _partialBytesAfterRequest
 
       if _c ^. fastOpen
         then

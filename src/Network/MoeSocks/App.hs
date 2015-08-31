@@ -17,7 +17,7 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
-import Network.MoeSocks.Encrypt (initCipherBox)
+import Network.MoeSocks.Encrypt (initCipherBox, safeMethods, unsafeMethods)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
@@ -35,6 +35,23 @@ import qualified Data.Text.IO as TIO
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
+
+withGateOptions :: MoeOptions -> IO a -> IO ()
+withGateOptions aOption aIO = do
+  if aOption ^. listMethods
+    then do
+      let _br = putStrLn ""
+
+      _br
+      putStrLn "Recommended:"
+      itraverse_ (\k _ -> putStrLn - "\t\t" <> k ^. _Text) - safeMethods
+
+      _br
+      putStrLn "Supported:"
+      itraverse_ (\k _ -> putStrLn - "\t\t" <> k ^. _Text) - unsafeMethods
+
+    else
+      () <$ aIO
 
 parseConfig :: MoeOptions -> MoeMonadT MoeConfig
 parseConfig aOption = do
@@ -126,6 +143,7 @@ parseConfig aOption = do
       let configStr = showConfig _config ^. _Text :: String
       io - debug_ - "Using config: " <> configStr
       pure - _config 
+                & method .~ "camellia-128-cfb8"
               
 
 initLogger :: Priority -> IO ()
