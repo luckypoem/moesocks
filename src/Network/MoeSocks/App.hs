@@ -306,11 +306,11 @@ moeApp = do
   let 
       runRemote :: IO ()
       runRemote = do
-        let _TCP_Relay = foreverRun - catchExceptAsyncLog "R TCP app" - do
+        let _TCP_Relay = foreverRun - catchExceptAsyncLog "R TCP Relay" - do
               getSocket (_c ^. remote) (_c ^. remotePort) Stream
                 >>= remote_TCP_Relay 
 
-        let _UDP_Relay = foreverRun - catchExceptAsyncLog "R UDP app" - do
+        let _UDP_Relay = foreverRun - catchExceptAsyncLog "R UDP Relay" - do
               getSocket (_c ^. remote) (_c ^. remotePort) Datagram
                 >>= remote_UDP_Relay 
 
@@ -322,7 +322,7 @@ moeApp = do
       runLocal = do
         let _localForward_TCPs = do
               forM_ (_options ^. forward_TCP) - \forwarding -> forkIO - do
-                  foreverRun - catchExceptAsyncLog "L TCPForwarding app" - do
+                  foreverRun - catchExceptAsyncLog "L TCP_Forwarding" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
                       Stream
@@ -330,13 +330,13 @@ moeApp = do
           
         let _localForward_UDPs = do
               forM_ (_options ^. forward_UDP) - \forwarding -> forkIO - do
-                  foreverRun - catchExceptAsyncLog "L UDPForwarding app" - do
+                  foreverRun - catchExceptAsyncLog "L UDP_Forwarding" - do
                     getSocket (_c ^. local) 
                       (forwarding ^. forwardLocalPort) 
                       Datagram
                     >>= localForward_UDP forwarding
         
-        let _SOCKS5_App = foreverRun - catchExceptAsyncLog "L SOCKS5 app" - do
+        let _local_SOCKS5 = foreverRun - catchExceptAsyncLog "L SOCKS5" - do
               getSocket (_c ^. local) (_c ^. localPort) Stream
                 >>= local_SOCKS5 
 
@@ -351,7 +351,7 @@ moeApp = do
               else
                 error_ "Nothing to run!"
                 
-          else _SOCKS5_App
+          else _local_SOCKS5
 
       runDebug :: IO ()
       runDebug = do
