@@ -4,6 +4,7 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
+import Control.Concurrent.Async hiding (waitBoth)
 import Control.Lens
 import Control.Monad
 import Control.Monad.Except
@@ -180,6 +181,7 @@ moeApp = do
   
   let _env = Env _options _config _cipherBox
 
+
   let localRelay :: RelayType 
                       -> String 
                       -> (ByteString -> (Socket, SockAddr) -> IO ()) 
@@ -306,17 +308,43 @@ moeApp = do
   let 
       runRemote :: IO ()
       runRemote = do
-        {-let build_remote_TCP_Relay :: -}
+        let config_To_Runtime :: Config -> Runtime -> Runtime
+            config_To_Runtime _config _runtime = 
+              let _remote_TCP_Relay =   
+                      RemoteRelay
+                        Remote_TCP_Relay
+                        (_config ^. remoteAddress)
+                        (_config ^. remotePort)
 
-        let _TCP_Relay = foreverRun - catchExceptAsyncLog "R TCP Relay" - do
-              getSocket (_c ^. remoteAddress) (_c ^. remotePort) Stream
-                >>= remote_TCP_Relay 
+                  _remote_UDP_Relay = 
+                      RemoteRelay
+                        Remote_UDP_Relay
+                        (_config ^. remoteAddress)
+                        (_config ^. remotePort)
+              in
+              _runtime & remoteRelays .~ [_remote_TCP_Relay, _remote_UDP_Relay]
 
-        let _UDP_Relay = foreverRun - catchExceptAsyncLog "R UDP Relay" - do
-              getSocket (_c ^. remoteAddress) (_c ^. remotePort) Datagram
-                >>= remote_UDP_Relay 
+        let buildRemoteRelay :: RemoteRelay -> IO (Async ())
+            buildRemoteRelay _remoteRelay = do
+              let _address = _remoteRelay ^. remoteRelayAddress
+                  _port = _remoteRelay ^. remoteRelayPort
+              
+              async - foreverRun - do
+                case _remoteRelay ^. remoteRelayType of
+                  Remote_TCP_Relay -> catchExceptAsyncLog "R TCP Relay" - do
+                                        getSocket _address _port Stream
+                                          >>= remote_TCP_Relay 
 
-        waitBoth _TCP_Relay _UDP_Relay
+                  Remote_UDP_Relay  -> catchExceptAsyncLog "R UDP Relay" - do
+                                        getSocket _address _port Datagram
+                                          >>= remote_UDP_Relay 
+                
+        relays <- mapM buildRemoteRelay - 
+                        config_To_Runtime _c mempty ^. remoteRelays
+
+        waitAnyCancel relays
+
+        pure ()
 
           
         

@@ -11,6 +11,7 @@ import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.IP
 import Data.Word
+import Data.Monoid
 import GHC.Generics
 import System.Log.Logger
 import qualified Data.Strict as S
@@ -144,10 +145,10 @@ data RemoteRelayType =
 
 makePrisms ''RemoteRelayType
 
-data RemoteRelay = RemoreRelay
+data RemoteRelay = RemoteRelay
   {
     _remoteRelayType :: RemoteRelayType
-  , _remoteRelayHost :: Text
+  , _remoteRelayAddress :: Text
   , _remoteRelayPort :: Int
   }
   deriving (Show, Eq)
@@ -161,6 +162,10 @@ data Runtime = Runtime
   }
   deriving (Show, Eq)
 
+instance Monoid Runtime where
+  mempty = Runtime [] []
+  Runtime x y `mappend` Runtime x' y' = Runtime (x <> x') (y <> y')
+          
 makeLenses ''Runtime
 
 data Env = Env
