@@ -172,11 +172,12 @@ data Runtime = Runtime
   }
   deriving (Show, Eq)
 
+makeLenses ''Runtime
+
 instance Monoid Runtime where
   mempty = Runtime [] []
   Runtime x y `mappend` Runtime x' y' = Runtime (x <> x') (y <> y')
           
-makeLenses ''Runtime
 
 data Env = Env
   {
