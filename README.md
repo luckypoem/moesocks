@@ -98,7 +98,7 @@ Credits
 * [ss] greatly inspired MoeSocks.
 * [ss-haskell] another implementation of ss in Haskell, also greatly inspired
   MoeSocks. Much of the understanding of the internal of ss was gained by
-  reading rnons's implementation.
+  reading ss-haskell.
 
 License
 =======
