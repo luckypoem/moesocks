@@ -116,8 +116,51 @@ data CipherBox = CipherBox
   , _decryptBuilder ::  CipherBuilder
   }
 
-makeLenses '' CipherBox
+makeLenses ''CipherBox
 
+data LocalRelayType =
+      Local_TCP_Relay Forward
+    | Local_UDP_Relay Forward
+    | Local_SOCKS_Relay Int
+    deriving (Show, Eq)
+
+makePrisms ''LocalRelayType
+
+data LocalRelay = LocalRelay
+  {
+    localRelayType :: LocalRelayType
+  , localRelayLocal :: Text
+  , localRelayRemote :: Text
+  , localRelayRemotePort :: Int
+  }
+  deriving (Show, Eq)
+
+makeLenses ''LocalRelay
+
+data RemoteRelayType =
+      Remote_TCP_Relay
+    | Remote_UDP_Relay
+    deriving (Show, Eq)
+
+makePrisms ''RemoteRelayType
+
+data RemoteRelay = RemoreRelay
+  {
+    remoteRelayType :: RemoteRelayType
+  , remoteRelayPort :: Int
+  }
+  deriving (Show, Eq)
+
+makeLenses ''RemoteRelay
+
+data Runtime = Runtime
+  {
+    localRelays :: [LocalRelay]
+  , remoteRelays :: [RemoteRelay]
+  }
+  deriving (Show, Eq)
+
+makeLenses ''Runtime
 
 data Env = Env
   {
