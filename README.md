@@ -9,7 +9,7 @@ Installation
 ============
 
 * Need `GHC 7.10.2` and `cabal-install`.
-      
+
   Installing [haskell-platform](https://www.haskell.org/platform/) should be
   sufficient. (Linux users should pick the *Generic* distribution, since
   it's the most up to date)
@@ -35,15 +35,15 @@ Usage
 * Edit `config.json` to fit your setup (at least the `remote` and `password`
   fields)
 
-* Start a remote node outside a firewall: 
-          
+* Start a remote node outside a firewall:
+
         moesocks --role remote -c config.json
 
-* Start a local node inside a firewall: 
-    
+* Start a local node inside a firewall:
+
         moesocks --role local -c config.json
 
-* Now you have a SOCKS5 proxy running inside a firewall using port 
+* Now you have a SOCKS5 proxy running inside a firewall using port
   `localPort`.
 
 * Shadowsocks compatible obfuscation can be turned on with the `-o` flag to make
@@ -61,18 +61,18 @@ Usage
 Features
 ========
 
-* Socks5 proxy service, obviously
+* SOCKS5 proxy service, obviously
 * TCP port forwarding
 * UDP port forwarding, for example `-U 5300:8.8.8.8:53`
 * TCP per connection throttling (as a side effect of trying to find a bug in the
 remote)
-* Socks5 service on local can be turned off
+* SOCKS5 service on local can be turned off
 * Understand shadowsocks' configuration file
 
 Drawbacks
 ==========
 
-* UDP over Socks5 is not implemented
+* UDP over SOCKS5 is not implemented
 * More then 2 times slower then the original Python implementation (measured at
   20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method)
 
@@ -86,7 +86,7 @@ Both local and remote will use TFO when instructed. If the browser in use and
 the website to visit both support TFO, you can enjoy TFO all the way through.
 This could lead to a huge reduction of latency.
 
-## Enable TFO in your OS runtime. 
+## Enable TFO in your OS runtime.
 
 On Linux 3.7+, to check the availability of TFO:
 
@@ -114,8 +114,8 @@ Credits
 
 * [shadowsocks] greatly inspired MoeSocks.
   Shadowsocks introduced a ground breaking design and implementation to bypass
-  Internet censorship in China. 
-* [shadowsocks-haskell] by rnons, another implementation of shadowsocks in 
+  Internet censorship in China.
+* [shadowsocks-haskell] by rnons, another implementation of shadowsocks in
   Haskell, also greatly inspired MoeSocks. Much of the understanding of
   the internal of shadowsocks was gained by reading rnons's implementation.
 
@@ -136,7 +136,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[shadowsocks]:https://github.com/shadowsocks/shadowsocks 
+[shadowsocks]:https://github.com/shadowsocks/shadowsocks
 [shadowsocks-go]:https://github.com/shadowsocks/shadowsocks-go
 [shadowsocks-haskell]:https://github.com/rnons/shadowsocks-haskell
 [config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json

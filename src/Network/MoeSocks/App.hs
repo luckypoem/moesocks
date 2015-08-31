@@ -336,7 +336,7 @@ moeApp = do
                       Datagram
                     >>= localForward_UDP forwarding
         
-        let _socks5App = foreverRun - catchExceptAsyncLog "L socks5 app" - do
+        let _SOCKS5_App = foreverRun - catchExceptAsyncLog "L SOCKS5 app" - do
               getSocket (_c ^. local) (_c ^. localPort) Stream
                 >>= local_SOCKS5 
 
@@ -351,7 +351,7 @@ moeApp = do
               else
                 error_ "Nothing to run!"
                 
-          else _socks5App
+          else _SOCKS5_App
 
       runDebug :: IO ()
       runDebug = do
