@@ -251,8 +251,8 @@ recv_ = flip recv 4096
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 
-sendFast_ :: Socket -> ByteString -> SockAddr -> IO ()
-sendFast_ = sendAllToFastOpen
+sendFast :: Socket -> ByteString -> SockAddr -> IO ()
+sendFast = sendAllToFastOpen
 
 
 sendAllRandom :: Int -> Socket -> ByteString -> IO ()

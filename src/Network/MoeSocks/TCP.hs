@@ -130,7 +130,7 @@ local_TCP_RequestHandler aEnv
 
             if _c ^. fastOpen
               then
-                sendFast_ _remoteSocket _initBytes _remoteAddress
+                sendFast _remoteSocket _initBytes _remoteAddress
               else do
                 connect _remoteSocket _remoteAddress
                 send_ _remoteSocket _initBytes
@@ -232,7 +232,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
       if _c ^. fastOpen
         then
-          sendFast_ _targetSocket _initBytes _targetAddress
+          sendFast _targetSocket _initBytes _targetAddress
         else do
           connect _targetSocket _targetAddress
           send_ _targetSocket _initBytes
