@@ -1,7 +1,7 @@
 0.1.1.30
 --------
 * Add more encryption methods from OpenSSL
-* Add a `--list-method` flag to show all supported encryption methods
+* Add a `--list-methods` flag to show all supported encryption methods
 
 0.1.1.20
 --------
