@@ -452,6 +452,6 @@ tryIO _ = try -- . logException aID
 
 toHaskellNamingConvention :: Text -> Text
 toHaskellNamingConvention x = x 
-                  & T.split (`elem` ['_', '-'])
-                  & over (_tail . traversed) T.toTitle
-                  & T.concat
+                                & T.split (`elem` ['_', '-'])
+                                & over (_tail . traversed) T.toTitle
+                                & T.concat
