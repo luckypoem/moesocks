@@ -56,9 +56,9 @@ type CipherBox = (IV_Length, IO IV, EncryptBuilder, DecryptBuilder)
 
 type MaybeT_IO = ExceptT () IO
 
-type Method = Map Text KeyLength
+type Methods = Map Text KeyLength
 
-safeMethods :: Method
+safeMethods :: Methods
 safeMethods = fromList - 
   [ 
     ("aes-128-cfb"        , 16)
@@ -99,14 +99,14 @@ safeMethods = fromList -
   ]
 
 
-unsafeMethods :: Method
+unsafeMethods :: Methods
 unsafeMethods = fromList - 
   [
     ("rc2-cfb"            , 16) -- unsafe
   , ("rc4"                , 16) -- unsafe
   ]
 
-methods :: Method
+methods :: Methods
 methods = safeMethods <> unsafeMethods
 
 hashKey :: ByteString -> KeyLength -> IV_Length -> ByteString
