@@ -32,7 +32,7 @@
 0.1.0.25
 --------
 * Add `forbidden-ip` option, which defaults to `127.0.0.1`, to prevent misuse
-  of remote. This is again a feature ported from shadowsocks.
+  of remote. This is again a feature ported from ss.
 
 0.1.0.24
 --------
@@ -70,7 +70,7 @@
 
 0.1.0.16
 --------
-* Add compatibility with shadowsocks for UDP port forwarding.
+* Add compatibility with ss for UDP port forwarding.
 
 0.1.0.15
 --------
