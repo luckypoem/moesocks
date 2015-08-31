@@ -17,7 +17,6 @@ import Data.ByteString (ByteString)
 import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
-import qualified Data.Text as T
 import Data.Text.Lens
 import Data.Time.Clock
 import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
@@ -33,6 +32,7 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Strict as S
+import qualified Data.Text as T
 
 
 -- BEGIN backports
