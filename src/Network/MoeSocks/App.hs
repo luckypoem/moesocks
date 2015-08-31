@@ -355,7 +355,7 @@ moeApp = do
 
       runDebug :: IO ()
       runDebug = do
-        catchExceptAsyncLog "Debug app" - do
+        catchExceptAsyncLog "runDebug" - do
           waitBothDebug
             (Just "runLocal", runLocal)
             (Just "runRemote", runRemote)
