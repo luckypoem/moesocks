@@ -21,7 +21,7 @@ import System.Random
 import qualified Prelude as P
 
 main :: IO ()
-main = ssl - do
+main = do
   let _options = defaultMoeOptions 
                                     & configFile .~ Just "config.json"
                                     & forward_UDP .~ 

@@ -11,7 +11,7 @@ import Prelude hiding ((-))
 import System.Exit
 
 main :: IO ()
-main = ssl - do
+main = do
   _options <- execParser opts
   
   withGateOptions _options - do
