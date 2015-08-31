@@ -6,6 +6,7 @@ module Network.MoeSocks.Type where
 import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Concurrent.Async
 import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.Text (Text)
@@ -145,11 +146,20 @@ data RemoteRelayType =
 
 makePrisms ''RemoteRelayType
 
+newtype Relay_ID = Relay_ID { _unRelay_ID :: Async () }
+  deriving (Eq, Ord)
+
+makeLenses ''Relay_ID
+
+instance Show Relay_ID where
+  show _ = "Relay ID"
+
 data RemoteRelay = RemoteRelay
   {
     _remoteRelayType :: RemoteRelayType
   , _remoteRelayAddress :: Text
   , _remoteRelayPort :: Int
+  , _relay_ID :: Maybe Relay_ID
   }
   deriving (Show, Eq)
 
