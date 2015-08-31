@@ -3,7 +3,7 @@ MoeSocks
 
 A SOCKS5 proxy using the client / server architecture.
 
-MoeSocks is greatly inspired by [shadowsocks] and can be used in place of it.
+MoeSocks is greatly inspired by [ss] and can be used in place of it.
 
 Installation
 ============
@@ -29,7 +29,7 @@ Usage
 * Now you have a SOCKS5 proxy running inside a firewall using port
   `localPort`.
 
-* Shadowsocks compatible obfuscation can be turned on with the `-o` flag to make
+* SS compatible obfuscation can be turned on with the `-o` flag to make
   statistical analysis on packet length a bit more confusing.
 
 * See more options:
@@ -50,7 +50,7 @@ Features
 * TCP per connection throttling (as a side effect of trying to find a bug in the
 remote)
 * SOCKS5 service on local can be turned off
-* Understand shadowsocks' configuration file
+* Understand ss' configuration file
 
 Drawbacks
 ==========
@@ -95,12 +95,10 @@ payload. An example command is:
 Credits
 =======
 
-* [shadowsocks] greatly inspired MoeSocks.
-  Shadowsocks introduced a ground breaking design and implementation to bypass
-  Internet censorship in China.
-* [shadowsocks-haskell] by rnons, another implementation of shadowsocks in
-  Haskell, also greatly inspired MoeSocks. Much of the understanding of
-  the internal of shadowsocks was gained by reading rnons's implementation.
+* [ss] greatly inspired MoeSocks.
+* [ss-haskell] another implementation of ss in Haskell, also greatly inspired
+  MoeSocks. Much of the understanding of the internal of ss was gained by
+  reading rnons's implementation.
 
 License
 =======
@@ -119,9 +117,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[shadowsocks]:https://github.com/shadowsocks/shadowsocks
-[shadowsocks-go]:https://github.com/shadowsocks/shadowsocks-go
-[shadowsocks-haskell]:https://github.com/rnons/shadowsocks-haskell
+[ss]:https://github.com/shadowsocks/shadowsocks
+[ss-haskell]:https://github.com/rnons/shadowsocks-haskell
 [config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json
 [#10590]:https://ghc.haskell.org/trac/ghc/ticket/10590
 [TFO]:https://en.wikipedia.org/wiki/TCP_Fast_Open
