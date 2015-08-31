@@ -1,3 +1,7 @@
+0.1.1.32
+--------
+* Add a runtime type
+
 0.1.1.31
 --------
 * Fix hardcoded encryption method
