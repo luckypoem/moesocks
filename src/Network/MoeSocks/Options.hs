@@ -65,7 +65,7 @@ optionParser =
       _listMethods :: O.Parser Bool
       _listMethods = switch -
                       long "list-methods"
-                  <>  help "show supported encryption methods"
+                  <>  help "Show supported encryption methods"
                   
       _tcpBufferSize = intParam -
                               long "tcp-buffer-size"
@@ -81,7 +81,7 @@ optionParser =
                       short 'c'
                   <>  long "config"
                   <>  metavar "CONFIG"
-                  <>  help "Point to the path of the configuration file"
+                  <>  help "Set the path of the configuration file"
                  
       _remote = textParam -
                       short 's'
@@ -128,11 +128,11 @@ optionParser =
                     <>  defaultHelp (_c ^. timeout
                                         & show
                                         & view (from _Text))
-                                    "timeout connection in seconds"
+                                    "Timeout connection in seconds"
                         
       _fastOpen = boolParam -
                         long "fast-open"
-                    <>  help ("use TCP_FASTOPEN, requires Linux 3.7+")
+                    <>  help ("Use TCP_FASTOPEN, requires Linux 3.7+")
       
       _obfuscation :: O.Parser Bool 
       _obfuscation = switch -
