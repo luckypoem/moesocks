@@ -8,7 +8,7 @@ import Control.Concurrent.Async hiding (waitBoth)
 import Control.Lens
 import Control.Monad
 import Control.Monad.Except
-import Control.Monad.Reader hiding (localAddress)
+import Control.Monad.Reader hiding (local)
 import Control.Monad.Writer hiding (listen)
 import Data.Aeson hiding (Result)
 import Data.Aeson.Lens
