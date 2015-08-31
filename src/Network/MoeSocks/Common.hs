@@ -39,7 +39,7 @@ checkForbidden_IP_List _address@(IPv6_Address _) aForbidden_IP_List =
   isJust -
     do
       _ip <- showAddressType _address ^. _Text ^? _Show
-      findOf (each . _IPv6Range) (isMatchedTo _ip) - aForbidden_IP_List
+      findOf (each . _IPv6Range) (isMatchedTo _ip) aForbidden_IP_List
 
 checkForbidden_IP_List _ _ = False
 
@@ -54,7 +54,7 @@ withCheckedForbidden_IP_List aAddressType aForbidden_IP_List aIO =
 showConnectionType :: ConnectionType -> String
 showConnectionType TCP_IP_StreamConnection = "TCP_Stream"
 showConnectionType TCP_IP_PortBinding      = "TCP_Bind  "
-showConnectionType UDP_Port                 = "UDP       "
+showConnectionType UDP_Port                = "UDP       "
 
 showRequest :: ClientRequest -> String
 showRequest _r =  
@@ -73,8 +73,8 @@ addressType_To_Family _                = Nothing
 
 connectionType_To_SocketType :: ConnectionType -> SocketType
 connectionType_To_SocketType TCP_IP_StreamConnection = Stream
-connectionType_To_SocketType TCP_IP_PortBinding = NoSocketType
-connectionType_To_SocketType UDP_Port = Datagram
+connectionType_To_SocketType TCP_IP_PortBinding      = NoSocketType
+connectionType_To_SocketType UDP_Port                = Datagram
 
 initTarget :: ClientRequest -> IO (Socket, SockAddr)
 initTarget _clientRequest = do
