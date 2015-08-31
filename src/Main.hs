@@ -3,7 +3,6 @@ module Main where
 import Control.Monad.Except
 import Control.Monad.Reader hiding (local)
 import Network.MoeSocks.App
-import Network.MoeSocks.Encrypt
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Options
 import Options.Applicative hiding (Parser)
