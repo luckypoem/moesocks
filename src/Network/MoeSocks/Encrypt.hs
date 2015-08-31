@@ -142,8 +142,8 @@ initCipherBox aMethod aPassword
                         in
                         pure - Just (0, pure mempty, constCipher, constCipher)
 
-  | otherwise = ssl - 
-      fmap (preview _Right) - runExceptT - initCipherBox' aMethod aPassword
+  | otherwise = fmap (preview _Right) - 
+                  runExceptT - initCipherBox' aMethod aPassword
 
 initCipherBox' :: Text -> Text -> ExceptT_IO CipherBox
 initCipherBox' aMethod aPassword = do
