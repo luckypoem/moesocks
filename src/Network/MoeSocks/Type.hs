@@ -128,10 +128,10 @@ makePrisms ''LocalRelayType
 
 data LocalRelay = LocalRelay
   {
-    localRelayType :: LocalRelayType
-  , localRelayLocal :: Text
-  , localRelayRemote :: Text
-  , localRelayRemotePort :: Int
+    _localRelayType :: LocalRelayType
+  , _localRelayLocal :: Text
+  , _localRelayRemote :: Text
+  , _localRelayRemotePort :: Int
   }
   deriving (Show, Eq)
 
@@ -146,8 +146,8 @@ makePrisms ''RemoteRelayType
 
 data RemoteRelay = RemoreRelay
   {
-    remoteRelayType :: RemoteRelayType
-  , remoteRelayPort :: Int
+    _remoteRelayType :: RemoteRelayType
+  , _remoteRelayPort :: Int
   }
   deriving (Show, Eq)
 
@@ -155,8 +155,8 @@ makeLenses ''RemoteRelay
 
 data Runtime = Runtime
   {
-    localRelays :: [LocalRelay]
-  , remoteRelays :: [RemoteRelay]
+    _localRelays :: [LocalRelay]
+  , _remoteRelays :: [RemoteRelay]
   }
   deriving (Show, Eq)
 
