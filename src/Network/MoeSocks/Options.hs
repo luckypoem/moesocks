@@ -38,9 +38,9 @@ bool_To_Maybe True = Just True
 boolParam :: O.Mod O.FlagFields Bool -> O.Parser (Maybe Value)
 boolParam = (fmap . fmap) toJSON . fmap bool_To_Maybe . switch
 
-optionParser :: O.Parser MoeOptions
+optionParser :: O.Parser Options
 optionParser = 
-  let _c = defaultMoeConfig
+  let _c = defaultConfig
       _mode = ( textOption -
                     short 'r'
                 <>  long "role"
@@ -211,7 +211,7 @@ optionParser =
       _forbidden_IPs = optional - textOption -
                           long "forbidden-ip"
                       <>  metavar "IPLIST"
-                      <>  defaultHelp (defaultMoeOptions ^. forbidden_IPs
+                      <>  defaultHelp (defaultOptions ^. forbidden_IPs
                                         & map show
                                         & map (view - from _Text)
                                         & T.intercalate ", ")
@@ -221,7 +221,7 @@ optionParser =
                                 )
      
       parseForbidden_IP :: Maybe Text -> [IPRange]
-      parseForbidden_IP = maybe (defaultMoeOptions ^. forbidden_IPs) -
+      parseForbidden_IP = maybe (defaultOptions ^. forbidden_IPs) -
                                 (toListOf - each 
                                           . to T.strip 
                                           . _Text 
@@ -251,7 +251,7 @@ optionParser =
   in
         
 
-  MoeOptions 
+  Options 
               <$> fmap parseMode _mode 
               <*> _config
               <*> _verbosity
@@ -263,7 +263,7 @@ optionParser =
               <*> _listMethods
               <*> _params
 
-opts :: ParserInfo MoeOptions
+opts :: ParserInfo Options
 opts = info (helper <*> optionParser) - 
         fullDesc
     <>  progDesc "A SOCKS5 proxy using the client / server architecture"

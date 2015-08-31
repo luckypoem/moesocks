@@ -19,7 +19,7 @@ import System.Random
 
 main :: IO ()
 main = do
-  let _options = defaultMoeOptions 
+  let _options = defaultOptions 
                                     & configFile .~ Just "config.json"
                                     & forward_UDPs .~ 
                                                 [Forward 5301 "localhost" 53]

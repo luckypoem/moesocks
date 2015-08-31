@@ -36,7 +36,7 @@ import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
 
-withGateOptions :: MoeOptions -> IO a -> IO ()
+withGateOptions :: Options -> IO a -> IO ()
 withGateOptions aOption aIO = do
   if aOption ^. listMethods
     then do
@@ -53,7 +53,7 @@ withGateOptions aOption aIO = do
     else
       () <$ aIO
 
-parseConfig :: MoeOptions -> MoeMonadT MoeConfig
+parseConfig :: Options -> MoeMonadT Config
 parseConfig aOption = do
   let _maybeFilePath = aOption ^. configFile 
 
@@ -89,7 +89,7 @@ parseConfig aOption = do
       toReadableConfig :: Value -> Value
       toReadableConfig = asList - each . _1 %~ T.tail 
 
-      showConfig :: MoeConfig -> Text
+      showConfig :: Config -> Text
       showConfig =  review _JSON
                     . toReadableConfig 
                     . review _JSON 
@@ -111,7 +111,7 @@ parseConfig aOption = do
       fallbackConfig :: Value -> Value -> Value
       fallbackConfig = flip insertConfig
 
-      optionalConfig = filterEssentialConfig - toJSON defaultMoeConfig
+      optionalConfig = filterEssentialConfig - toJSON defaultConfig
       
       _maybeConfig = _v
                       >>= decode 
@@ -131,7 +131,7 @@ parseConfig aOption = do
                                     tell _filePath
                                     tell "\n"
                                     tell "Example: \n"
-                                    tell - showConfig defaultMoeConfig <> "\n"
+                                    tell - showConfig defaultConfig <> "\n"
                 Nothing -> do
                             tell "The password argument '-k' is required.\n"
                             tell "Alternatively, use '-c' to provide a "

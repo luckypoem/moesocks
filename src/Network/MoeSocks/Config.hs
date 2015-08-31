@@ -5,8 +5,8 @@ module Network.MoeSocks.Config where
 import Network.MoeSocks.Type
 import System.Log.Logger
 
-defaultMoeConfig :: MoeConfig
-defaultMoeConfig = MoeConfig
+defaultConfig :: Config
+defaultConfig = Config
   {
     _remote= "0.0.0.0"
   , _remotePort = 8388 
@@ -23,8 +23,8 @@ defaultMoeConfig = MoeConfig
   }
 
 
-defaultMoeOptions :: MoeOptions
-defaultMoeOptions = MoeOptions
+defaultOptions :: Options
+defaultOptions = Options
   {
     _runningMode = DebugMode
   , _configFile = Nothing

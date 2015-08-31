@@ -48,7 +48,7 @@ data ClientRequest = ClientRequest
 makeLenses ''ClientRequest
 
 
-data MoeConfig = MoeConfig
+data Config = Config
   {
     _remote :: Text
   , _remotePort :: Int
@@ -65,10 +65,10 @@ data MoeConfig = MoeConfig
   }
   deriving (Show, Eq, Generic)
 
-instance FromJSON MoeConfig
-instance ToJSON MoeConfig
+instance FromJSON Config
+instance ToJSON Config
 
-makeLenses ''MoeConfig
+makeLenses ''Config
 
 data RunningMode = RemoteMode | LocalMode | DebugMode
       deriving (Show, Eq)
@@ -87,7 +87,7 @@ data Forward = Forward
 
 makeLenses ''Forward
 
-data MoeOptions = MoeOptions
+data Options = Options
   {
     _runningMode :: RunningMode
   , _configFile :: Maybe Text
@@ -102,7 +102,7 @@ data MoeOptions = MoeOptions
   }
   deriving (Show, Eq)
 
-makeLenses ''MoeOptions
+makeLenses ''Options
 
 type Cipher = S.Maybe ByteString -> IO ByteString 
 type IV = ByteString
@@ -164,13 +164,13 @@ makeLenses ''Runtime
 
 data Env = Env
   {
-    _options :: MoeOptions
-  , _config :: MoeConfig
+    _options :: Options
+  , _config :: Config
   , _cipherBox :: CipherBox
   }
 
 makeLenses ''Env
 
 
-type MoeMonadT = ReaderT MoeOptions (ExceptT String IO)
+type MoeMonadT = ReaderT Options (ExceptT String IO)
 
