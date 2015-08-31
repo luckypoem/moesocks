@@ -53,7 +53,7 @@ local_TCP_ForwardRequestHandler :: Env
                                 -> IO ()
 local_TCP_ForwardRequestHandler aEnv aForwarding _ (aSocket,_) = do
   let _clientRequest = ClientRequest
-                          TCP_IP_stream_connection
+                          TCP_IP_StreamConnection
                           (DomainName - aForwarding ^. 
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)
@@ -211,7 +211,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
                                           mempty
                                           _decrypt
                                           (shadowSocksRequestParser 
-                                            TCP_IP_stream_connection)
+                                            TCP_IP_StreamConnection)
                                           aSocket
   
   logSA "R target socket" (initTarget _clientRequest) - \_r -> do

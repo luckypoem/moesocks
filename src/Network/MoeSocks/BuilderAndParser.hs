@@ -112,9 +112,9 @@ addressTypeBuilder aAddressType =
 
 
 connectionType_To_Word8 :: ConnectionType -> Word8
-connectionType_To_Word8 TCP_IP_stream_connection = 1
-connectionType_To_Word8 TCP_IP_port_binding = 2
-connectionType_To_Word8 UDP_port = 3
+connectionType_To_Word8 TCP_IP_StreamConnection = 1
+connectionType_To_Word8 TCP_IP_PortBinding = 2
+connectionType_To_Word8 UDP_Port = 3
 
 
 
@@ -160,9 +160,9 @@ requestParser :: Parser ClientRequest
 requestParser = do
   __connectionType <- choice
       [
-        TCP_IP_stream_connection <$ word8 1 
-      , TCP_IP_port_binding <$ word8 2
-      , UDP_port <$ word8 3
+        TCP_IP_StreamConnection <$ word8 1 
+      , TCP_IP_PortBinding <$ word8 2
+      , UDP_Port <$ word8 3
       ]
 
   word8 _ReservedByte

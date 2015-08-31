@@ -52,9 +52,9 @@ withCheckedForbidden_IP_List aAddressType aForbidden_IP_List aIO =
 
 
 showConnectionType :: ConnectionType -> String
-showConnectionType TCP_IP_stream_connection = "TCP_Stream"
-showConnectionType TCP_IP_port_binding      = "TCP_Bind  "
-showConnectionType UDP_port                 = "UDP       "
+showConnectionType TCP_IP_StreamConnection = "TCP_Stream"
+showConnectionType TCP_IP_PortBinding      = "TCP_Bind  "
+showConnectionType UDP_Port                 = "UDP       "
 
 showRequest :: ClientRequest -> String
 showRequest _r =  
@@ -72,9 +72,9 @@ addressType_To_Family (IPv6_Address _) = Just AF_INET6
 addressType_To_Family _                = Nothing
 
 connectionType_To_SocketType :: ConnectionType -> SocketType
-connectionType_To_SocketType TCP_IP_stream_connection = Stream
-connectionType_To_SocketType TCP_IP_port_binding = NoSocketType
-connectionType_To_SocketType UDP_port = Datagram
+connectionType_To_SocketType TCP_IP_StreamConnection = Stream
+connectionType_To_SocketType TCP_IP_PortBinding = NoSocketType
+connectionType_To_SocketType UDP_Port = Datagram
 
 initTarget :: ClientRequest -> IO (Socket, SockAddr)
 initTarget _clientRequest = do

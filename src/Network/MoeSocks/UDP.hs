@@ -27,7 +27,7 @@ buildShadowSocksRequest aClientRequest aMessage =
 
 parseShadowSocksRequest :: ByteString -> IO (ByteString, ClientRequest)
 parseShadowSocksRequest aMessage =
-  case parse (shadowSocksRequestParser UDP_port) aMessage of
+  case parse (shadowSocksRequestParser UDP_Port) aMessage of
     Done _i _r -> pure (_i, _r)
     _ -> throwIO - ParseException -
             "R Failed to parse UDP request"
@@ -51,7 +51,7 @@ local_UDP_ForwardRequestHandler aEnv
       _cipherBox = _cipherBox
 
   let _clientRequest = ClientRequest
-                          UDP_port
+                          UDP_Port
                           (DomainName - aForwarding ^. 
                             forwardRemoteHost)
                           (aForwarding ^. forwardRemotePort)

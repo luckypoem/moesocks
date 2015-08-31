@@ -24,9 +24,9 @@ data ClientGreeting = ClientGreeting
 makeLenses ''ClientGreeting
 
 data ConnectionType =
-    TCP_IP_stream_connection
-  | TCP_IP_port_binding
-  | UDP_port
+    TCP_IP_StreamConnection
+  | TCP_IP_PortBinding
+  | UDP_Port
   deriving (Show, Eq)
 
 data AddressType = 
