@@ -180,12 +180,12 @@ moeApp = do
   
   let _env = Env _options _config _cipherBox
 
-  let localAppBuilder :: AppType 
+  let dispatchLocalApp :: AppType 
                       -> String 
                       -> (ByteString -> (Socket, SockAddr) -> IO ()) 
                       -> (Socket, SockAddr) 
                       -> IO ()
-      localAppBuilder aAppType aID aHandler s = 
+      dispatchLocalApp aAppType aID aHandler s = 
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
             
           setSocketOption _localSocket ReuseAddr 1
@@ -229,7 +229,7 @@ moeApp = do
       showWrapped x = "[" <> show x <> "]"
 
   let localSocks5App :: (Socket, SockAddr) -> IO ()
-      localSocks5App _s = localAppBuilder TCP_App 
+      localSocks5App _s = dispatchLocalApp TCP_App 
                             ("Socks5 proxy " <> showWrapped (_s ^. _2))  
                             (local_Socks5_RequestHandler _env) - _s
 
@@ -247,14 +247,14 @@ moeApp = do
       forward_TCP_App :: Forward -> (Socket, SockAddr) -> IO ()
       forward_TCP_App _f _s = do
         let _m = showForwarding _f
-        localAppBuilder TCP_App  ("TCP port forwarding " <> _m)
+        dispatchLocalApp TCP_App  ("TCP port forwarding " <> _m)
                                 (local_TCP_ForwardRequestHandler _env _f) 
                                 _s
 
       forward_UDP_App :: Forward -> (Socket, SockAddr) -> IO ()
       forward_UDP_App _f _s = do
         let _m = showForwarding _f 
-        localAppBuilder UDP_App  ("UDP port forwarding " <> _m)
+        dispatchLocalApp UDP_App  ("UDP port forwarding " <> _m)
                                 (local_UDP_ForwardRequestHandler _env _f) 
                                 _s
       
