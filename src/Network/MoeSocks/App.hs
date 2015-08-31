@@ -143,8 +143,6 @@ parseConfig aOption = do
       let configStr = showConfig _config ^. _Text :: String
       io - debug_ - "Using config: " <> configStr
       pure - _config 
-                & method .~ "camellia-128-cfb8"
-              
 
 initLogger :: Priority -> IO ()
 initLogger aLevel = do

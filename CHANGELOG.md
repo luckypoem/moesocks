@@ -1,3 +1,7 @@
+0.1.1.31
+--------
+* Fix hardcoded encryption method
+
 0.1.1.30
 --------
 * Add more encryption methods from OpenSSL
