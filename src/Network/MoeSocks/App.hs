@@ -180,12 +180,12 @@ moeApp = do
   
   let _env = Env _options _config _cipherBox
 
-  let dispatchLocalApp :: RelayType 
+  let localRelay :: RelayType 
                       -> String 
                       -> (ByteString -> (Socket, SockAddr) -> IO ()) 
                       -> (Socket, SockAddr) 
                       -> IO ()
-      dispatchLocalApp aRelayType aID aHandler s = 
+      localRelay aRelayType aID aHandler s = 
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
             
           setSocketOption _localSocket ReuseAddr 1
@@ -229,7 +229,7 @@ moeApp = do
       showWrapped x = "[" <> show x <> "]"
 
   let local_SOCKS5 :: (Socket, SockAddr) -> IO ()
-      local_SOCKS5 _s = dispatchLocalApp TCP_Relay 
+      local_SOCKS5 _s = localRelay TCP_Relay 
                             ("SOCKS5 proxy " <> showWrapped (_s ^. _2))  
                             (local_SOCKS5_RequestHandler _env) - _s
 
@@ -247,14 +247,14 @@ moeApp = do
       localForward_TCP :: Forward -> (Socket, SockAddr) -> IO ()
       localForward_TCP _f _s = do
         let _m = showForwarding _f
-        dispatchLocalApp TCP_Relay  ("TCP port forwarding " <> _m)
+        localRelay TCP_Relay  ("TCP port forwarding " <> _m)
                                 (local_TCP_ForwardRequestHandler _env _f) 
                                 _s
 
       localForward_UDP :: Forward -> (Socket, SockAddr) -> IO ()
       localForward_UDP _f _s = do
         let _m = showForwarding _f 
-        dispatchLocalApp UDP_Relay  ("UDP port forwarding " <> _m)
+        localRelay UDP_Relay  ("UDP port forwarding " <> _m)
                                 (local_UDP_ForwardRequestHandler _env _f) 
                                 _s
       
