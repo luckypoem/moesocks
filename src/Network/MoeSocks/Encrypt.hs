@@ -54,7 +54,7 @@ type DecryptBuilder = CipherBuilder
 
 type CipherBox = (IV_Length, IO IV, EncryptBuilder, DecryptBuilder)
 
-type MaybeT_IO = ExceptT () IO
+type ExceptT_IO = ExceptT () IO
 
 type Methods = Map Text KeyLength
 
@@ -130,11 +130,11 @@ eitherToMaybe :: Either a b -> Maybe b
 eitherToMaybe (Left _) = Nothing
 eitherToMaybe (Right x) = Just x
 
-getMaybe :: Maybe a -> MaybeT_IO a
+getMaybe :: Maybe a -> ExceptT_IO a
 getMaybe Nothing = throwError ()
 getMaybe (Just x) = pure x
 
-mio :: IO (Maybe a) -> MaybeT_IO a
+mio :: IO (Maybe a) -> ExceptT_IO a
 mio = (>>= getMaybe) . liftIO
 
 identityCipher :: Cipher
@@ -149,7 +149,7 @@ initCipherBox aMethod aPassword
   | otherwise = ssl - 
       fmap eitherToMaybe - runExceptT - initCipherBox' aMethod aPassword
 
-initCipherBox' :: Text -> Text -> MaybeT_IO CipherBox
+initCipherBox' :: Text -> Text -> ExceptT_IO CipherBox
 initCipherBox' aMethod aPassword = do
   _method <- mio - getCipherByName - aMethod ^. _Text
   let _IV_Length = cipherIvLength _method
