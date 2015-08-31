@@ -30,7 +30,7 @@ main = ssl - do
                                     & verbosity .~ DEBUG
                                     & obfuscation .~ True
                                     & forbidden_IP .~ []
-                                    & listMethods .~ True
+                                    {-& listMethods .~ True-}
 
   withGateOptions _options - do
     r <- runExceptT - runReaderT moeApp _options

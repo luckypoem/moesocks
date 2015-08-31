@@ -94,7 +94,7 @@ safeMethods = fromList -
   , ("camellia-256-cfb1"  , 32)
   , ("cast5-cfb"          , 16)
   , ("des-cfb"            , 8 )
-  {-, ("idea-cfb"           , 16)-}
+  {-, ("idea-cfb"           , 16)-} -- not supported in OpenSSL?
   , ("seed-cfb"           , 16)
   ]
 
@@ -126,10 +126,6 @@ hashKey aPassword aKeyLen a_IV_len = loop mempty mempty
 ssl :: IO a -> IO a
 ssl = withOpenSSL
 
-eitherToMaybe :: Either a b -> Maybe b
-eitherToMaybe (Left _) = Nothing
-eitherToMaybe (Right x) = Just x
-
 getMaybe :: Maybe a -> ExceptT_IO a
 getMaybe Nothing = throwError ()
 getMaybe (Just x) = pure x
@@ -147,7 +143,7 @@ initCipherBox aMethod aPassword
                         pure - Just (0, pure mempty, constCipher, constCipher)
 
   | otherwise = ssl - 
-      fmap eitherToMaybe - runExceptT - initCipherBox' aMethod aPassword
+      fmap (preview _Right) - runExceptT - initCipherBox' aMethod aPassword
 
 initCipherBox' :: Text -> Text -> ExceptT_IO CipherBox
 initCipherBox' aMethod aPassword = do
