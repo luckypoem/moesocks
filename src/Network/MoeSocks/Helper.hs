@@ -245,19 +245,12 @@ portPairToInt = fromIntegral . portPairToWord16
     portPairToWord16 :: (Word8, Word8) -> Word16
     portPairToWord16 = decode . runPut . put 
 
-duplicateKey :: (Eq a) => (a, a) -> [(a, b)] -> [(a, b)]
-duplicateKey (_from, _to) l = 
-  case lookup _from l of
-    Nothing -> l
-    Just v -> (_to,v) : l
-
 
 recv_ :: Socket -> IO ByteString
 recv_ = flip recv 4096
 
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
-
 
 sendFast_ :: Socket -> ByteString -> SockAddr -> IO ()
 sendFast_ = sendAllToFastOpen
@@ -457,8 +450,8 @@ setSocketCloseOnExec aSocket =
 tryIO :: String -> IO a -> IO (Either IOException a)
 tryIO _ = try -- . logException aID
 
-toCamelCase :: Text -> Text
-toCamelCase x = x 
+toHaskellNamingConvention :: Text -> Text
+toHaskellNamingConvention x = x 
                   & T.split (`elem` ['_', '-'])
                   & over (_tail . traversed) T.toTitle
                   & T.concat

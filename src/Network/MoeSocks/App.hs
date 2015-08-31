@@ -82,7 +82,7 @@ parseConfig aOption = do
       toParsableConfig :: Value -> Value
       toParsableConfig = asList - each . _1 %~  (
                                                   T.cons '_' 
-                                                . toCamelCase
+                                                . toHaskellNamingConvention
                                                 . fromShadowSocksConfig
                                                 )  
 
