@@ -5,15 +5,11 @@
 
 0.1.1.20
 --------
-* Implement TFO in remote. If your browser and the website your are visiting 
-  both support TFO, you can enjoy TFO all the way through. This could lead to a
-  huge reduction of latency.
+* Implement TFO in remote. 
 
 0.1.1.10
 --------
-* Add TCP Fast Open (TFO) capability. It can be turned on by adding a 
-  `"fast_open":true` field in `config.json` or specifying a `--fast-open` flag
-  in the command line arguments.
+* Add TCP Fast Open (TFO) capability. 
 
 0.1.1.0
 -------
