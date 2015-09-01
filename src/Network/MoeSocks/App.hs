@@ -357,15 +357,15 @@ moeApp = do
       runJob (LocalServiceJob x) = runLocalService x 
         
       runApp :: [Job] -> IO ()
-      runApp jobs = do
-        _jobs <- mapM runJob jobs
+      runApp someJobs = do
+        _jobs <- mapM runJob someJobs
         waitAnyCancel _jobs
         pure ()
         
 
   let config_To_Jobs :: Config -> [Job]
       config_To_Jobs aConfig = 
-        let _c = _config
+        let _c = aConfig
 
             _remote_TCP_Relay =   
                 RemoteRelay
@@ -408,8 +408,8 @@ moeApp = do
   
   let 
       filterJobs :: Options -> [Job] -> [Job]
-      filterJobs aOption =
-        case _options ^. runningMode of
+      filterJobs aOptions =
+        case aOptions ^. runningMode of
           DebugMode -> id
           RemoteMode -> filter - is _RemoteRelayJob
           LocalMode -> filter - is _LocalServiceJob
