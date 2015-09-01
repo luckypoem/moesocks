@@ -48,7 +48,7 @@ local_UDP_ForwardRequestHandler aEnv
                                 (aSocket, aSockAddr) = do
 
   let _c = aEnv ^. config
-      _cipherBox = _cipherBox
+      _cipherBox = aEnv ^. cipherBox
 
   let _clientRequest = ClientRequest
                           UDP_Port
@@ -71,13 +71,14 @@ local_UDP_ForwardRequestHandler aEnv
         connect _remoteSocket _remoteAddr
 
         _encodeIV <- _cipherBox ^. generate_IV 
+
         _encrypt <- _cipherBox ^. encryptBuilder - _encodeIV
 
         {-let (_encrypt, _decrypt) = (pure, pure)-}
 
         let _bytes = buildShadowSocksRequest _clientRequest aMessage
 
-        {-debug_ - "L UDP: " <> show _bytes-}
+        {-debug_ - "L UDP sending: " <> show _bytes-}
 
         let _msg = showRelay aSockAddr _clientRequest
         info_ - "LU: " <> _msg
