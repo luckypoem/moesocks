@@ -12,7 +12,6 @@ import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.IP
 import Data.Word
-import Data.Monoid
 import GHC.Generics
 import System.Log.Logger
 import qualified Data.Strict as S
