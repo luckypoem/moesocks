@@ -437,6 +437,8 @@ setSocketSendFast :: Socket -> IO ()
 setSocketSendFast aSocket = do
   setSocketOption aSocket NoDelay 1 
   tryIO "TCP_NOTSENT_LOWAT" - setSocket_TCP_NOTSENT_LOWAT aSocket
+  
+  {-setSocket_TCP_NOTSENT_LOWAT aSocket-}
 
   pure ()
 

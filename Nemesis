@@ -9,10 +9,10 @@ import Data.Time
 main = N.run nemesis
 
 ping = do
-        sh "curl -x socks5://localhost:1090 'http://localhost:8080'; exit 0"
+        sh "curl -x socks5://127.0.0.1:1090 'http://127.0.0.1:8080'; exit 0"
 
 pingNone = do
-        sh "curl -x socks5://localhost:1090 'http://localhost:8081'; exit 0"
+        sh "curl -x socks5://127.0.0.1:1090 'http://127.0.0.1:8081'; exit 0"
 
 runP :: String -> IO ()
 runP = run . ("--forbidden-ip '' " <>)
@@ -61,11 +61,11 @@ nemesis = do
    
     desc "http"
     task "http" - do
-      run "-r debug -c bench/bench.json -T 8081:localhost:8080"
+      run "-r debug -c bench/bench.json -T 8081:127.0.0.1:8080"
     
     let url = "http://127.0.0.1:8080/test.mp4"
         urlSmall = "http://127.0.0.1:8080/"
-        cmd = "parallel --no-notice curl -x socks5://localhost:1091 -o /dev/null" 
+        cmd = "parallel --no-notice curl -x socks5://127.0.0.1:1091 -o /dev/null" 
         args _url = concatMap (<> " ") - replicate 4 _url
 
     desc "load"
@@ -97,17 +97,17 @@ nemesis = do
 
   desc "test port forwarding with a tcp dns request"
   task "dig-tcp" - do
-    sh "dig @localhost -p 5300 +tcp twitter.com"
+    sh "dig @127.0.0.1 -p 5300 +tcp twitter.com"
 
   desc "test port forwarding with a loop of udp dns request"
   task "dig" - do
     forever - do
-      sh "dig @localhost -p 5300 twitter.com; exit 0;"
+      sh "dig @127.0.0.1 -p 5300 twitter.com; exit 0;"
       sleep 1
   
   desc "test port forwarding with a udp dns request"
   task "dig-one" - do
-    sh "dig @localhost -p 5300 twitter.com; exit 0;"
+    sh "dig @127.0.0.1 -p 5300 twitter.com; exit 0;"
     sleep 1
   
   desc "dist"
