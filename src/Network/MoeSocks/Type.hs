@@ -136,14 +136,6 @@ data LocalServiceType =
 makePrisms ''LocalServiceType
 
 
-{-newtype AsyncWrapper = AsyncWrapper { _unAsyncWrapper :: Async () }-}
-  {-deriving (Eq, Ord)-}
-
-{-makeLenses ''AsyncWrapper-}
-
-{-instance Show AsyncWrapper where-}
-  {-show _ = "Async Wrapper"-}
-
 data LocalService = LocalService
   {
     _localServiceAddress :: Text
@@ -184,20 +176,10 @@ type Async_ID = Async ()
 
 data Runtime = Runtime
   {
-    _localServices :: [LocalService]
-  , _remoteRelays :: [RemoteRelay]
-  , _jobs :: [(Job, Async_ID)]
+    _jobs :: [(Job, Async_ID)]
   }
 
 makeLenses ''Runtime
-
-instance Monoid Runtime where
-  mempty = Runtime [] [] []
-  Runtime x y z `mappend` Runtime x' y' z' = Runtime 
-                                              (x <> x') 
-                                              (y <> y')
-                                              (z <> z')
-          
 
 data Env = Env
   {
