@@ -328,6 +328,41 @@ moeApp = do
                                   getSocket _address _port Datagram
                                     >>= remote_UDP_Relay 
 
+      
+  let runLocalService :: LocalService -> IO Async_ID
+      runLocalService _localService = do
+        async . foreverRun - do
+          case _localService ^. localServiceType of
+            LocalService_TCP_Forward forwarding -> 
+              catchExceptAsyncLog "L TCP_Forwarding" - do
+                getSocket (_localService ^. localServiceAddress) 
+                  (forwarding ^. forwardLocalPort) 
+                  Stream
+                >>= localForward_TCP forwarding
+        
+            LocalService_UDP_Forward forwarding ->
+              catchExceptAsyncLog "L UDP_Forwarding" - do
+                getSocket (_localService ^. localServiceAddress) 
+                  (forwarding ^. forwardLocalPort) 
+                  Datagram
+                >>= localForward_UDP forwarding
+              
+            LocalService_SOCKS5 _port ->
+              catchExceptAsyncLog "L SOCKS5" - do
+                getSocket (_localService ^. localServiceAddress) _port Stream
+                  >>= local_SOCKS5 
+
+      runJob :: Job -> IO Async_ID
+      runJob (RemoteRelayJob x) = runRemoteRelay x
+      runJob (LocalServiceJob x) = runLocalService x 
+        
+      runApp :: [Job] -> IO ()
+      runApp jobs = do
+        _jobs <- mapM runJob jobs
+        waitAnyCancel _jobs
+        pure ()
+        
+
   let config_To_Jobs :: Config -> [Job]
       config_To_Jobs aConfig = 
         let _c = _config
@@ -366,92 +401,20 @@ moeApp = do
             _localServices = _localService_TCP_Forwards
                           <> _localService_UDP_Forwards
                           <> pure _localService_SOCKS5
-
-
         in
 
         map RemoteRelayJob _remoteRelays
         <> map LocalServiceJob _localServices
-                            
-
+  
   let 
-
-      filterRuntime :: Options -> Runtime -> Runtime
-      filterRuntime aOption =
+      filterJobs :: Options -> [Job] -> [Job]
+      filterJobs aOption =
         case _options ^. runningMode of
           DebugMode -> id
-          RemoteMode -> over jobs - filter - is _RemoteRelayJob . fst
-          LocalMode -> over jobs - filter - is _LocalServiceJob . fst
-      
-      startRuntime :: Runtime -> IO ()
-      startRuntime _runtime = do
-         undefined
+          RemoteMode -> filter - is _RemoteRelayJob
+          LocalMode -> filter - is _LocalServiceJob
 
-      
-      runRemote :: IO ()
-      runRemote = do
-        pure ()
-        {-relays <- mapM runRemoteRelay - -}
-                        {-config_To_Job _c mempty ^. remoteRelays-}
+  io - runApp - filterJobs _options - config_To_Jobs _c
 
-        {-waitAnyCancel - relays ^.. each . relay_ID . _Just . unAsyncWrapper-}
 
-        {-pure ()-}
-
-          
-  let runLocalService :: LocalService -> IO Async_ID
-      runLocalService _localService = do
-        async . foreverRun - do
-          case _localService ^. localServiceType of
-            LocalService_TCP_Forward forwarding -> 
-              catchExceptAsyncLog "L TCP_Forwarding" - do
-                getSocket (_localService ^. localServiceAddress) 
-                  (forwarding ^. forwardLocalPort) 
-                  Stream
-                >>= localForward_TCP forwarding
-        
-            LocalService_UDP_Forward forwarding ->
-              catchExceptAsyncLog "L UDP_Forwarding" - do
-                getSocket (_localService ^. localServiceAddress) 
-                  (forwarding ^. forwardLocalPort) 
-                  Datagram
-                >>= localForward_UDP forwarding
-              
-            LocalService_SOCKS5 _port ->
-              catchExceptAsyncLog "L SOCKS5" - do
-                getSocket (_localService ^. localServiceAddress) _port Stream
-                  >>= local_SOCKS5 
-
-      runJob :: Job -> IO Async_ID
-      runJob (RemoteRelayJob x) = runRemoteRelay x
-      runJob (LocalServiceJob x) = runLocalService x 
-        
-      {-runApp :: Runtime -> IO ()-}
-      {-runApp aRuntime = do-}
-        {-jobs <- mapM runJob - aRuntime ^. jobs-}
-
-        {-waitAnyCancel - services ^.. each . service_ID . _Just . unAsyncWrapper-}
-        
-
-      runLocal :: IO ()
-      runLocal = do
-        {-services <- mapM runLocalService - -}
-                        {-config_To_Runtime _c mempty ^. localServices-}
-
-        {-waitAnyCancel - services ^.. each . service_ID . _Just . unAsyncWrapper-}
-
-        pure ()
-
-      runDebug :: IO ()
-      runDebug = pure () 
-        {-do-}
-        {-catchExceptAsyncLog "runDebug" - do-}
-          {-waitBothDebug-}
-            {-(Just "runLocal", runLocal)-}
-            {-(Just "runRemote", runRemote)-}
-
-  io - case _options ^. runningMode of
-    DebugMode -> runDebug
-    RemoteMode -> runRemote 
-    LocalMode -> runLocal
 
