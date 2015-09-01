@@ -175,7 +175,7 @@ nemesis = do
 
   desc "local2"
   task "local2" - do
-    run "-r local -c dev2.json -U 5300:8.8.8.8:53"
+    run "-r local -c dev2.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
   
   desc "i"
   task "i" - do
