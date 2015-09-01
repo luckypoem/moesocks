@@ -55,8 +55,8 @@ local_TCP_ForwardRequestHandler aEnv aForwarding _ (aSocket,_) = do
   let _clientRequest = ClientRequest
                           TCP_IP_StreamConnection
                           (DomainName - aForwarding ^. 
-                            forwardRemoteHost)
-                          (aForwarding ^. forwardRemotePort)
+                            forwardTargetAddress)
+                          (aForwarding ^. forwardTargetPort)
               
   local_TCP_RequestHandler aEnv
                           (mempty, _clientRequest) False aSocket
