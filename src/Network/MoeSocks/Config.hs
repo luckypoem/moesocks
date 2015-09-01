@@ -20,6 +20,7 @@ defaultConfig = Config
   , _throttleSpeed = 8000 -- in Kilobytes
   , _obfuscationFlushBound = 4096
   , _fastOpen = False
+  , _socketOption_TCP_NOTSENT_LOWAT = False
   }
 
 
