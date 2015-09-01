@@ -38,6 +38,7 @@ import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
 
+
 withGateOptions :: Options -> IO a -> IO ()
 withGateOptions aOption aIO = do
   if aOption ^. listMethods
@@ -76,6 +77,7 @@ parseConfig aOption = do
                 ("server", "remoteAddress")
               , ("server_port", "remotePort")
               , ("local_address", "localAddress")
+              , ("local_port", "localPort")
               ]
 
         in
@@ -84,7 +86,7 @@ parseConfig aOption = do
       toParsableConfig :: Value -> Value
       toParsableConfig = asList - each . _1 %~  (
                                                   T.cons '_' 
-                                                . toHaskellNamingConvention
+                                                {-. toHaskellNamingConvention-}
                                                 . fromShadowSocksConfig
                                                 )  
 
@@ -115,7 +117,8 @@ parseConfig aOption = do
 
       optionalConfig = filterEssentialConfig - toJSON defaultConfig
       
-      _maybeConfig = _v
+      _maybeConfig = -- trace ("JSON: " <> show _v) 
+                      _v
                       >>= decode 
                           . encode 
                           . fallbackConfig optionalConfig

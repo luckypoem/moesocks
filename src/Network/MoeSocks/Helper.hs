@@ -19,6 +19,7 @@ import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Time.Clock
+import Debug.Trace (trace)
 import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
@@ -31,8 +32,6 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Strict as S
-import qualified Data.Text as T
-
 
 -- BEGIN backports
 
@@ -56,6 +55,9 @@ flip4 (_a, _b, _c, _d) = (_d, _c, _b, _a)
 boolToMaybe :: Bool -> Maybe ()
 boolToMaybe True = Just ()
 boolToMaybe False = Nothing
+
+trace' :: (Show a) => String -> a -> a
+trace' aID x = trace ("TRACE " <> aID <> ": " <> show x) x
 
 {-syncLock :: MVar ()-}
 {-syncLock = unsafePerformIO - newEmptyMVar-}
@@ -444,8 +446,8 @@ setSocketCloseOnExec aSocket =
 tryIO :: String -> IO a -> IO (Either IOException a)
 tryIO _ = try -- . logException aID
 
-toHaskellNamingConvention :: Text -> Text
-toHaskellNamingConvention x = x 
-                                & T.split (`elem` ['_', '-'])
-                                & over (_tail . traversed) T.toTitle
-                                & T.concat
+{-toHaskellNamingConvention :: Text -> Text-}
+{-toHaskellNamingConvention x = x -}
+                                {-& T.split (`elem` ['_', '-'])-}
+                                {-& over (_tail . traversed) T.toTitle-}
+                                {-& T.concat-}
