@@ -92,4 +92,5 @@ setSocketConfig:: Config -> Socket -> IO ()
 setSocketConfig aConfig aSocket = do
   setSocketOption aSocket NoDelay 1 
   when (aConfig ^. socketOption_TCP_NOTSENT_LOWAT) - do
-    setSocket_TCP_NOTSENT_LOWAT aSocket
+    tryIO "setSocket_TCP_NOTSENT_LOWAT" - setSocket_TCP_NOTSENT_LOWAT aSocket
+    pure ()
