@@ -90,6 +90,12 @@ data Forward = Forward
 
 makeLenses ''Forward
 
+{-data Profile =    Mac-}
+                {-| Linux-}
+  {-deriving (Show, Eq, Read)-}
+
+{-makePrisms ''Profile-}
+
 data Options = Options
   {
     _runningMode :: RunningMode
