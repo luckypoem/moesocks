@@ -433,6 +433,11 @@ setSocket_TCP_NOTSENT_LOWAT aSocket =
   in
   setSocketOption aSocket (CustomSockOpt (_TCP_Option, _TCP_NOTSENT_LOWAT)) 1 
 
+setSocketSendFast :: Socket -> IO ()
+setSocketSendFast aSocket = do
+  setSocketOption aSocket NoDelay 1 
+  {-tryIO "TCP_NOTSENT_LOWAT" - setSocket_TCP_NOTSENT_LOWAT aSocket-}
+  pure ()
 
 
 -- Copied and slightly modified from: 
