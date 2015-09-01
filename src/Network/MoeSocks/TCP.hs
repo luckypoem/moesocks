@@ -89,7 +89,7 @@ local_TCP_RequestHandler aEnv
     
     logSA "L remote socket" _initSocket - 
       \(_remoteSocket, _remoteAddress) -> do
-      setSocketSendFast _remoteSocket
+      setSocketConfig _c _remoteSocket
 
       _remoteSocketName <- getSocketName _remoteSocket
       
@@ -221,7 +221,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
     debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
     withCheckedForbidden_IP_List _addr _forbidden_IPs - do
-      setSocketSendFast _targetSocket
+      setSocketConfig _c _targetSocket
 
       _remotePeerAddr <- getPeerName aSocket
       let _msg = showRelay _remotePeerAddr _clientRequest

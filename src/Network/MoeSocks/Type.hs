@@ -64,6 +64,7 @@ data Config = Config
   , _throttleSpeed :: Double
   , _obfuscationFlushBound :: Int -- should be greater then MTU
   , _fastOpen :: Bool
+  , _socketOption_TCP_NOTSENT_LOWAT :: Bool
   }
   deriving (Show, Eq, Generic)
 
