@@ -163,7 +163,7 @@ initLogger aLevel = do
   updateGlobalLogger "moe" - addHandler formattedHandler
   updateGlobalLogger "moe" - setLevel aLevel
 
-data RelayType = TCP_Relay | UDP_Relay 
+data ServiceType = TCP_Service | UDP_Service
   deriving (Show, Eq)
 
 moeApp:: MoeMonadT ()
@@ -186,19 +186,19 @@ moeApp = do
   let _env = Env _options _config _cipherBox
 
 
-  let localRelay :: RelayType 
+  let localService :: ServiceType 
                       -> String 
                       -> (ByteString -> (Socket, SockAddr) -> IO ()) 
                       -> (Socket, SockAddr) 
                       -> IO ()
-      localRelay aRelayType aID aHandler s = 
+      localService aServiceType aID aHandler s = 
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
             
           setSocketOption _localSocket ReuseAddr 1
           bindSocket _localSocket _localAddr
           
-          case aRelayType of
-            TCP_Relay -> do
+          case aServiceType of
+            TCP_Service -> do
               info_ - "LT: " <> aID <> " nyaa!"
 
               when (_c ^. fastOpen) -
@@ -217,7 +217,7 @@ moeApp = do
 
               forever - handleLocal _localSocket
 
-            UDP_Relay -> do
+            UDP_Service -> do
               info_ - "LU: " <> aID <> " nyaa!"
               let handleLocal = do
                     (_msg, _sockAddr) <- 
@@ -237,7 +237,7 @@ moeApp = do
       showWrapped x = "[" <> show x <> "]"
 
   let local_SOCKS5 :: (Socket, SockAddr) -> IO ()
-      local_SOCKS5 _s = localRelay TCP_Relay 
+      local_SOCKS5 _s = localService TCP_Service
                             ("SOCKS5 proxy " <> showWrapped (_s ^. _2))  
                             (local_SOCKS5_RequestHandler _env) - _s
 
@@ -255,14 +255,14 @@ moeApp = do
       localForward_TCP :: Forward -> (Socket, SockAddr) -> IO ()
       localForward_TCP _f _s = do
         let _m = showForwarding _f
-        localRelay TCP_Relay  ("TCP port forwarding " <> _m)
+        localService TCP_Service ("TCP port forwarding " <> _m)
                                 (local_TCP_ForwardRequestHandler _env _f) 
                                 _s
 
       localForward_UDP :: Forward -> (Socket, SockAddr) -> IO ()
       localForward_UDP _f _s = do
         let _m = showForwarding _f 
-        localRelay UDP_Relay  ("UDP port forwarding " <> _m)
+        localService UDP_Service ("UDP port forwarding " <> _m)
                                 (local_UDP_ForwardRequestHandler _env _f) 
                                 _s
       
@@ -313,52 +313,50 @@ moeApp = do
 
   -- Run
 
-  let runRemoteRelay :: RemoteRelay -> IO Async_ID
+  let runRemoteRelay :: RemoteRelay -> IO ()
       runRemoteRelay _remoteRelay = do
         let _address = _remoteRelay ^. remoteRelayAddress
             _port = _remoteRelay ^. remoteRelayPort
         
-        async . foreverRun - do
-          case _remoteRelay ^. remoteRelayType of
-            Remote_TCP_Relay -> catchExceptAsyncLog "R TCP Relay" - do
-                                  getSocket _address _port Stream
-                                    >>= remote_TCP_Relay 
+        case _remoteRelay ^. remoteRelayType of
+          Remote_TCP_Relay -> catchExceptAsyncLog "R TCP Relay" - do
+                                getSocket _address _port Stream
+                                  >>= remote_TCP_Relay 
 
-            Remote_UDP_Relay  -> catchExceptAsyncLog "R UDP Relay" - do
-                                  getSocket _address _port Datagram
-                                    >>= remote_UDP_Relay 
+          Remote_UDP_Relay  -> catchExceptAsyncLog "R UDP Relay" - do
+                                getSocket _address _port Datagram
+                                  >>= remote_UDP_Relay 
 
       
-  let runLocalService :: LocalService -> IO Async_ID
+  let runLocalService :: LocalService -> IO ()
       runLocalService _localService = do
-        async . foreverRun - do
-          case _localService ^. localServiceType of
-            LocalService_TCP_Forward forwarding -> 
-              catchExceptAsyncLog "L TCP_Forwarding" - do
-                getSocket (_localService ^. localServiceAddress) 
-                  (forwarding ^. forwardLocalPort) 
-                  Stream
-                >>= localForward_TCP forwarding
-        
-            LocalService_UDP_Forward forwarding ->
-              catchExceptAsyncLog "L UDP_Forwarding" - do
-                getSocket (_localService ^. localServiceAddress) 
-                  (forwarding ^. forwardLocalPort) 
-                  Datagram
-                >>= localForward_UDP forwarding
-              
-            LocalService_SOCKS5 _port ->
-              catchExceptAsyncLog "L SOCKS5" - do
-                getSocket (_localService ^. localServiceAddress) _port Stream
-                  >>= local_SOCKS5 
+        case _localService ^. localServiceType of
+          LocalService_TCP_Forward forwarding -> 
+            catchExceptAsyncLog "L TCP_Forwarding" - do
+              getSocket (_localService ^. localServiceAddress) 
+                (forwarding ^. forwardLocalPort) 
+                Stream
+              >>= localForward_TCP forwarding
+      
+          LocalService_UDP_Forward forwarding ->
+            catchExceptAsyncLog "L UDP_Forwarding" - do
+              getSocket (_localService ^. localServiceAddress) 
+                (forwarding ^. forwardLocalPort) 
+                Datagram
+              >>= localForward_UDP forwarding
+            
+          LocalService_SOCKS5 _port ->
+            catchExceptAsyncLog "L SOCKS5" - do
+              getSocket (_localService ^. localServiceAddress) _port Stream
+                >>= local_SOCKS5 
 
-      runJob :: Job -> IO Async_ID
+      runJob :: Job -> IO ()
       runJob (RemoteRelayJob x) = runRemoteRelay x
       runJob (LocalServiceJob x) = runLocalService x 
         
       runApp :: [Job] -> IO ()
       runApp someJobs = do
-        _jobs <- mapM runJob someJobs
+        _jobs <- mapM (async . foreverRun . runJob) someJobs
         waitAnyCancel _jobs
         pure ()
         
