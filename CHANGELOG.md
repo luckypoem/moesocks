@@ -1,7 +1,7 @@
 0.1.2.0
 -------
 
-* Add OSX compatibility
+* Add OSX compatibility, still some unfixed bugs on OSX. 
 * Fix a bug that breaks UDP forwarding in local
 
 0.1.1.32
