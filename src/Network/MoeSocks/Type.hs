@@ -82,8 +82,8 @@ data Verbosity = Normal | Verbose
 data Forward = Forward
   {
     _forwardLocalPort :: Port
-  , _forwardRemoteHost :: Text
-  , _forwardRemotePort :: Port
+  , _forwardTargetAddress :: Text
+  , _forwardTargetPort :: Port
   }
   deriving (Show, Eq)
 
@@ -127,24 +127,33 @@ data CipherBox = CipherBox
 
 makeLenses ''CipherBox
 
-data LocalRelayType =
-      Local_TCP_Relay Forward
-    | Local_UDP_Relay Forward
-    | Local_SOCKS_Relay Int
+data LocalServiceType =
+      LocalService_TCP_Forward Forward
+    | LocalService_UDP_Forward Forward
+    | LocalService_SOCKS5 Int
     deriving (Show, Eq)
 
-makePrisms ''LocalRelayType
+makePrisms ''LocalServiceType
 
-data LocalRelay = LocalRelay
+
+{-newtype AsyncWrapper = AsyncWrapper { _unAsyncWrapper :: Async () }-}
+  {-deriving (Eq, Ord)-}
+
+{-makeLenses ''AsyncWrapper-}
+
+{-instance Show AsyncWrapper where-}
+  {-show _ = "Async Wrapper"-}
+
+data LocalService = LocalService
   {
-    _localRelayType :: LocalRelayType
-  , _localRelayAddress :: Text
-  , _localRelayRemoteAddress :: Text
-  , _localRelayRemotePort :: Int
+    _localServiceAddress :: Text
+  , _localServiceRemoteAddress :: Text
+  , _localServiceRemotePort :: Int
+  , _localServiceType :: LocalServiceType
   }
   deriving (Show, Eq)
 
-makeLenses ''LocalRelay
+makeLenses ''LocalService
 
 data RemoteRelayType =
       Remote_TCP_Relay
@@ -153,37 +162,41 @@ data RemoteRelayType =
 
 makePrisms ''RemoteRelayType
 
-newtype Relay_ID = Relay_ID { _unRelay_ID :: Async () }
-  deriving (Eq, Ord)
-
-makeLenses ''Relay_ID
-
-instance Show Relay_ID where
-  show _ = "Relay ID"
 
 data RemoteRelay = RemoteRelay
   {
     _remoteRelayType :: RemoteRelayType
   , _remoteRelayAddress :: Text
   , _remoteRelayPort :: Int
-  , _relay_ID :: Maybe Relay_ID
   }
   deriving (Show, Eq)
 
 makeLenses ''RemoteRelay
 
+data Job = 
+      RemoteRelayJob RemoteRelay
+    | LocalServiceJob LocalService
+    deriving (Show, Eq)
+
+makePrisms ''Job
+
+type Async_ID = Async ()
+
 data Runtime = Runtime
   {
-    _localRelays :: [LocalRelay]
+    _localServices :: [LocalService]
   , _remoteRelays :: [RemoteRelay]
+  , _jobs :: [(Job, Async_ID)]
   }
-  deriving (Show, Eq)
 
 makeLenses ''Runtime
 
 instance Monoid Runtime where
-  mempty = Runtime [] []
-  Runtime x y `mappend` Runtime x' y' = Runtime (x <> x') (y <> y')
+  mempty = Runtime [] [] []
+  Runtime x y z `mappend` Runtime x' y' z' = Runtime 
+                                              (x <> x') 
+                                              (y <> y')
+                                              (z <> z')
           
 
 data Env = Env

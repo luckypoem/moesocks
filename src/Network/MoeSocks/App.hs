@@ -311,12 +311,14 @@ moeApp = do
 
           forever handleRemote
 
-  let runRemoteRelay :: RemoteRelay -> IO RemoteRelay 
+  -- Run
+
+  let runRemoteRelay :: RemoteRelay -> IO Async_ID
       runRemoteRelay _remoteRelay = do
         let _address = _remoteRelay ^. remoteRelayAddress
             _port = _remoteRelay ^. remoteRelayPort
         
-        _relay_ID <- fmap Relay_ID - async - foreverRun - do
+        async . foreverRun - do
           case _remoteRelay ^. remoteRelayType of
             Remote_TCP_Relay -> catchExceptAsyncLog "R TCP Relay" - do
                                   getSocket _address _port Stream
@@ -326,82 +328,130 @@ moeApp = do
                                   getSocket _address _port Datagram
                                     >>= remote_UDP_Relay 
 
-        pure - _remoteRelay & relay_ID ?~ _relay_ID
+  let config_To_Jobs :: Config -> [Job]
+      config_To_Jobs aConfig = 
+        let _c = _config
+
+            _remote_TCP_Relay =   
+                RemoteRelay
+                  Remote_TCP_Relay
+                  (_c ^. remoteAddress)
+                  (_c ^. remotePort)
+
+            _remote_UDP_Relay = 
+                RemoteRelay
+                  Remote_UDP_Relay
+                  (_c ^. remoteAddress)
+                  (_c ^. remotePort)
+
+            _localService :: LocalServiceType -> LocalService
+            _localService = LocalService 
+                              (_c ^. localAddress)
+                              (_c ^. remoteAddress)
+                              (_c ^. remotePort)
+
+            _localService_TCP_Forwards = 
+                _options ^. forward_TCPs 
+                  & map (_localService . LocalService_TCP_Forward)
+
+            _localService_UDP_Forwards =
+                _options ^. forward_UDPs 
+                  & map (_localService . LocalService_UDP_Forward)
+
+            _localService_SOCKS5 =
+                LocalService_SOCKS5 (_c ^. localPort)
+                  & _localService
+
+            _remoteRelays = [_remote_TCP_Relay, _remote_UDP_Relay]
+            _localServices = _localService_TCP_Forwards
+                          <> _localService_UDP_Forwards
+                          <> pure _localService_SOCKS5
+
+
+        in
+
+        map RemoteRelayJob _remoteRelays
+        <> map LocalServiceJob _localServices
+                            
 
   let 
+
+      filterRuntime :: Options -> Runtime -> Runtime
+      filterRuntime aOption =
+        case _options ^. runningMode of
+          DebugMode -> id
+          RemoteMode -> over jobs - filter - is _RemoteRelayJob . fst
+          LocalMode -> over jobs - filter - is _LocalServiceJob . fst
+      
+      startRuntime :: Runtime -> IO ()
+      startRuntime _runtime = do
+         undefined
+
+      
       runRemote :: IO ()
       runRemote = do
-        let config_To_Runtime :: Config -> Runtime -> Runtime
-            config_To_Runtime _config _runtime = 
-              let _remote_TCP_Relay =   
-                      RemoteRelay
-                        Remote_TCP_Relay
-                        (_config ^. remoteAddress)
-                        (_config ^. remotePort)
-                        Nothing
+        pure ()
+        {-relays <- mapM runRemoteRelay - -}
+                        {-config_To_Job _c mempty ^. remoteRelays-}
 
-                  _remote_UDP_Relay = 
-                      RemoteRelay
-                        Remote_UDP_Relay
-                        (_config ^. remoteAddress)
-                        (_config ^. remotePort)
-                        Nothing 
-              in
-              _runtime & remoteRelays .~ [_remote_TCP_Relay, _remote_UDP_Relay]
-                
-        relays <- mapM runRemoteRelay - 
-                        config_To_Runtime _c mempty ^. remoteRelays
+        {-waitAnyCancel - relays ^.. each . relay_ID . _Just . unAsyncWrapper-}
 
-        waitAnyCancel - relays ^.. each . relay_ID . _Just . unRelay_ID
+        {-pure ()-}
+
+          
+  let runLocalService :: LocalService -> IO Async_ID
+      runLocalService _localService = do
+        async . foreverRun - do
+          case _localService ^. localServiceType of
+            LocalService_TCP_Forward forwarding -> 
+              catchExceptAsyncLog "L TCP_Forwarding" - do
+                getSocket (_localService ^. localServiceAddress) 
+                  (forwarding ^. forwardLocalPort) 
+                  Stream
+                >>= localForward_TCP forwarding
+        
+            LocalService_UDP_Forward forwarding ->
+              catchExceptAsyncLog "L UDP_Forwarding" - do
+                getSocket (_localService ^. localServiceAddress) 
+                  (forwarding ^. forwardLocalPort) 
+                  Datagram
+                >>= localForward_UDP forwarding
+              
+            LocalService_SOCKS5 _port ->
+              catchExceptAsyncLog "L SOCKS5" - do
+                getSocket (_localService ^. localServiceAddress) _port Stream
+                  >>= local_SOCKS5 
+
+      runJob :: Job -> IO Async_ID
+      runJob (RemoteRelayJob x) = runRemoteRelay x
+      runJob (LocalServiceJob x) = runLocalService x 
+        
+      {-runApp :: Runtime -> IO ()-}
+      {-runApp aRuntime = do-}
+        {-jobs <- mapM runJob - aRuntime ^. jobs-}
+
+        {-waitAnyCancel - services ^.. each . service_ID . _Just . unAsyncWrapper-}
+        
+
+      runLocal :: IO ()
+      runLocal = do
+        {-services <- mapM runLocalService - -}
+                        {-config_To_Runtime _c mempty ^. localServices-}
+
+        {-waitAnyCancel - services ^.. each . service_ID . _Just . unAsyncWrapper-}
 
         pure ()
 
-          
-        
-      runLocal :: IO ()
-      runLocal = do
-        let _localForward_TCPs = do
-              forM_ (_options ^. forward_TCPs) - \forwarding -> forkIO - do
-                  foreverRun - catchExceptAsyncLog "L TCP_Forwarding" - do
-                    getSocket (_c ^. localAddress) 
-                      (forwarding ^. forwardLocalPort) 
-                      Stream
-                    >>= localForward_TCP forwarding
-          
-        let _localForward_UDPs = do
-              forM_ (_options ^. forward_UDPs) - \forwarding -> forkIO - do
-                  foreverRun - catchExceptAsyncLog "L UDP_Forwarding" - do
-                    getSocket (_c ^. localAddress) 
-                      (forwarding ^. forwardLocalPort) 
-                      Datagram
-                    >>= localForward_UDP forwarding
-        
-        let _local_SOCKS5 = foreverRun - catchExceptAsyncLog "L SOCKS5" - do
-              getSocket (_c ^. localAddress) (_c ^. localPort) Stream
-                >>= local_SOCKS5 
-
-        _localForward_TCPs
-        _localForward_UDPs
-        if (_options ^. disable_SOCKS5) 
-          then 
-            if (_options ^. forward_TCPs & isn't _Empty)
-                    || (_options ^. forward_UDPs & isn't _Empty)
-              then 
-                forever - sleep 1000
-              else
-                error_ "Nothing to run!"
-                
-          else _local_SOCKS5
-
       runDebug :: IO ()
-      runDebug = do
-        catchExceptAsyncLog "runDebug" - do
-          waitBothDebug
-            (Just "runLocal", runLocal)
-            (Just "runRemote", runRemote)
+      runDebug = pure () 
+        {-do-}
+        {-catchExceptAsyncLog "runDebug" - do-}
+          {-waitBothDebug-}
+            {-(Just "runLocal", runLocal)-}
+            {-(Just "runRemote", runRemote)-}
 
   io - case _options ^. runningMode of
     DebugMode -> runDebug
-    RemoteMode -> runRemote
+    RemoteMode -> runRemote 
     LocalMode -> runLocal
 
