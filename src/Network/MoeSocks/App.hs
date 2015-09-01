@@ -19,6 +19,7 @@ import Data.Text.Lens
 import Network.MoeSocks.Config
 import Network.MoeSocks.Constant
 import Network.MoeSocks.Encrypt (initCipherBox, safeMethods, unsafeMethods)
+import Network.MoeSocks.Common
 import Network.MoeSocks.Helper
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
@@ -205,7 +206,7 @@ moeApp = do
               let handleLocal _socket = do
                     _s@(_newSocket, _newSockAddr) <- accept _socket
                     setSocketCloseOnExec _newSocket
-                    setSocketSendFast _socket
+                    setSocketConfig _c _socket
                     
                     forkIO - catchExceptAsyncLog "LT" - 
                               logSA "L TCP client socket" (pure _s) -
@@ -278,7 +279,7 @@ moeApp = do
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
                 setSocketCloseOnExec _newSocket
-                setSocketSendFast _socket
+                setSocketConfig _c _socket
                 
                 forkIO - catchExceptAsyncLog "RT" - 
                             logSocket "R remote socket" (pure _newSocket) -
