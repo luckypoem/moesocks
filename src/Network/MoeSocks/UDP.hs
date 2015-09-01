@@ -53,8 +53,8 @@ local_UDP_ForwardRequestHandler aEnv
   let _clientRequest = ClientRequest
                           UDP_Port
                           (DomainName - aForwarding ^. 
-                            forwardRemoteHost)
-                          (aForwarding ^. forwardRemotePort)
+                            forwardTargetAddress)
+                          (aForwarding ^. forwardTargetPort)
   
   {-debug_ - "L UDP: " <> show _clientRequest-}
 

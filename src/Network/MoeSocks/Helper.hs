@@ -42,6 +42,8 @@ f - x = f x
 
 -- END backports
 
+is :: APrism s t a b -> s -> Bool
+is x = not . isn't x
 
 type HCipher = S.Maybe ByteString -> IO ByteString 
 type HQueue = TBQueue (S.Maybe ByteString)
