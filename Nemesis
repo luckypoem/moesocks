@@ -20,7 +20,7 @@ runP = run . ("--forbidden-ip '' " <>)
 
 run :: String -> IO ()
 run x = do
-  let cmd = "cabal run -- --fast-open " <> x
+  let cmd = "cabal run -- " <> x
   puts cmd
   sh cmd
 

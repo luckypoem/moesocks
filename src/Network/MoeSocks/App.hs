@@ -197,7 +197,9 @@ moeApp = do
             TCP_Relay -> do
               info_ - "LT: " <> aID <> " nyaa!"
 
-              setSocket_TCP_FAST_OPEN _localSocket
+              when (_c ^. fastOpen) -
+                setSocket_TCP_FAST_OPEN _localSocket
+
               listen _localSocket maxListenQueue
 
               let handleLocal _socket = do
@@ -268,7 +270,8 @@ moeApp = do
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
 
-          setSocket_TCP_FAST_OPEN _remoteSocket
+          when (_c ^. fastOpen) -
+            setSocket_TCP_FAST_OPEN _remoteSocket
           
           listen _remoteSocket maxListenQueue
 
