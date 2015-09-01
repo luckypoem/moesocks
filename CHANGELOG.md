@@ -1,3 +1,9 @@
+0.1.2.0
+-------
+
+* Add OSX compatibility
+* Fix a bug that breaks UDP forwarding in local
+
 0.1.1.32
 --------
 * Add a runtime type
