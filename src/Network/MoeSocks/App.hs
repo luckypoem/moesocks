@@ -241,7 +241,7 @@ moeApp = do
         pure ()
         
 
-  io - runApp - filterJobs _options - config_To_Jobs _c _options
+  io - runApp - filterJobs (_options ^. runningMode) - loadJobs _c _options
 
 
 

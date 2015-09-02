@@ -113,7 +113,7 @@ addressTypeBuilder aAddressType =
 
 connectionType_To_Word8 :: ConnectionType -> Word8
 connectionType_To_Word8 TCP_IP_StreamConnection = 1
-connectionType_To_Word8 TCP_IP_PortBinding = 2
+{-connectionType_To_Word8 TCP_IP_PortBinding = 2-}
 connectionType_To_Word8 UDP_Port = 3
 
 
@@ -161,7 +161,7 @@ requestParser = do
   __connectionType <- choice
       [
         TCP_IP_StreamConnection <$ word8 1 
-      , TCP_IP_PortBinding <$ word8 2
+      {-, TCP_IP_PortBinding <$ word8 2-}
       , UDP_Port <$ word8 3
       ]
 

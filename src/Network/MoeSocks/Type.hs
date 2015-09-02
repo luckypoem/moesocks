@@ -7,14 +7,17 @@ import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Concurrent.Async
+import Control.Lens
 import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.Text (Text)
+import Data.Text.Lens
 import Data.IP
 import Data.Word
-import GHC.Generics
+import GHC.Generics (Generic)
 import System.Log.Logger
 import qualified Data.Strict as S
+import qualified Data.List as L
 
 data ClientGreeting = ClientGreeting
   {
@@ -26,7 +29,7 @@ makeLenses ''ClientGreeting
 
 data ConnectionType =
     TCP_IP_StreamConnection
-  | TCP_IP_PortBinding
+--  | TCP_IP_PortBinding
   | UDP_Port
   deriving (Show, Eq)
 
@@ -34,8 +37,20 @@ data AddressType =
     IPv4_Address (Word8, Word8, Word8, Word8)
   | DomainName Text
   | IPv6_Address [Word16]
-  deriving (Show, Eq)
+  deriving (Eq)
 
+instance Show AddressType where
+  show = showAddressType
+    where
+      showAddressType :: AddressType -> String
+      showAddressType (IPv4_Address xs) = xs ^.. each . to show
+                                             ^.. folding 
+                                                  (concat . L.intersperse ".")
+                                            
+      showAddressType (DomainName x)   = x ^. _Text
+      showAddressType (IPv6_Address xs) = xs ^.. each . to show
+                                             ^.. folding 
+                                                  (concat . L.intersperse ":")
 type Port = Int
 
 data ClientRequest = ClientRequest

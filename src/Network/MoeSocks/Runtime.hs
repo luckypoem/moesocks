@@ -31,8 +31,8 @@ initLogger aLevel = do
   updateGlobalLogger "moe" - setLevel aLevel
 
 
-config_To_Jobs :: Config -> Options -> [Job]
-config_To_Jobs aConfig aOptions = 
+loadJobs :: Config -> Options -> [Job]
+loadJobs aConfig aOptions = 
   let _c = aConfig
 
       _remote_TCP_Relay =   
@@ -74,9 +74,8 @@ config_To_Jobs aConfig aOptions =
   map RemoteRelayJob _remoteRelays
   <> map LocalServiceJob _localServices
 
-filterJobs :: Options -> [Job] -> [Job]
-filterJobs aOptions =
-  case aOptions ^. runningMode of
-    DebugMode -> id
-    RemoteMode -> filter - is _RemoteRelayJob
-    LocalMode -> filter - is _LocalServiceJob
+filterJobs :: RunningMode -> [Job] -> [Job]
+filterJobs = \case
+  DebugMode -> id
+  RemoteMode -> filter - is _RemoteRelayJob
+  LocalMode -> filter - is _LocalServiceJob
