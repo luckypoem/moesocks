@@ -4,6 +4,7 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent
+import Control.Concurrent.STM
 import Control.Concurrent.Async hiding (waitBoth)
 import Control.Lens
 import Control.Monad
@@ -230,14 +231,25 @@ moeApp = do
               getSocket (_localService ^. localServiceAddress) _port Stream
                 >>= local_SOCKS5 
 
-      runJob :: Job -> IO ()
-      runJob (RemoteRelayJob x) = runRemoteRelay x
-      runJob (LocalServiceJob x) = runLocalService x 
+      runJob :: Job -> TVar JobStatus -> IO ()
+      runJob (RemoteRelayJob x) _ = runRemoteRelay x
+      runJob (LocalServiceJob x) _ = runLocalService x 
         
       runApp :: [Job] -> IO ()
       runApp someJobs = do
-        _jobs <- mapM (async . foreverRun . runJob) someJobs
-        waitAnyCancel _jobs
+        _jobs <- (forM someJobs - \_job -> (,) _job 
+                                            <$> newTVarIO initialJobStatus)
+        _asyncs <- mapM (async . foreverRun . (uncurry runJob)) _jobs 
+        
+        forkIO - do
+          waitAnyCancel - _asyncs 
+          pure ()
+
+        forever - do
+          let _statuses = _jobs ^.. each . _2 :: [TVar JobStatus]
+          {-forM_ _statuses - readTVarIO >=> print-}
+          sleep 5
+
         pure ()
         
 

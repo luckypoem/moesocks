@@ -7,6 +7,7 @@ import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Concurrent.Async
+import Control.Concurrent.STM
 import Control.Lens
 import Data.Aeson
 import Data.ByteString (ByteString)
@@ -188,9 +189,23 @@ makePrisms ''Job
 
 type Async_ID = Async ()
 
+data JobStatus = JobStatus
+      {
+        _incomingSpeed :: Double
+      , _incomingTotal :: Double
+      , _outgoingSpeed :: Double
+      , _outgoingTotal :: Double
+      }
+      deriving (Show, Eq)
+
+makeLenses ''JobStatus
+
+initialJobStatus :: JobStatus
+initialJobStatus = JobStatus 0 0 0 0
+
 data Runtime = Runtime
   {
-    _jobs :: [(Job, Async_ID)]
+    _jobs :: [(Job, Async_ID, TVar JobStatus)]
   }
 
 makeLenses ''Runtime
