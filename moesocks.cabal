@@ -23,7 +23,7 @@ source-repository head
 
 executable moesocks
   main-is:             Main.hs
-  ghc-options:        -Wall -fno-warn-unused-do-bind -O2
+  ghc-options:        -Wall -fno-warn-unused-do-bind
                       -threaded
                       -- -rtsopts "-with-rtsopts=-N -c"
   build-depends:       base > 4 && <= 5
@@ -62,7 +62,9 @@ executable moesocks
                       Network.MoeSocks.Encrypt
                       Network.MoeSocks.Helper
                       Network.MoeSocks.Internal.Socket
+                      Network.MoeSocks.Modules.Resource
                       Network.MoeSocks.Options
+                      Network.MoeSocks.Runtime
                       Network.MoeSocks.TCP
                       Network.MoeSocks.Type
                       Network.MoeSocks.UDP
