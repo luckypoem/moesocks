@@ -194,13 +194,14 @@ data JobStatus = JobStatus
       , _incomingTotal :: Double
       , _outgoingSpeed :: Double
       , _outgoingTotal :: Double
+      , _numberOfRequests :: Int
       }
       deriving (Show, Eq)
 
 makeLenses ''JobStatus
 
 initialJobStatus :: JobStatus
-initialJobStatus = JobStatus 0 0 0 0
+initialJobStatus = JobStatus 0 0 0 0 0
 
 data Runtime = Runtime
   {
