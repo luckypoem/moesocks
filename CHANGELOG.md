@@ -1,3 +1,7 @@
+0.1.2.10
+-------
+* Fix not parsing snake case in config, a bug in introduced in 0.1.2.0
+
 0.1.2.0
 -------
 

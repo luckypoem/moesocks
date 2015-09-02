@@ -241,14 +241,15 @@ moeApp = do
                                             <$> newTVarIO initialJobStatus)
         _asyncs <- mapM (async . foreverRun . (uncurry runJob)) _jobs 
         
-        forkIO - do
+        _mainThread <- async - do
           waitAnyCancel - _asyncs 
-          pure ()
 
-        forever - do
+        _uiThread <- async - forever - do
           let _statuses = _jobs ^.. each . _2 :: [TVar JobStatus]
           {-forM_ _statuses - readTVarIO >=> print-}
           sleep 5
+
+        waitAnyCancel [_mainThread, _uiThread]
 
         pure ()
         

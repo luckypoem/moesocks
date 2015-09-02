@@ -4,7 +4,7 @@
   "local":"localhost",
   "localPort":1090,
   "password":"birthday!",
-  "fastOpen":false,
+  "fast-open":true,
   "method":"aes-256-cfb"
 }
 

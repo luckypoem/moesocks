@@ -14,6 +14,7 @@ import Data.Attoparsec.ByteString hiding (try)
 import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
+import Data.Char (isUpper)
 import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
@@ -32,6 +33,7 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.Strict as S
+import qualified Data.Text as T
 
 -- BEGIN backports
 
@@ -448,8 +450,12 @@ setSocketCloseOnExec aSocket =
 tryIO :: String -> IO a -> IO (Either IOException a)
 tryIO _ = try -- . logException aID
 
-{-toHaskellNamingConvention :: Text -> Text-}
-{-toHaskellNamingConvention x = x -}
-                                {-& T.split (`elem` ['_', '-'])-}
-                                {-& over (_tail . traversed) T.toTitle-}
-                                {-& T.concat-}
+toHaskellNamingConvention :: Text -> Text
+toHaskellNamingConvention x = 
+  let xs = x & T.split (`elem` ['_', '-'])
+  in
+  if xs & anyOf each (T.all isUpper)
+    then x
+    else xs
+            & over (_tail . traversed) T.toTitle
+            & T.concat

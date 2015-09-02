@@ -41,8 +41,6 @@ loadConfig aOption = do
               [
                 ("server", "remoteAddress")
               , ("server_port", "remotePort")
-              , ("local_address", "localAddress")
-              , ("local_port", "localPort")
               ]
 
         in
@@ -51,7 +49,7 @@ loadConfig aOption = do
       toParsableConfig :: Value -> Value
       toParsableConfig = asList - each . _1 %~  (
                                                   T.cons '_' 
-                                                {-. toHaskellNamingConvention-}
+                                                . toHaskellNamingConvention
                                                 . fromShadowSocksConfig
                                                 )  
 
