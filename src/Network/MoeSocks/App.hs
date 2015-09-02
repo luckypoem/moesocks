@@ -26,6 +26,8 @@ import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import Prelude hiding ((-), take)
 
+_PacketLength :: Int
+_PacketLength = 4096
 
 withGateOptions :: Options -> IO a -> IO ()
 withGateOptions aOption aIO = do

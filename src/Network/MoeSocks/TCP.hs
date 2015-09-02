@@ -20,6 +20,9 @@ import Prelude hiding ((-), take)
 import qualified Data.ByteString as S
 import qualified Data.Strict as S
 
+_NoThrottle :: Maybe a
+_NoThrottle = Nothing
+
 local_SOCKS5_RequestHandler :: Env
                             -> ByteString 
                             -> (Socket, SockAddr) 

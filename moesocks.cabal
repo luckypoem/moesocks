@@ -59,7 +59,6 @@ executable moesocks
                       Network.MoeSocks.BuilderAndParser
                       Network.MoeSocks.Common
                       Network.MoeSocks.Config
-                      Network.MoeSocks.Constant
                       Network.MoeSocks.Encrypt
                       Network.MoeSocks.Helper
                       Network.MoeSocks.Internal.Socket

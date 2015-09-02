@@ -19,13 +19,23 @@ import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Prelude as P
 
-{-import Debug.Trace-}
+
+
+_No_authentication :: Word8
+_No_authentication = 0
+              
+_Request_Granted :: Word8
+_Request_Granted = 0
+
+_ReservedByte :: Word8
+_ReservedByte = 0
+
+_SpaceCode :: Word8
+_SpaceCode = 32
+
 
 socksVersion :: Word8
 socksVersion = 5
-
-
-
 
 -- Builder
 
