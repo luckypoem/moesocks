@@ -25,6 +25,7 @@ executable moesocks
   main-is:             Main.hs
   ghc-options:        -Wall -fno-warn-unused-do-bind
                       -threaded
+                      -O2
                       -- -rtsopts "-with-rtsopts=-N -c"
   build-depends:       base > 4 && <= 5
                       , HsOpenSSL
