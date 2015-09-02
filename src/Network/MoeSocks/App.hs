@@ -14,7 +14,6 @@ import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
 import Data.Text.Lens
 import Network.MoeSocks.Common
-import Network.MoeSocks.Constant
 import Network.MoeSocks.Encrypt (initCipherBox, safeMethods, unsafeMethods)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Modules.Resource (loadConfig)

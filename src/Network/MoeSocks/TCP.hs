@@ -10,7 +10,6 @@ import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
-import Network.MoeSocks.Constant
 import Network.MoeSocks.Encrypt (identityCipher)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type

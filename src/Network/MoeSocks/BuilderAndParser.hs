@@ -10,7 +10,6 @@ import Data.Maybe
 import Data.Monoid
 import Data.Text.Lens
 import Data.Text.Strict.Lens (utf8)
-import Network.MoeSocks.Constant
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket
