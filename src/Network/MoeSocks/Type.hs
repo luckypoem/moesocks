@@ -8,7 +8,6 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Concurrent.Async
 import Control.Concurrent.STM
-import Control.Lens
 import Data.Aeson
 import Data.ByteString (ByteString)
 import Data.Text (Text)

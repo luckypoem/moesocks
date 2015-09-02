@@ -7,13 +7,11 @@ import Control.Lens
 import Control.Monad.Writer hiding (listen)
 import Data.IP
 import Data.Maybe
-import Data.Text (Text)
 import Data.Text.Lens
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
-import qualified Data.List as L
 
 
 makePrisms ''IPRange
