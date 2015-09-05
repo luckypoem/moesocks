@@ -235,9 +235,9 @@ optionParser =
 
       _params :: O.Parser [(Text, Value)]
       _params = 
-        [ tag "_remote"         _remote    
+        [ tag "_remoteHost"         _remote    
         , tag "_remotePort"     _remotePort
-        , tag "_local"          _local     
+        , tag "_localHost"          _local     
         , tag "_localPort"      _localPort 
         , tag "_password"       _password
         , tag "_method"         _method 
