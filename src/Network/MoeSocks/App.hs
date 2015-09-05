@@ -50,35 +50,35 @@ data ServiceType = TCP_Service | UDP_Service
 
 moeApp:: MoeMonadT ()
 moeApp = do
-  _options <- ask 
+  _options <- ask
   io - initLogger - _options ^. verbosity
-  
+
   io - debug_ - show _options
-  
+
   _config <- loadConfig - _options
   let _c = _config
 
   let _method = _config ^. method
 
   _cipherBox <- (io - initCipherBox _method (_config ^. password)) >>= \case
-    Nothing -> throwError - "Invalid method '" 
+    Nothing -> throwError - "Invalid method '"
                             <> _method ^. _Text
     Just (a, b, c, d) -> pure - CipherBox a b c d
-  
+
   let _env = Env _options _config _cipherBox
 
 
-  let localService :: ServiceType 
-                      -> String 
-                      -> (ByteString -> (Socket, SockAddr) -> IO ()) 
-                      -> (Socket, SockAddr) 
+  let localService :: ServiceType
+                      -> String
+                      -> (ByteString -> (Socket, SockAddr) -> IO ())
+                      -> (Socket, SockAddr)
                       -> IO ()
-      localService aServiceType aID aHandler s = 
+      localService aServiceType aID aHandler s =
         logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
-            
+
           setSocketOption _localSocket ReuseAddr 1
           bindSocket _localSocket _localAddr
-          
+
           case aServiceType of
             TCP_Service -> do
               info_ - "LT: " <> aID <> " nyaa!"
@@ -92,8 +92,8 @@ moeApp = do
                     _s@(_newSocket, _newSockAddr) <- accept _socket
                     setSocketCloseOnExec _newSocket
                     setSocketConfig _c _socket
-                    
-                    forkIO - catchExceptAsyncLog "LT" - 
+
+                    forkIO - catchExceptAsyncLog "LT" -
                               logSA "L TCP client socket" (pure _s) -
                                 aHandler ""
 
@@ -102,32 +102,32 @@ moeApp = do
             UDP_Service -> do
               info_ - "LU: " <> aID <> " nyaa!"
               let handleLocal = do
-                    (_msg, _sockAddr) <- 
+                    (_msg, _sockAddr) <-
                         recvFrom _localSocket _PacketLength
 
                     debug_ - "L UDP: " <> show _msg
-                    
+
                     let _s = (_localSocket, _sockAddr)
 
-                    forkIO - catchExceptAsyncLog "LU" - 
+                    forkIO - catchExceptAsyncLog "LU" -
                                 aHandler _msg _s
 
               forever handleLocal
-              
+
   let
       showWrapped :: (Show a) => a -> String
       showWrapped x = "[" <> show x <> "]"
 
   let local_SOCKS5 :: (Socket, SockAddr) -> IO ()
       local_SOCKS5 _s = localService TCP_Service
-                            ("SOCKS5 proxy " <> showWrapped (_s ^. _2))  
+                            ("SOCKS5 proxy " <> showWrapped (_s ^. _2))
                             (local_SOCKS5_RequestHandler _env) - _s
 
       showForwarding :: Forward -> String
       showForwarding (Forward _localPort _remoteHost _remotePort) =
                           "["
-                      <> show _localPort 
-                      <> " -> " 
+                      <> show _localPort
+                      <> " -> "
                       <> _remoteHost ^. _Text
                       <> ":"
                       <> show _remotePort
@@ -138,16 +138,16 @@ moeApp = do
       localForward_TCP _f _s = do
         let _m = showForwarding _f
         localService TCP_Service ("TCP port forwarding " <> _m)
-                                (local_TCP_ForwardRequestHandler _env _f) 
+                                (local_TCP_ForwardRequestHandler _env _f)
                                 _s
 
       localForward_UDP :: Forward -> (Socket, SockAddr) -> IO ()
       localForward_UDP _f _s = do
-        let _m = showForwarding _f 
+        let _m = showForwarding _f
         localService UDP_Service ("UDP port forwarding " <> _m)
-                                (local_UDP_ForwardRequestHandler _env _f) 
+                                (local_UDP_ForwardRequestHandler _env _f)
                                 _s
-      
+
   let remote_TCP_Relay :: (Socket, SockAddr) -> IO ()
       remote_TCP_Relay s = logSA "R loop" (pure s) -
         \(_remoteSocket, _remoteAddr) -> do
@@ -158,17 +158,17 @@ moeApp = do
 
           when (_c ^. fastOpen) -
             setSocket_TCP_FAST_OPEN _remoteSocket
-          
+
           listen _remoteSocket maxListenQueue
 
           let handleRemote _socket = do
                 (_newSocket, _) <- accept _socket
                 setSocketCloseOnExec _newSocket
                 setSocketConfig _c _socket
-                
-                forkIO - catchExceptAsyncLog "RT" - 
+
+                forkIO - catchExceptAsyncLog "RT" -
                             logSocket "R remote socket" (pure _newSocket) -
-                              remote_TCP_RequestHandler _env 
+                              remote_TCP_RequestHandler _env
 
           forever - handleRemote _remoteSocket
 
@@ -188,7 +188,7 @@ moeApp = do
                 let _s = (_remoteSocket, _sockAddr)
 
 
-                forkIO - catchExceptAsyncLog "RU" - 
+                forkIO - catchExceptAsyncLog "RU" -
                             remote_UDP_RequestHandler _env _msg _s
 
           forever handleRemote
@@ -197,53 +197,53 @@ moeApp = do
 
   let runRemoteRelay :: RemoteRelay -> IO ()
       runRemoteRelay _remoteRelay = do
-        let _address = _remoteRelay ^. remoteRelayAddress
+        let _address = _remoteRelay ^. remoteRelayHost
             _port = _remoteRelay ^. remoteRelayPort
-        
+
         case _remoteRelay ^. remoteRelayType of
           Remote_TCP_Relay -> catchExceptAsyncLog "R TCP Relay" - do
                                 getSocket _address _port Stream
-                                  >>= remote_TCP_Relay 
+                                  >>= remote_TCP_Relay
 
           Remote_UDP_Relay  -> catchExceptAsyncLog "R UDP Relay" - do
                                 getSocket _address _port Datagram
-                                  >>= remote_UDP_Relay 
+                                  >>= remote_UDP_Relay
 
-      
+
   let runLocalService :: LocalService -> IO ()
       runLocalService _localService = do
         case _localService ^. localServiceType of
-          LocalService_TCP_Forward forwarding -> 
+          LocalService_TCP_Forward forwarding ->
             catchExceptAsyncLog "L TCP_Forwarding" - do
-              getSocket (_localService ^. localServiceAddress) 
-                (forwarding ^. forwardLocalPort) 
+              getSocket (_localService ^. localServiceHost)
+                (forwarding ^. forwardLocalPort)
                 Stream
               >>= localForward_TCP forwarding
-      
+
           LocalService_UDP_Forward forwarding ->
             catchExceptAsyncLog "L UDP_Forwarding" - do
-              getSocket (_localService ^. localServiceAddress) 
-                (forwarding ^. forwardLocalPort) 
+              getSocket (_localService ^. localServiceHost)
+                (forwarding ^. forwardLocalPort)
                 Datagram
               >>= localForward_UDP forwarding
-            
+
           LocalService_SOCKS5 _port ->
             catchExceptAsyncLog "L SOCKS5" - do
-              getSocket (_localService ^. localServiceAddress) _port Stream
-                >>= local_SOCKS5 
+              getSocket (_localService ^. localServiceHost) _port Stream
+                >>= local_SOCKS5
 
       runJob :: Job -> TVar JobStatus -> IO ()
       runJob (RemoteRelayJob x) _ = runRemoteRelay x
-      runJob (LocalServiceJob x) _ = runLocalService x 
-        
+      runJob (LocalServiceJob x) _ = runLocalService x
+
       runApp :: [Job] -> IO ()
       runApp someJobs = do
-        _jobs <- (forM someJobs - \_job -> (,) _job 
+        _jobs <- (forM someJobs - \_job -> (,) _job
                                             <$> newTVarIO initialJobStatus)
-        _asyncs <- mapM (async . foreverRun . (uncurry runJob)) _jobs 
-        
+        _asyncs <- mapM (async . foreverRun . (uncurry runJob)) _jobs
+
         _mainThread <- async - do
-          waitAnyCancel - _asyncs 
+          waitAnyCancel - _asyncs
 
         _uiThread <- async - forever - do
           let _statuses = _jobs ^.. each . _2 :: [TVar JobStatus]
@@ -253,9 +253,6 @@ moeApp = do
         waitAnyCancel [_mainThread, _uiThread]
 
         pure ()
-        
+
 
   io - runApp - filterJobs (_options ^. runningMode) - loadJobs _c _options
-
-
-

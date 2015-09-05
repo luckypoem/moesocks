@@ -39,7 +39,7 @@ loadConfig aOption = do
       fromShadowSocksConfig x = 
         let fixes = Map.fromList
               [
-                ("server", "remoteAddress")
+                ("server", "remoteHost")
               , ("server_port", "remotePort")
               ]
 

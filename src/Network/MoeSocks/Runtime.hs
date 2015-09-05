@@ -38,19 +38,19 @@ loadJobs aConfig aOptions =
       _remote_TCP_Relay =   
           RemoteRelay
             Remote_TCP_Relay
-            (_c ^. remoteAddress)
+            (_c ^. remoteHost)
             (_c ^. remotePort)
 
       _remote_UDP_Relay = 
           RemoteRelay
             Remote_UDP_Relay
-            (_c ^. remoteAddress)
+            (_c ^. remoteHost)
             (_c ^. remotePort)
 
       _localService :: LocalServiceType -> LocalService
       _localService = LocalService 
-                        (_c ^. localAddress)
-                        (_c ^. remoteAddress)
+                        (_c ^. localHost)
+                        (_c ^. remoteHost)
                         (_c ^. remotePort)
 
       _localService_TCP_Forwards = 

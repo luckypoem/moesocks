@@ -66,9 +66,9 @@ makeLenses ''ClientRequest
 
 data Config = Config
   {
-    _remoteAddress :: Text
+    _remoteHost :: Text
   , _remotePort :: Int
-  , _localAddress :: Text
+  , _localHost :: Text
   , _localPort :: Int
   , _password :: Text
   , _method :: Text
@@ -96,7 +96,7 @@ data Verbosity = Normal | Verbose
 data Forward = Forward
   {
     _forwardLocalPort :: Port
-  , _forwardTargetAddress :: Text
+  , _forwardTargetHost :: Text
   , _forwardTargetPort :: Port
   }
   deriving (Show, Eq)
@@ -152,7 +152,7 @@ makePrisms ''LocalServiceType
 
 data LocalService = LocalService
   {
-    _localServiceAddress :: Text
+    _localServiceHost :: Text
   , _localServiceRemoteAddress :: Text
   , _localServiceRemotePort :: Int
   , _localServiceType :: LocalServiceType
@@ -172,7 +172,7 @@ makePrisms ''RemoteRelayType
 data RemoteRelay = RemoteRelay
   {
     _remoteRelayType :: RemoteRelayType
-  , _remoteRelayAddress :: Text
+  , _remoteRelayHost :: Text
   , _remoteRelayPort :: Int
   }
   deriving (Show, Eq)

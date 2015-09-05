@@ -1,7 +1,7 @@
 {
-  "remoteAddress":"0.0.0.0",
+  "remoteHost":"0.0.0.0",
   "remotePort":1190,
-  "localAddress":"localhost",
+  "localHost":"localhost",
   "localPort":1090,
   "password":"birthday!",
   "fastOpen":false,

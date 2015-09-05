@@ -8,9 +8,9 @@ import System.Log.Logger
 defaultConfig :: Config
 defaultConfig = Config
   {
-    _remoteAddress = "0.0.0.0"
+    _remoteHost = "0.0.0.0"
   , _remotePort = 8388 
-  , _localAddress = "127.0.0.1"
+  , _localHost = "127.0.0.1"
   , _localPort = 1080
   , _password = "moesocks"
   , _method = "aes-256-cfb"

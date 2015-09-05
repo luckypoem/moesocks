@@ -57,7 +57,7 @@ local_TCP_ForwardRequestHandler aEnv aForwarding _ (aSocket,_) = do
   let _clientRequest = ClientRequest
                           TCP_IP_StreamConnection
                           (DomainName - aForwarding ^. 
-                            forwardTargetAddress)
+                            forwardTargetHost)
                           (aForwarding ^. forwardTargetPort)
               
   local_TCP_RequestHandler aEnv
@@ -85,12 +85,12 @@ local_TCP_RequestHandler aEnv
         _flushBound = _c ^. obfuscationFlushBound
 
         _initSocket = 
-            getSocket (_c ^. remoteAddress) (_c ^. remotePort) Stream 
+            getSocket (_c ^. remoteHost) (_c ^. remotePort) Stream 
 
     debug_ - "L: " <> show _clientRequest
     
     logSA "L remote socket" _initSocket - 
-      \(_remoteSocket, _remoteAddress) -> do
+      \(_remoteSocket, _remoteHost) -> do
       setSocketConfig _c _remoteSocket
 
       _remoteSocketName <- getSocketName _remoteSocket
@@ -132,9 +132,9 @@ local_TCP_RequestHandler aEnv
 
             if _c ^. fastOpen
               then
-                sendFast _remoteSocket _initBytes _remoteAddress
+                sendFast _remoteSocket _initBytes _remoteHost
               else do
-                connect _remoteSocket _remoteAddress
+                connect _remoteSocket _remoteHost
                 send_ _remoteSocket _initBytes
 
             let sendThread = do
@@ -217,8 +217,8 @@ remote_TCP_RequestHandler aEnv aSocket = do
                                           aSocket
   
   logSA "R target socket" (initTarget _clientRequest) - \_r -> do
-    let (_targetSocket, _targetAddress) = _r 
-        (_addr, _) = sockAddr_To_Pair _targetAddress
+    let (_targetSocket, _targetHost) = _r 
+        (_addr, _) = sockAddr_To_Pair _targetHost
         _forbidden_IPs = _options ^. forbidden_IPs
 
     debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
@@ -234,9 +234,9 @@ remote_TCP_RequestHandler aEnv aSocket = do
 
       if _c ^. fastOpen
         then
-          sendFast _targetSocket _initBytes _targetAddress
+          sendFast _targetSocket _initBytes _targetHost
         else do
-          connect _targetSocket _targetAddress
+          connect _targetSocket _targetHost
           send_ _targetSocket _initBytes
       
       let 

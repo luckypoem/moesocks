@@ -86,7 +86,7 @@ optionParser =
       _remote = textParam -
                       short 's'
                   <>  metavar "REMOTE"
-                  <>  defaultHelp (_c ^. remoteAddress)
+                  <>  defaultHelp (_c ^. remoteHost)
                                   "remote address"
   
       _remotePort = intParam -
@@ -100,7 +100,7 @@ optionParser =
       _local = textParam -
                       short 'b'
                   <>  metavar "LOCAL"
-                  <>  defaultHelp (_c ^. localAddress)
+                  <>  defaultHelp (_c ^. localHost)
                                   "local address"
 
       _localPort = intParam -
