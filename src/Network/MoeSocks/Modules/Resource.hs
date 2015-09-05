@@ -35,13 +35,16 @@ loadConfig aOption = do
       asList :: ([(Text, Value)] -> [(Text, Value)]) -> Value -> Value
       asList f = over _Object - H.fromList . f . H.toList 
       
-      fromShadowSocksConfig :: Text -> Text
-      fromShadowSocksConfig x = 
+      fixConfig:: Text -> Text
+      fixConfig x = 
         let fixes = Map.fromList
               [
                 ("server", "remoteHost")
               , ("server_port", "remotePort")
               , ("local_address", "localHost")
+
+              , ("remoteAddress", "remoteHost")
+              , ("localAddress", "localHost")
               ]
 
         in
@@ -51,7 +54,7 @@ loadConfig aOption = do
       toParsableConfig = asList - each . _1 %~  (
                                                   T.cons '_' 
                                                 . toHaskellNamingConvention
-                                                . fromShadowSocksConfig
+                                                . fixConfig 
                                                 )  
 
       toReadableConfig :: Value -> Value
