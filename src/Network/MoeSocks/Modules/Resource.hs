@@ -41,6 +41,7 @@ loadConfig aOption = do
               [
                 ("server", "remoteHost")
               , ("server_port", "remotePort")
+              , ("local_address", "localHost")
               ]
 
         in
