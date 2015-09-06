@@ -44,14 +44,14 @@ loadConfig aOption = do
             fixes = Map.fromList
               [
                 ("server"       , _remoteHost )
-              , ("remoteAddress", _remoteHost )
               , ("remote"       , _remoteHost )
+              , ("remoteAddress", _remoteHost )
 
               , ("server_port"  , _remotePort )
 
-              , ("local_address", _localHost  )
-              , ("localAddress" , _localHost  )
               , ("local"        , _localHost  )
+              , ("localAddress" , _localHost  )
+              , ("local_address", _localHost  )
               
               ]
 
