@@ -37,14 +37,22 @@ loadConfig aOption = do
       
       fixConfig:: Text -> Text
       fixConfig x = 
-        let fixes = Map.fromList
-              [
-                ("server", "remoteHost")
-              , ("server_port", "remotePort")
-              , ("local_address", "localHost")
+        let _remoteHost = "remoteHost"
+            _remotePort = "remotePort"
+            _localHost = "localHost"
 
-              , ("remoteAddress", "remoteHost")
-              , ("localAddress", "localHost")
+            fixes = Map.fromList
+              [
+                ("server"       , _remoteHost )
+              , ("remoteAddress", _remoteHost )
+              , ("remote"       , _remoteHost )
+
+              , ("server_port"  , _remotePort )
+
+              , ("local_address", _localHost  )
+              , ("localAddress" , _localHost  )
+              , ("local"        , _localHost  )
+              
               ]
 
         in
