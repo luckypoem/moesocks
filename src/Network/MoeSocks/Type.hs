@@ -16,6 +16,7 @@ import Data.IP
 import Data.Word
 import GHC.Generics (Generic)
 import System.Log.Logger
+import Numeric (showHex)
 import qualified Data.Strict as S
 import qualified Data.List as L
 
@@ -48,7 +49,7 @@ instance Show AddressType where
                                                   (concat . L.intersperse ".")
                                             
       showAddressType (DomainName x)   = x ^. _Text
-      showAddressType (IPv6_Address xs) = xs ^.. each . to show
+      showAddressType (IPv6_Address xs) = xs ^.. each . to (flip showHex "")
                                              ^.. folding 
                                                   (concat . L.intersperse ":")
 type Port = Int

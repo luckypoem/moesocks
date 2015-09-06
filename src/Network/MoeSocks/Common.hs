@@ -54,10 +54,10 @@ showRelay :: SockAddr -> ClientRequest -> String
 showRelay aSockAddr aClientRequest = 
       show aSockAddr <> " -> " <> showRequest aClientRequest
 
-addressType_To_Family :: AddressType -> Maybe Family
-addressType_To_Family (IPv4_Address _) = Just AF_INET
-addressType_To_Family (IPv6_Address _) = Just AF_INET6
-addressType_To_Family _                = Nothing
+addressType_To_Family :: AddressType -> Family
+addressType_To_Family (IPv4_Address _) = AF_INET
+addressType_To_Family (IPv6_Address _) = AF_INET6
+addressType_To_Family _                = AF_UNSPEC
 
 _SocketType :: Prism' SocketType ConnectionType
 _SocketType = prism' connectionType_To_SocketType socketType_To_connectionType

@@ -1,3 +1,7 @@
+0.1.2.20
+--------
+* Fix IPv6, finally tested on a real IPv6 network..
+
 0.1.2.10
 -------
 * Fix not parsing snake case in config, a bug in introduced in 0.1.2.0

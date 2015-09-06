@@ -198,17 +198,21 @@ connectMarket = waitBothDebug
 
 getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)
-getSocket = getSocketWithHint Nothing
+getSocket = getSocketWithHint AF_UNSPEC
 
 getSocketWithHint :: (Integral i, Show i) => 
-                        Maybe Family -> Text -> i -> SocketType -> 
+                        Family -> Text -> i -> SocketType -> 
                         IO (Socket, SockAddr)
-getSocketWithHint maybeFamily aHost aPort aSocketType = do
-    {-debug_ - "getSocket: " <> show aHost <> ":" <> show aPort-}
+getSocketWithHint aFamily aHost aPort aSocketType = do
+    debug_ - "getSocketWithHint: " <> show aFamily <> 
+              " " <> show aHost <> ":" <> show aPort
 
-    maybeAddrInfo <- firstOf folded <$>
-                  getAddrInfo (Just hints) 
+    _addrs <- getAddrInfo (Just hints) 
                               (Just - aHost ^. _Text) (Just - show aPort)
+
+    debug_ - "Get socket addrs: " <> show _addrs
+
+    maybeAddrInfo <- firstOf folded <$> pure _addrs
 
     case maybeAddrInfo of
       Nothing -> error - "Error in getSocket for: " <> aHost ^. _Text 
@@ -226,19 +230,18 @@ getSocketWithHint maybeFamily aHost aPort aSocketType = do
           when (aSocketType == Stream) -
             setSocketOption _socket NoDelay 1 
 
-          debug_ - "Getting socket: " <> show addrInfo
+          debug_ - "Got socket: " <> show addrInfo
           {-debug_ - "Socket family: " <> show family-}
           {-debug_ - "Socket protocol: " <> show protocol -}
 
           pure (_socket, address)
           
   where
-    _family = maybeFamily & fromMaybe AF_INET
     hints = defaultHints 
             {
               addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]
             , addrSocketType = aSocketType
-            , addrFamily = _family
+            , addrFamily = aFamily
             }
 
 builder_To_ByteString :: B.Builder -> ByteString

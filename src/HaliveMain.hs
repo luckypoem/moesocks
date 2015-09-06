@@ -24,7 +24,7 @@ main = do
                                     & forward_UDPs .~ 
                                                 [Forward 5301 "localhost" 53]
                                     {-& verbosity .~ INFO-}
-                                    & verbosity .~ DEBUG
+                                    {-& verbosity .~ DEBUG-}
                                     & obfuscation .~ True
                                     & forbidden_IPs .~ []
                                     {-& listMethods .~ True-}
