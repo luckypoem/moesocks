@@ -205,7 +205,7 @@ getSocketWithHint :: (Integral i, Show i) =>
                         IO (Socket, SockAddr)
 getSocketWithHint aFamily aHost aPort aSocketType = do
     {-debug_ - "getSocketWithHint: " <> show aFamily <> -}
-              " " <> show aHost <> ":" <> show aPort
+              {-" " <> show aHost <> ":" <> show aPort-}
 
     _addrs <- getAddrInfo (Just hints) 
                               (Just - aHost ^. _Text) (Just - show aPort)
