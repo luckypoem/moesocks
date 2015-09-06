@@ -20,6 +20,7 @@ import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Time.Clock
+import Data.List (sortOn)
 import Debug.Trace (trace)
 import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
 import Network.Socket hiding (send, recv)
@@ -204,11 +205,13 @@ getSocketWithHint :: (Integral i, Show i) =>
                         Family -> Text -> i -> SocketType -> 
                         IO (Socket, SockAddr)
 getSocketWithHint aFamily aHost aPort aSocketType = do
-    {-debug_ - "getSocketWithHint: " <> show aFamily <> -}
-              {-" " <> show aHost <> ":" <> show aPort-}
+    info_ - "getSocketWithHint: " <> show aFamily <> 
+              " " <> show aHost <> ":" <> show aPort
 
     _addrs <- getAddrInfo (Just hints) 
                               (Just - aHost ^. _Text) (Just - show aPort)
+
+              <&> sortOn addrFamily
 
     info_ - "Get socket addrs: " <> show _addrs
 
