@@ -204,13 +204,13 @@ getSocketWithHint :: (Integral i, Show i) =>
                         Family -> Text -> i -> SocketType -> 
                         IO (Socket, SockAddr)
 getSocketWithHint aFamily aHost aPort aSocketType = do
-    debug_ - "getSocketWithHint: " <> show aFamily <> 
+    {-debug_ - "getSocketWithHint: " <> show aFamily <> -}
               " " <> show aHost <> ":" <> show aPort
 
     _addrs <- getAddrInfo (Just hints) 
                               (Just - aHost ^. _Text) (Just - show aPort)
 
-    debug_ - "Get socket addrs: " <> show _addrs
+    {-debug_ - "Get socket addrs: " <> show _addrs-}
 
     maybeAddrInfo <- firstOf folded <$> pure _addrs
 
