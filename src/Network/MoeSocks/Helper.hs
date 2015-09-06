@@ -210,7 +210,7 @@ getSocketWithHint aFamily aHost aPort aSocketType = do
     _addrs <- getAddrInfo (Just hints) 
                               (Just - aHost ^. _Text) (Just - show aPort)
 
-    {-debug_ - "Get socket addrs: " <> show _addrs-}
+    info_ - "Get socket addrs: " <> show _addrs
 
     maybeAddrInfo <- firstOf folded <$> pure _addrs
 
