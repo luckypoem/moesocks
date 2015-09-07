@@ -3,7 +3,7 @@
 module Network.MoeSocks.Default where
 
 import Network.MoeSocks.Type
-import Network.MoeSocks.Type.Bootstrap.Option
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import System.Log.Logger
 import Control.Lens
@@ -27,24 +27,25 @@ defaultConfig = C.Config
   }
 
 
-defaultOptions :: Options
-defaultOptions = Options
+defaultOptions :: O.Options
+defaultOptions = O.Options
   {
-    _runningMode = DebugMode
-  , _configFile = Nothing
-  , _verbosity = DEBUG
-  , _forward_TCPs = []
-  , _forward_UDPs = []
-  , _disable_SOCKS5 = False
-  , _obfuscation = False
-  , _forbidden_IPs = ["127.0.0.1", "0.0.0.0", "::1"]
-  , _listMethods = False
-  , _params = []
+    O._runningMode = O.DebugMode
+  , O._configFile = Nothing
+  , O._verbosity = DEBUG
+  , O._forward_TCPs = []
+  , O._forward_UDPs = []
+  , O._disable_SOCKS5 = False
+  , O._obfuscation = False
+  , O._forbidden_IPs = ["127.0.0.1", "0.0.0.0", "::1"]
+  , O._listMethods = False
+  , O._params = []
   } 
 
 defaultRuntime :: Runtime
 defaultRuntime =
   let _c = defaultConfig
+      _o = defaultOptions
   in
   Runtime
     {
@@ -56,4 +57,6 @@ defaultRuntime =
     , _obfuscationFlushBound          = _c ^. C.obfuscationFlushBound 
     , _fastOpen                       = _c ^. C.fastOpen
     , _socketOption_TCP_NOTSENT_LOWAT = _c ^. C.socketOption_TCP_NOTSENT_LOWAT
+    , _obfuscation                    = _o ^. O.obfuscation
+    , _forbidden_IPs                  = _o ^. O.forbidden_IPs
     }

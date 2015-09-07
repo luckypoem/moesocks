@@ -8,22 +8,10 @@ import Data.Aeson
 import Data.Text (Text)
 import Data.IP
 import System.Log.Logger
+import Network.MoeSocks.Type.Common
 
 data RunningMode = RemoteMode | LocalMode | DebugMode
       deriving (Show, Eq)
-
-type Port = Int
-
-data Forward = Forward
-  {
-    _forwardLocalPort :: Port
-  , _forwardTargetHost :: Text
-  , _forwardTargetPort :: Port
-  }
-  deriving (Show, Eq)
-
-
-makeLenses ''Forward
 
 data Options = Options
   {

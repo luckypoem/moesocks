@@ -17,8 +17,6 @@ import System.Log.Logger
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
-
-
 initLogger :: Priority -> IO ()
 initLogger aLevel = do
   stdoutHandler <- streamHandler IO.stdout DEBUG

@@ -11,6 +11,7 @@ import Data.Text.Lens
 import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type.Bootstrap.Option
+import Network.MoeSocks.Type.Common
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Options.Applicative hiding (Parser)
 import Prelude hiding ((-), takeWhile)
