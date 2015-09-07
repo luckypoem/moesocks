@@ -13,6 +13,7 @@ import Control.Monad.Reader hiding (local)
 import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
 import Data.Text.Lens
+import Data.Text (Text)
 import Network.MoeSocks.Common
 import Network.MoeSocks.Encrypt (initCipherBox, safeMethods, unsafeMethods)
 import Network.MoeSocks.Helper
@@ -113,10 +114,13 @@ moeApp = do
       showWrapped :: (Show a) => a -> String
       showWrapped x = "[" <> show x <> "]"
 
-  let local_SOCKS5 :: Env -> (Socket, SockAddr) -> IO ()
-      local_SOCKS5 _env _s = localService _env TCP_Service
-                            ("SOCKS5 proxy " <> showWrapped (_s ^. _2))
-                            (local_SOCKS5_RequestHandler _env) - _s
+  let local_SOCKS5 :: Env -> Text -> Int -> (Socket, SockAddr) -> IO ()
+      local_SOCKS5 _env _remoteHost _remotePort _s = 
+        localService _env TCP_Service
+                      ("SOCKS5 proxy " <> showWrapped (_s ^. _2))
+                      (local_SOCKS5_RequestHandler _env
+                                                    _remoteHost
+                                                    _remotePort) - _s
 
       showForwarding :: Forward -> String
       showForwarding (Forward _localPort _remoteHost _remotePort) =
@@ -129,18 +133,28 @@ moeApp = do
                       <> "]"
 
 
-      localForward_TCP :: Env -> Forward -> (Socket, SockAddr) -> IO ()
-      localForward_TCP _env _f _s = do
+      localForward_TCP :: Env -> Text -> Int -> Forward -> (Socket, SockAddr) 
+                                                                    -> IO ()
+      localForward_TCP _env _remoteHost _remotePort _f _s = do
         let _m = showForwarding _f
         localService _env TCP_Service ("TCP port forwarding " <> _m)
-                                (local_TCP_ForwardRequestHandler _env _f)
+                                (local_TCP_ForwardRequestHandler 
+                                  _env
+                                  _remoteHost
+                                  _remotePort
+                                  _f)
                                 _s
 
-      localForward_UDP :: Env -> Forward -> (Socket, SockAddr) -> IO ()
-      localForward_UDP _env _f _s = do
+      localForward_UDP :: Env -> Text -> Int -> Forward -> (Socket, SockAddr) 
+                                                                    -> IO ()
+      localForward_UDP _env _remoteHost _remotePort _f _s = do
         let _m = showForwarding _f
         localService _env UDP_Service ("UDP port forwarding " <> _m)
-                                (local_UDP_ForwardRequestHandler _env _f)
+                                (local_UDP_ForwardRequestHandler 
+                                  _env 
+                                  _remoteHost
+                                  _remotePort
+                                  _f)
                                 _s
 
   let remote_TCP_Relay :: Env -> (Socket, SockAddr) -> IO ()
@@ -213,19 +227,27 @@ moeApp = do
               getSocket (_localService ^. localServiceHost)
                 (forwarding ^. forwardLocalPort)
                 Stream
-              >>= localForward_TCP _env forwarding
+              >>= localForward_TCP _env 
+                                  (_localService ^. localServiceRemoteHost)
+                                  (_localService ^. localServiceRemotePort)
+                                  forwarding
 
           LocalService_UDP_Forward forwarding ->
             catchExceptAsyncLog "L UDP_Forwarding" - do
               getSocket (_localService ^. localServiceHost)
                 (forwarding ^. forwardLocalPort)
                 Datagram
-              >>= localForward_UDP _env forwarding
+              >>= localForward_UDP _env 
+                                  (_localService ^. localServiceRemoteHost)
+                                  (_localService ^. localServiceRemotePort)
+                                  forwarding
 
           LocalService_SOCKS5 _port ->
             catchExceptAsyncLog "L SOCKS5" - do
               getSocket (_localService ^. localServiceHost) _port Stream
-                >>= local_SOCKS5 _env
+                >>= local_SOCKS5 _env 
+                                  (_localService ^. localServiceRemoteHost)
+                                  (_localService ^. localServiceRemotePort)
 
       runJob :: Env -> Job -> TVar JobStatus -> IO ()
       runJob aEnv (RemoteRelayJob x) _ = runRemoteRelay aEnv x

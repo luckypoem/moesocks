@@ -92,7 +92,7 @@ makePrisms ''LocalServiceType
 data LocalService = LocalService
   {
     _localServiceHost :: Text
-  , _localServiceRemoteAddress :: Text
+  , _localServiceRemoteHost :: Text
   , _localServiceRemotePort :: Int
   , _localServiceType :: LocalServiceType
   }
@@ -155,7 +155,7 @@ data Env = Env
   , _obfuscation :: Bool
   , _forbidden_IPs :: [IPRange]
 
-  , _options :: O.Options
+  {-, _options :: O.Options-}
   , _config :: C.Config
   , _cipherBox :: CipherBox
   }

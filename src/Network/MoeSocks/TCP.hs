@@ -8,12 +8,12 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
+import Data.Text (Text)
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
 import Network.MoeSocks.Encrypt (identityCipher)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.MoeSocks.Type.Bootstrap.Option
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
@@ -26,10 +26,12 @@ _NoThrottle :: Maybe a
 _NoThrottle = Nothing
 
 local_SOCKS5_RequestHandler :: Env
+                            -> Text
+                            -> Int
                             -> ByteString 
                             -> (Socket, SockAddr) 
                             -> IO ()
-local_SOCKS5_RequestHandler aEnv _ (aSocket,_) = do
+local_SOCKS5_RequestHandler aEnv aRemoteHost aRemotePort _ (aSocket,_) = do
   (_partialBytesAfterGreeting, _r) <- 
       parseSocket "clientGreeting" mempty identityCipher
         greetingParser aSocket
@@ -47,48 +49,64 @@ local_SOCKS5_RequestHandler aEnv _ (aSocket,_) = do
                                 connectionParser
                                 aSocket
 
-  local_TCP_RequestHandler aEnv _parsedRequest True aSocket
+  local_TCP_RequestHandler  aEnv 
+                            aRemoteHost 
+                            aRemotePort 
+                            _parsedRequest 
+                            True 
+                            aSocket
 
 
 
 local_TCP_ForwardRequestHandler :: Env
+                                -> Text
+                                -> Int
                                 -> Forward 
                                 -> ByteString 
                                 -> (Socket, SockAddr) 
                                 -> IO ()
-local_TCP_ForwardRequestHandler aEnv aForwarding _ (aSocket,_) = do
+local_TCP_ForwardRequestHandler aEnv aRemoteHost aRemotePort aForwarding _ 
+                                                              (aSocket,_) = do
   let _clientRequest = ClientRequest
                           TCP_IP_StreamConnection
                           (DomainName - aForwarding ^. 
                             forwardTargetHost)
                           (aForwarding ^. forwardTargetPort)
               
-  local_TCP_RequestHandler aEnv
-                          (mempty, _clientRequest) False aSocket
+  local_TCP_RequestHandler  aEnv
+                            aRemoteHost
+                            aRemotePort
+                            (mempty, _clientRequest) 
+                            False 
+                            aSocket
 
 
 
 local_TCP_RequestHandler :: Env
+                          -> Text
+                          -> Int
                           -> (ByteString, ClientRequest) 
                           -> Bool 
                           -> Socket 
                           -> IO ()
 local_TCP_RequestHandler aEnv
+                        aRemoteHost
+                        aRemotePort
                         (_partialBytesAfterClientRequest, _clientRequest) 
                         shouldReplyClient aSocket = do
   let _addr = _clientRequest ^. addressType
-      _forbidden_IPs = aEnv ^. options .O.forbidden_IPs
+      _forbidden_IPs = aEnv ^. forbidden_IPs
+      _c = aEnv ^. config
 
   debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
   withCheckedForbidden_IP_List _addr _forbidden_IPs - do
     let 
-        _c = aEnv ^. config 
         _cipherBox = aEnv ^. cipherBox
-        _obfuscation = aEnv ^. options .O.obfuscation
-        _flushBound = _c ^. C.obfuscationFlushBound
+        _obfuscation = aEnv ^. obfuscation
+        _flushBound = aEnv ^. obfuscationFlushBound
 
         _initSocket = 
-            getSocket (_c ^. C.remoteHost) (_c ^. C.remotePort) Stream 
+            getSocket aRemoteHost aRemotePort Stream 
 
     debug_ - "L: " <> show _clientRequest
     
@@ -202,10 +220,9 @@ local_TCP_RequestHandler aEnv
 remote_TCP_RequestHandler :: Env -> Socket -> IO ()
 remote_TCP_RequestHandler aEnv aSocket = do
   let
-      _obfuscation = aEnv ^. options .O.obfuscation
+      _obfuscation = aEnv ^. obfuscation
       _cipherBox = aEnv ^. cipherBox
       _c = aEnv ^. config
-      _options = aEnv ^. options
       _flushBound = _c ^. C.obfuscationFlushBound
 
   _decodeIV <- recv aSocket (_cipherBox ^. ivLength)
@@ -222,7 +239,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
   logSA "R target socket" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetHost) = _r 
         (_addr, _) = sockAddr_To_Pair _targetHost
-        _forbidden_IPs = _options ^. O.forbidden_IPs
+        _forbidden_IPs = aEnv ^. forbidden_IPs
 
     debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
     withCheckedForbidden_IP_List _addr _forbidden_IPs - do

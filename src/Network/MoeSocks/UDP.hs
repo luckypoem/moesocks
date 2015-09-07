@@ -7,6 +7,7 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.Attoparsec.ByteString
+import Data.Text (Text)
 import Data.ByteString (ByteString)
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
@@ -40,11 +41,15 @@ processAll f x =
   (<>) <$> f (S.Just x) <*> f S.Nothing
 
 local_UDP_ForwardRequestHandler :: Env
+                                -> Text
+                                -> Port
                                 -> Forward
                                 -> ByteString
                                 -> (Socket,SockAddr)
                                 -> IO ()
 local_UDP_ForwardRequestHandler aEnv
+                                aRemoteHost
+                                aRemotePort
                                 aForwarding
                                 aMessage
                                 (aSocket, aSockAddr) = do
@@ -61,7 +66,7 @@ local_UDP_ForwardRequestHandler aEnv
   {-debug_ - "L UDP: " <> show _clientRequest-}
 
   let _addr = _clientRequest ^. addressType
-      _forbidden_IPs = aEnv ^. options .O.forbidden_IPs
+      _forbidden_IPs = aEnv ^. forbidden_IPs
 
   debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
 
@@ -110,7 +115,6 @@ remote_UDP_RequestHandler aEnv
                           aMessage
                           (aSocket, aSockAddr) = do
   let _cipherBox = aEnv ^. cipherBox
-      _options = aEnv ^. options
 
   let (_decodeIV, _eMsg) = S.splitAt (_cipherBox ^. ivLength)
                                        aMessage
@@ -128,7 +132,7 @@ remote_UDP_RequestHandler aEnv
 
     let (_targetSocket, _targetSocketAddress) = _r
         (_addr, _) = sockAddr_To_Pair _targetSocketAddress
-        _forbidden_IPs = _options ^. O.forbidden_IPs
+        _forbidden_IPs = aEnv ^. forbidden_IPs
 
     debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
     withCheckedForbidden_IP_List _addr _forbidden_IPs - do
