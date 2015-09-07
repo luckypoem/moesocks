@@ -188,7 +188,7 @@ waitBothDebug x y = do
 
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 connectTunnel x y = 
-  let _prolong _io = _io >> sleep 10
+  let _prolong _io = _io >> sleep 5
   in
 
   race_ (_prolong - logWaitIO x) 
