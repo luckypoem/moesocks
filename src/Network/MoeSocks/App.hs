@@ -7,13 +7,14 @@ import Control.Concurrent.Async hiding (waitBoth)
 import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad
-import Control.Monad.Writer hiding (listen)
+import Control.Monad.Writer (tell) 
+import Data.Monoid ((<>))
 import Data.Text.Lens
 import Network.MoeSocks.Encrypt (safeMethods, unsafeMethods)
-import Network.MoeSocks.Handler
-import Network.MoeSocks.Helper
+import Network.MoeSocks.Handler (runRemoteRelay, runLocalService)
+import Network.MoeSocks.Helper 
 import Network.MoeSocks.Modules.Resource (loadConfig)
-import Network.MoeSocks.Runtime
+import Network.MoeSocks.Runtime (initRuntime)
 import Network.MoeSocks.Type
 import Prelude hiding ((-), take)
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
