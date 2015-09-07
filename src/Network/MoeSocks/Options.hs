@@ -85,7 +85,7 @@ optionParser =
                   <>  metavar "CONFIG"
                   <>  help "Set the path of the configuration file"
                  
-      _remote = textParam -
+      _remoteHost = textParam -
                       short 's'
                   <>  metavar "REMOTE"
                   <>  defaultHelp (_c ^. C.remoteHost)
@@ -99,7 +99,7 @@ optionParser =
                                           & view (from _Text))
                                       "remote port"
 
-      _local = textParam -
+      _localHost = textParam -
                       short 'b'
                   <>  metavar "LOCAL"
                   <>  defaultHelp (_c ^. C.localHost)
@@ -237,9 +237,9 @@ optionParser =
 
       _params :: O.Parser [(Text, Value)]
       _params = 
-        [ tag "_remoteHost"         _remote    
+        [ tag "_remoteHost"     _remoteHost
         , tag "_remotePort"     _remotePort
-        , tag "_localHost"          _local     
+        , tag "_localHost"      _localHost
         , tag "_localPort"      _localPort 
         , tag "_password"       _password
         , tag "_method"         _method 
