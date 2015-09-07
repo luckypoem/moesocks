@@ -13,7 +13,7 @@ import Network.MoeSocks.Common
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.MoeSocks.Type.Bootstrap.Config
-import Network.MoeSocks.Type.Bootstrap.Option
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import Prelude hiding ((-), take)
@@ -61,7 +61,7 @@ local_UDP_ForwardRequestHandler aEnv
   {-debug_ - "L UDP: " <> show _clientRequest-}
 
   let _addr = _clientRequest ^. addressType
-      _forbidden_IPs = aEnv ^. options . forbidden_IPs
+      _forbidden_IPs = aEnv ^. options .O.forbidden_IPs
 
   debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
 
@@ -128,7 +128,7 @@ remote_UDP_RequestHandler aEnv
 
     let (_targetSocket, _targetSocketAddress) = _r
         (_addr, _) = sockAddr_To_Pair _targetSocketAddress
-        _forbidden_IPs = _options ^. forbidden_IPs
+        _forbidden_IPs = _options ^. O.forbidden_IPs
 
     debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
     withCheckedForbidden_IP_List _addr _forbidden_IPs - do

@@ -7,9 +7,9 @@ import Control.Lens
 import Control.Monad.Writer hiding (listen)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.MoeSocks.Type.Bootstrap.Option
 import Network.MoeSocks.Default
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple
@@ -33,7 +33,7 @@ initLogger aLevel = do
 
 
 
-loadJobs :: C.Config -> Options -> [Job]
+loadJobs :: C.Config -> O.Options -> [Job]
 loadJobs aConfig someOptions = 
   let _c = aConfig
 
@@ -56,11 +56,11 @@ loadJobs aConfig someOptions =
                         (_c ^. C.remotePort)
 
       _localService_TCP_Forwards = 
-          someOptions ^. forward_TCPs 
+          someOptions ^. O.forward_TCPs 
             & map (_localService . LocalService_TCP_Forward)
 
       _localService_UDP_Forwards =
-          someOptions ^. forward_UDPs 
+          someOptions ^. O.forward_UDPs 
             & map (_localService . LocalService_UDP_Forward)
 
       _localService_SOCKS5 =
@@ -76,16 +76,17 @@ loadJobs aConfig someOptions =
   map RemoteRelayJob _remoteRelays
   <> map LocalServiceJob _localServices
 
-filterJobs :: RunningMode -> [Job] -> [Job]
+filterJobs :: O.RunningMode -> [Job] -> [Job]
 filterJobs = \case
-  DebugMode -> id
-  RemoteMode -> filter - is _RemoteRelayJob
-  LocalMode -> filter - is _LocalServiceJob
+  O.DebugMode -> id
+  O.RemoteMode -> filter - is _RemoteRelayJob
+  O.LocalMode -> filter - is _LocalServiceJob
 
 
-initRuntime :: C.Config -> Options -> Runtime
-initRuntime aConfig _ = 
+initRuntime :: C.Config -> O.Options -> Runtime
+initRuntime aConfig someOptions = 
   let _c = aConfig
+      _o = someOptions
   in
   defaultRuntime
     & timeout                        .~ _c ^. C.timeout
@@ -95,3 +96,5 @@ initRuntime aConfig _ =
     & obfuscationFlushBound          .~ _c ^. C.obfuscationFlushBound 
     & fastOpen                       .~ _c ^. C.fastOpen
     & socketOption_TCP_NOTSENT_LOWAT .~ _c ^. C.socketOption_TCP_NOTSENT_LOWAT
+    & obfuscation                    .~ _o ^. O.obfuscation
+    & forbidden_IPs                  .~ _o ^. O.forbidden_IPs

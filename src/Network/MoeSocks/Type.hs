@@ -8,7 +8,7 @@ module Network.MoeSocks.Type
 )
 where
 
-import Network.MoeSocks.Type.Runtime hiding (forbidden_IPs, obfuscation)
+import Network.MoeSocks.Type.Runtime 
 import Network.MoeSocks.Type.Common
 
 

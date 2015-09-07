@@ -15,6 +15,7 @@ import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
 import Network.MoeSocks.Type.Bootstrap.Option
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString (recv)
 import Prelude hiding ((-), take)
@@ -76,14 +77,14 @@ local_TCP_RequestHandler aEnv
                         (_partialBytesAfterClientRequest, _clientRequest) 
                         shouldReplyClient aSocket = do
   let _addr = _clientRequest ^. addressType
-      _forbidden_IPs = aEnv ^. options . forbidden_IPs
+      _forbidden_IPs = aEnv ^. options .O.forbidden_IPs
 
   debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
   withCheckedForbidden_IP_List _addr _forbidden_IPs - do
     let 
         _c = aEnv ^. config 
         _cipherBox = aEnv ^. cipherBox
-        _obfuscation = aEnv ^. options . obfuscation
+        _obfuscation = aEnv ^. options .O.obfuscation
         _flushBound = _c ^. C.obfuscationFlushBound
 
         _initSocket = 
@@ -201,7 +202,7 @@ local_TCP_RequestHandler aEnv
 remote_TCP_RequestHandler :: Env -> Socket -> IO ()
 remote_TCP_RequestHandler aEnv aSocket = do
   let
-      _obfuscation = aEnv ^. options . obfuscation
+      _obfuscation = aEnv ^. options .O.obfuscation
       _cipherBox = aEnv ^. cipherBox
       _c = aEnv ^. config
       _options = aEnv ^. options
@@ -221,7 +222,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
   logSA "R target socket" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetHost) = _r 
         (_addr, _) = sockAddr_To_Pair _targetHost
-        _forbidden_IPs = _options ^. forbidden_IPs
+        _forbidden_IPs = _options ^. O.forbidden_IPs
 
     debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
     withCheckedForbidden_IP_List _addr _forbidden_IPs - do

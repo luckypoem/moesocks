@@ -12,7 +12,7 @@ import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Options
 import Network.MoeSocks.Type
-import Network.MoeSocks.Type.Bootstrap.Option
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.MoeSocks.Type.Bootstrap.Config
 import Prelude hiding ((-))
 import System.Exit
@@ -23,13 +23,13 @@ main :: IO ()
 main = do
   let _options = defaultOptions 
                                     {-& configFile .~ Just "halive.json"-}
-                                    & configFile .~ Just "config.json"
-                                    & forward_UDPs .~ 
+                                    & O.configFile .~ Just "config.json"
+                                    & O.forward_UDPs .~ 
                                                 [Forward 5301 "localhost" 53]
                                     {-& verbosity .~ INFO-}
                                     {-& verbosity .~ DEBUG-}
-                                    & obfuscation .~ True
-                                    & forbidden_IPs .~ []
+                                    & O.obfuscation .~ True
+                                    & O.forbidden_IPs .~ []
                                     {-& listMethods .~ True-}
 
   withGateOptions _options - do
