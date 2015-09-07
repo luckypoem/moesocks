@@ -59,7 +59,7 @@ defaultEnv =
     , _socketOption_TCP_NOTSENT_LOWAT = _c ^. C.socketOption_TCP_NOTSENT_LOWAT
     , _obfuscation                    = _o ^. O.obfuscation
     , _forbidden_IPs                  = _o ^. O.forbidden_IPs
-    , _config = defaultConfig
+    {-, _config = defaultConfig-}
     , _cipherBox = let (a,b,c,d) = constCipherBox in CipherBox a b c d
   }
 

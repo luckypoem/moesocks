@@ -156,7 +156,7 @@ data Env = Env
   , _forbidden_IPs :: [IPRange]
 
   {-, _options :: O.Options-}
-  , _config :: C.Config
+  {-, _config :: C.Config-}
   , _cipherBox :: CipherBox
   }
 

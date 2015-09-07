@@ -106,7 +106,6 @@ initEnv aConfig someOptions = do
     Just (a, b, c, d) -> pure - CipherBox a b c d
 
   let _env = defaultEnv
-              & config    .~ _c
               & cipherBox .~ _cipherBox
 
   pure - _env

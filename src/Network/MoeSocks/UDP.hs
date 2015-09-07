@@ -54,7 +54,7 @@ local_UDP_ForwardRequestHandler aEnv
                                 aMessage
                                 (aSocket, aSockAddr) = do
 
-  let _c = aEnv ^. config
+  let 
       _cipherBox = aEnv ^. cipherBox
 
   let _clientRequest = ClientRequest
@@ -71,7 +71,7 @@ local_UDP_ForwardRequestHandler aEnv
   debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
 
   withCheckedForbidden_IP_List _addr _forbidden_IPs - do
-    _sa <- getSocket (_c ^. remoteHost) (_c ^. remotePort) Datagram
+    _sa <- getSocket aRemoteHost aRemotePort Datagram
 
     logSA "L UDP -->:" (pure _sa) -
       \(_remoteSocket, _remoteAddr) -> do

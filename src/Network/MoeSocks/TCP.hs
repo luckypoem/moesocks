@@ -96,7 +96,6 @@ local_TCP_RequestHandler aEnv
                         shouldReplyClient aSocket = do
   let _addr = _clientRequest ^. addressType
       _forbidden_IPs = aEnv ^. forbidden_IPs
-      _c = aEnv ^. config
 
   debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
   withCheckedForbidden_IP_List _addr _forbidden_IPs - do
@@ -133,14 +132,14 @@ local_TCP_RequestHandler aEnv
             let 
                 _header = shadowSocksRequestBuilder _clientRequest
             
-            _sendChannel <- newTBQueueIO - _c ^. C.tcpBufferSize
-            _receiveChannel <- newTBQueueIO - _c ^. C.tcpBufferSize
+            _sendChannel <- newTBQueueIO - aEnv ^. tcpBufferSize
+            _receiveChannel <- newTBQueueIO - aEnv ^. tcpBufferSize
 
             let info_Id x = x <> " " <> _msg
-                _timeout = _c ^. C.timeout * 1000 * 1000
+                _timeout = aEnv ^. timeout * 1000 * 1000
                 _throttle = 
-                  if _c ^. C.throttle
-                    then Just - _c ^. C.throttleSpeed
+                  if aEnv ^. throttle
+                    then Just - aEnv ^. throttleSpeed
                     else Nothing
 
             _eHeader <- _encrypt - S.Just - builder_To_ByteString _header
@@ -151,7 +150,7 @@ local_TCP_RequestHandler aEnv
 
             let _initBytes = _encodeIV <> _eHeader <> _ePartial <> _eInit
 
-            if _c ^. C.fastOpen
+            if aEnv ^. fastOpen
               then
                 sendFast _remoteSocket _initBytes _remoteHost
               else do
@@ -222,8 +221,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
   let
       _obfuscation = aEnv ^. obfuscation
       _cipherBox = aEnv ^. cipherBox
-      _c = aEnv ^. config
-      _flushBound = _c ^. C.obfuscationFlushBound
+      _flushBound = aEnv ^. obfuscationFlushBound
 
   _decodeIV <- recv aSocket (_cipherBox ^. ivLength)
   _decrypt <- _cipherBox ^. decryptBuilder - _decodeIV
@@ -252,7 +250,7 @@ remote_TCP_RequestHandler aEnv aSocket = do
       
       let _initBytes = _partialBytesAfterRequest
 
-      if _c ^. C.fastOpen
+      if aEnv ^. fastOpen
         then
           sendFast _targetSocket _initBytes _targetHost
         else do
@@ -261,17 +259,17 @@ remote_TCP_RequestHandler aEnv aSocket = do
       
       let 
           handleTarget __targetSocket = do
-            _sendChannel <- newTBQueueIO - _c ^. C.tcpBufferSize
-            _receiveChannel <- newTBQueueIO - _c ^. C.tcpBufferSize
+            _sendChannel <- newTBQueueIO - aEnv ^. tcpBufferSize
+            _receiveChannel <- newTBQueueIO - aEnv ^. tcpBufferSize
 
             let info_Id x = x <> " " <> _msg
                 -- let remote wait slightly longer, so local can timeout
                 -- and disconnect
-                _timeout = (_c ^. C.timeout + 30) * 1000 * 1000
+                _timeout = (aEnv ^. timeout + 30) * 1000 * 1000
                 
                 _throttle = 
-                  if _c ^. C.throttle
-                    then Just - _c ^. C.throttleSpeed
+                  if aEnv ^. throttle
+                    then Just - aEnv ^. throttleSpeed
                     else Nothing
 
             let sendThread = do
