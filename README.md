@@ -58,7 +58,7 @@ Drawbacks
 * UDP over SOCKS5 is not implemented.
 * TCP bind over SOCKS5 is not implemented.
 * More then 2 times slower then the original Python implementation (measured at
-  20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method).
+  20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method, software AES).
 * Currently only works on Linux.
 
 
