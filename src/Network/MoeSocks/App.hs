@@ -18,6 +18,7 @@ import Network.MoeSocks.Encrypt (initCipherBox, safeMethods, unsafeMethods)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Modules.Resource (loadConfig)
 import Network.MoeSocks.Runtime
+import Network.MoeSocks.Default
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
 import Network.MoeSocks.Type.Bootstrap.Option
@@ -67,7 +68,10 @@ moeApp = do
                             <> _method ^. _Text
     Just (a, b, c, d) -> pure - CipherBox a b c d
 
-  let _env = Env _options _config _cipherBox
+  let _env = defaultEnv
+              & options   .~ _options 
+              & config    .~ _config 
+              & cipherBox .~ _cipherBox
 
 
   let localService :: ServiceType

@@ -14,7 +14,7 @@ import Data.Text.Lens
 import Data.Word
 import Data.IP
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
-import Network.MoeSocks.Type.Bootstrap.Option
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.MoeSocks.Type.Common
 import Numeric (showHex)
 import qualified Data.List as L
@@ -142,10 +142,10 @@ makeLenses ''JobStatus
 initialJobStatus :: JobStatus
 initialJobStatus = JobStatus 0 0 0 0 0
 
-data Runtime = Runtime
+
+data Env = Env
   {
-    _jobs :: [(Job, Async_ID, TVar JobStatus)]
-  , _timeout :: Int
+    _timeout :: Int
   , _tcpBufferSize :: Int -- in packets
   , _throttle :: Bool
   , _throttleSpeed :: Double
@@ -154,13 +154,8 @@ data Runtime = Runtime
   , _socketOption_TCP_NOTSENT_LOWAT :: Bool
   , _obfuscation :: Bool
   , _forbidden_IPs :: [IPRange]
-  }
 
-makeLenses ''Runtime
-
-data Env = Env
-  {
-    _options :: Options
+  , _options :: O.Options
   , _config :: C.Config
   , _cipherBox :: CipherBox
   }
@@ -168,5 +163,13 @@ data Env = Env
 makeLenses ''Env
 
 
-type MoeMonadT = ReaderT Options (ExceptT String IO)
+data Runtime = Runtime
+  {
+    _jobs :: [(Job, Async_ID, TVar JobStatus)]
+  , _env :: Env
+  }
+
+makeLenses ''Runtime
+
+type MoeMonadT = ReaderT O.Options (ExceptT String IO)
 

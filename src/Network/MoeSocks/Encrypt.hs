@@ -8,9 +8,10 @@
 module Network.MoeSocks.Encrypt 
 (
   initCipherBox
+, constCipherBox
 , identityCipher
-, ssl
 , safeMethods
+, ssl
 , unsafeMethods
 )
 where
@@ -136,12 +137,16 @@ mio = (>>= getMaybe) . liftIO
 identityCipher :: Cipher
 identityCipher = pure . S.fromMaybe mempty
 
+constCipherBox :: CipherBox
+constCipherBox = 
+  let constCipher = const - pure identityCipher
+  in 
+  (0, pure mempty, constCipher, constCipher)
+
+
 initCipherBox :: Text -> Text -> IO (Maybe CipherBox)
 initCipherBox aMethod aPassword 
-  | aMethod == "none" = let constCipher = const - pure identityCipher
-                        in
-                        pure - Just (0, pure mempty, constCipher, constCipher)
-
+  | aMethod == "none" = pure - Just constCipherBox
   | otherwise = ssl - 
       fmap (preview _Right) - runExceptT - initCipherBox' aMethod aPassword
 

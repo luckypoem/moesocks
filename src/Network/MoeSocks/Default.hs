@@ -2,11 +2,12 @@
 
 module Network.MoeSocks.Default where
 
-import Network.MoeSocks.Type
-import qualified Network.MoeSocks.Type.Bootstrap.Option as O
-import qualified Network.MoeSocks.Type.Bootstrap.Config as C
-import System.Log.Logger
 import Control.Lens
+import Network.MoeSocks.Encrypt (constCipherBox)
+import Network.MoeSocks.Type
+import System.Log.Logger
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 
 defaultConfig :: C.Config
 defaultConfig = C.Config
@@ -42,15 +43,14 @@ defaultOptions = O.Options
   , O._params = []
   } 
 
-defaultRuntime :: Runtime
-defaultRuntime =
+defaultEnv :: Env
+defaultEnv =
   let _c = defaultConfig
       _o = defaultOptions
   in
-  Runtime
-    {
-      _jobs                           = []
-    , _timeout                        = _c ^. C.timeout
+  Env
+  {
+      _timeout                        = _c ^. C.timeout
     , _tcpBufferSize                  = _c ^. C.tcpBufferSize
     , _throttle                       = _c ^. C.throttle
     , _throttleSpeed                  = _c ^. C.throttleSpeed
@@ -59,4 +59,15 @@ defaultRuntime =
     , _socketOption_TCP_NOTSENT_LOWAT = _c ^. C.socketOption_TCP_NOTSENT_LOWAT
     , _obfuscation                    = _o ^. O.obfuscation
     , _forbidden_IPs                  = _o ^. O.forbidden_IPs
+    , _options = defaultOptions
+    , _config = defaultConfig
+    , _cipherBox = let (a,b,c,d) = constCipherBox in CipherBox a b c d
+  }
+
+defaultRuntime :: Runtime
+defaultRuntime =
+  Runtime
+    {
+      _jobs = []
+    , _env = defaultEnv
     }

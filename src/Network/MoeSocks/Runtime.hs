@@ -87,14 +87,18 @@ initRuntime :: C.Config -> O.Options -> Runtime
 initRuntime aConfig someOptions = 
   let _c = aConfig
       _o = someOptions
+      _s = _c ^. C.socketOption_TCP_NOTSENT_LOWAT
+
+      _env = defaultEnv
+        & timeout                        .~ _c ^. C.timeout
+        & tcpBufferSize                  .~ _c ^. C.tcpBufferSize
+        & throttle                       .~ _c ^. C.throttle
+        & throttleSpeed                  .~ _c ^. C.throttleSpeed
+        & obfuscationFlushBound          .~ _c ^. C.obfuscationFlushBound 
+        & fastOpen                       .~ _c ^. C.fastOpen
+        & socketOption_TCP_NOTSENT_LOWAT .~ _s
+        & obfuscation                    .~ _o ^. O.obfuscation
+        & forbidden_IPs                  .~ _o ^. O.forbidden_IPs
   in
   defaultRuntime
-    & timeout                        .~ _c ^. C.timeout
-    & tcpBufferSize                  .~ _c ^. C.tcpBufferSize
-    & throttle                       .~ _c ^. C.throttle
-    & throttleSpeed                  .~ _c ^. C.throttleSpeed
-    & obfuscationFlushBound          .~ _c ^. C.obfuscationFlushBound 
-    & fastOpen                       .~ _c ^. C.fastOpen
-    & socketOption_TCP_NOTSENT_LOWAT .~ _c ^. C.socketOption_TCP_NOTSENT_LOWAT
-    & obfuscation                    .~ _o ^. O.obfuscation
-    & forbidden_IPs                  .~ _o ^. O.forbidden_IPs
+    & env .~ _env
