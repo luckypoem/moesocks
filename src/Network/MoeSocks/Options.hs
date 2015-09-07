@@ -18,11 +18,11 @@ import Prelude hiding ((-), takeWhile)
 import System.Log.Logger
 import qualified Data.Text as T
 import qualified Options.Applicative as O
-import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace, 
+import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace,
                               parseOnly, many', choice)
 
 textOption :: O.Mod O.OptionFields String -> O.Parser Text
-textOption x = strOption x <&> view (from _Text)
+textOption x = strOption x <&> review _Text
 
 defaultHelp :: Text -> Text -> Mod f a
 defaultHelp val x = help - x <> ", default: " <> val & view _Text
@@ -41,18 +41,18 @@ boolParam :: O.Mod O.FlagFields Bool -> O.Parser (Maybe Value)
 boolParam = (fmap . fmap) toJSON . fmap bool_To_Maybe . switch
 
 optionParser :: O.Parser Options
-optionParser = 
+optionParser =
   let _c = defaultConfig
       _mode = ( textOption -
                     short 'r'
                 <>  long "role"
                 <>  metavar "ROLE"
-                <>  defaultHelp "local" 
+                <>  defaultHelp "local"
                                 "Tell moesocks to run as local or remote"
-              ) <|> pure "local" 
-  
+              ) <|> pure "local"
+
       parseMode :: Text -> RunningMode
-      parseMode x 
+      parseMode x
         | x `elem` ["server", "remote"] = RemoteMode
         | x `elem` ["client", "local"] = LocalMode
         | x == "debug" = DebugMode
@@ -63,18 +63,18 @@ optionParser =
                       long "disable-socks5"
                   <>  help ("Do not start a SOCKS5 server on local. It can be "
                           <> "useful to run moesocks only as a secure tunnel")
-      
+
       _listMethods :: O.Parser Bool
       _listMethods = switch -
                       long "list-methods"
                   <>  help "Show supported encryption methods"
-                  
+
       _tcpBufferSize = intParam -
                               long "tcp-buffer-size"
                           <>  metavar "SIZE"
                           <>  defaultHelp (_c ^. C.tcpBufferSize
                                             & show
-                                            & view (from _Text))
+                                            & review _Text)
                                           ("The number of packets used as a "
                                             <> "buffer. A packet can hold "
                                             <> "at most 4K of data")
@@ -84,19 +84,19 @@ optionParser =
                   <>  long "config"
                   <>  metavar "CONFIG"
                   <>  help "Set the path of the configuration file"
-                 
+
       _remoteHost = textParam -
                       short 's'
                   <>  metavar "REMOTE"
                   <>  defaultHelp (_c ^. C.remoteHost)
                                   "remote address"
-  
+
       _remotePort = intParam -
                           short 'p'
                       <>  metavar "REMOTE_PORT"
-                      <>  defaultHelp (_c ^. C.remotePort 
-                                          & show 
-                                          & view (from _Text))
+                      <>  defaultHelp (_c ^. C.remotePort
+                                          & show
+                                          & review _Text)
                                       "remote port"
 
       _localHost = textParam -
@@ -110,7 +110,7 @@ optionParser =
                     <>  metavar "LOCAL PORT"
                     <>  defaultHelp (_c ^. C.localPort
                                         & show
-                                        & view (from _Text))
+                                        & review _Text)
                                     "local port"
 
       _password = textParam -
@@ -124,19 +124,19 @@ optionParser =
                     <> defaultHelp (_c ^. C.method)
                                     "encryption method"
 
-      _timeout  = intParam - 
+      _timeout  = intParam -
                         short 't'
                     <>  metavar "TIMEOUT"
                     <>  defaultHelp (_c ^. C.timeout
                                         & show
-                                        & view (from _Text))
+                                        & review _Text)
                                     "Timeout connection in seconds"
-                        
+
       _fastOpen = boolParam -
                         long "fast-open"
                     <>  help ("Use TCP_FASTOPEN, requires Linux 3.7+")
-      
-      _obfuscation :: O.Parser Bool 
+
+      _obfuscation :: O.Parser Bool
       _obfuscation = switch -
                           short 'o'
                       <>  long "obfuscation"
@@ -146,7 +146,7 @@ optionParser =
                                <> "about 10-20% performance degradation.")
 
 
-      _verbosity :: O.Parser Priority 
+      _verbosity :: O.Parser Priority
       _verbosity = flag INFO DEBUG -
                           short 'v'
                       <>  long "verbose"
@@ -163,7 +163,7 @@ optionParser =
                                 <> "(client) host is to be forwarded to the "
                                 <> "given host and port on the remote side."
                                 )
-  
+
 
 
       _forwardUDP :: O.Parser (Maybe Text)
@@ -177,16 +177,16 @@ optionParser =
                                 <> "(client) host is to be forwarded to the "
                                 <> "given host and port on the remote side."
                                 )
-  
+
       forwardParser ::  Parser Forward
       forwardParser = do
         skipSpace
         _forwardPort <- decimal
         char ':'
-        _forwardRemoteHost <- 
+        _forwardRemoteHost <-
           choice
             [
-              do 
+              do
                 char '['
                 _h <- takeWhile (/= ']')
                 char ']'
@@ -196,7 +196,7 @@ optionParser =
         char ':'
         _forwardRemotePort <- decimal
 
-        pure - Forward  
+        pure - Forward
                         _forwardPort
                         _forwardRemoteHost
                         _forwardRemotePort
@@ -206,7 +206,7 @@ optionParser =
 
       parseForwarding :: Maybe Text -> [Forward]
       parseForwarding x = x ^. _Just
-          & parseOnly forwardListParser 
+          & parseOnly forwardListParser
           & toListOf (traverse . traverse)
 
       _forbidden_IPs :: O.Parser (Maybe Text)
@@ -215,18 +215,18 @@ optionParser =
                       <>  metavar "IPLIST"
                       <>  defaultHelp (defaultOptions ^. forbidden_IPs
                                         & map show
-                                        & map (view - from _Text)
+                                        & map (review _Text)
                                         & T.intercalate ", ")
                                 (""
                                 <> "comma seperated IP list forbidden to "
                                 <> "connect"
                                 )
-     
+
       parseForbidden_IP :: Maybe Text -> [IPRange]
       parseForbidden_IP = maybe (defaultOptions ^. forbidden_IPs) -
-                                (toListOf - each 
-                                          . to T.strip 
-                                          . _Text 
+                                (toListOf - each
+                                          . to T.strip
+                                          . _Text
                                           . _Show
                                 ) . T.splitOn ","
 
@@ -236,25 +236,25 @@ optionParser =
 
 
       _params :: O.Parser [(Text, Value)]
-      _params = 
+      _params =
         [ tag "_remoteHost"     _remoteHost
         , tag "_remotePort"     _remotePort
         , tag "_localHost"      _localHost
-        , tag "_localPort"      _localPort 
+        , tag "_localPort"      _localPort
         , tag "_password"       _password
-        , tag "_method"         _method 
+        , tag "_method"         _method
         , tag "_timeout"        _timeout
         , tag "_tcpBufferSize"  _tcpBufferSize
         , tag "_fastOpen"       _fastOpen
         ]
         & sequenceA
         & fmap catMaybes
-          
-  in
-        
 
-  Options 
-              <$> fmap parseMode _mode 
+  in
+
+
+  Options
+              <$> fmap parseMode _mode
               <*> _config
               <*> _verbosity
               <*> fmap parseForwarding _forwardTCP
@@ -266,8 +266,7 @@ optionParser =
               <*> _params
 
 opts :: ParserInfo Options
-opts = info (helper <*> optionParser) - 
+opts = info (helper <*> optionParser) -
         fullDesc
     <>  progDesc "A SOCKS5 proxy using the client / server architecture"
     <>  header "A functional firewall killer"
-
