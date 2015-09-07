@@ -86,7 +86,7 @@ filterJobs = \case
 
 
 initRuntime :: C.Config -> Options -> Runtime
-initRuntime aConfig someOptions = 
+initRuntime aConfig _ = 
   let _c = aConfig
   in
   defaultRuntime

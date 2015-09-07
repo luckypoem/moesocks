@@ -8,17 +8,13 @@ import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader
-import Data.Aeson
 import Data.ByteString (ByteString)
-import Data.IP
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Word
-import GHC.Generics (Generic)
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Network.MoeSocks.Type.Bootstrap.Option hiding (Port)
 import Numeric (showHex)
-import System.Log.Logger
 import qualified Data.List as L
 import qualified Data.Strict as S
 

@@ -10,7 +10,6 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
 import Network.MoeSocks.Type.Bootstrap.Option
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Options.Applicative hiding (Parser)

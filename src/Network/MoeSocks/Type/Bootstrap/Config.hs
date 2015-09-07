@@ -4,21 +4,9 @@
 module Network.MoeSocks.Type.Bootstrap.Config where
 
 import Control.Lens
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Concurrent.Async
-import Control.Concurrent.STM
 import Data.Aeson
-import Data.ByteString (ByteString)
 import Data.Text (Text)
-import Data.Text.Lens
-import Data.IP
-import Data.Word
 import GHC.Generics (Generic)
-import System.Log.Logger
-import Numeric (showHex)
-import qualified Data.Strict as S
-import qualified Data.List as L
 
 data Config = Config
   {

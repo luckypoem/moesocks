@@ -58,7 +58,7 @@ executable moesocks
                       Network.MoeSocks.App
                       Network.MoeSocks.BuilderAndParser
                       Network.MoeSocks.Common
-                      Network.MoeSocks.Config
+                      Network.MoeSocks.Default
                       Network.MoeSocks.Encrypt
                       Network.MoeSocks.Helper
                       Network.MoeSocks.Internal.Socket
@@ -66,5 +66,7 @@ executable moesocks
                       Network.MoeSocks.Options
                       Network.MoeSocks.Runtime
                       Network.MoeSocks.TCP
+                      Network.MoeSocks.Type.Bootstrap.Option
+                      Network.MoeSocks.Type.Bootstrap.Config
                       Network.MoeSocks.Type
                       Network.MoeSocks.UDP
