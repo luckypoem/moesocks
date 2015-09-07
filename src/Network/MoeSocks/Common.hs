@@ -77,7 +77,7 @@ initTarget :: ClientRequest -> IO (Socket, SockAddr)
 initTarget _clientRequest = do
   let
       _socketType = _clientRequest ^. connectionType . re _SocketType
-      _hostName   = _clientRequest ^. addressType . to show . from _Text
+      _hostName   = _clientRequest ^. addressType . to show . re _Text
       _port       = _clientRequest ^. portNumber
       _family     = _clientRequest ^. addressType . to addressType_To_Family
   

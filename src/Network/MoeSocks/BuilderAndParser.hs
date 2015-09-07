@@ -22,7 +22,7 @@ import qualified Prelude as P
 
 _No_authentication :: Word8
 _No_authentication = 0
-              
+
 _Request_Granted :: Word8
 _Request_Granted = 0
 
@@ -46,9 +46,9 @@ greetingReplyBuilder =  B.word8 socksVersion
 
 sockAddr_To_Pair :: SockAddr -> (AddressType, Port)
 sockAddr_To_Pair aSockAddr = case aSockAddr of
-  SockAddrInet _port _host -> 
-                                    let 
-                                        _r@(_a, _b, _c, _d) = 
+  SockAddrInet _port _host ->
+                                    let
+                                        _r@(_a, _b, _c, _d) =
                                           decode . runPut . put - _host
                                           :: (Word8, Word8, Word8, Word8)
                                     in
@@ -58,8 +58,8 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
                                     )
 
   SockAddrInet6 _port _ _host _ ->
-                                    let 
-                                        _r@(_a, _b, _c, _d, _e, _f, _g, _h) = 
+                                    let
+                                        _r@(_a, _b, _c, _d, _e, _f, _g, _h) =
                                           decode . runPut . put - _host
                                           :: (Word16, Word16, Word16, Word16
                                               , Word16, Word16, Word16, Word16)
@@ -69,11 +69,11 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
                                     , fromIntegral _port
                                     )
 
-  SockAddrUnix x -> 
+  SockAddrUnix x ->
                                     let
                                         _host = P.takeWhile (/= ':') x
-                                        _port = x & reverse 
-                                                  & P.takeWhile (/= ':') 
+                                        _port = x & reverse
+                                                  & P.takeWhile (/= ':')
                                                   & reverse
                                     in
 
@@ -81,40 +81,40 @@ sockAddr_To_Pair aSockAddr = case aSockAddr of
                                     , fromMaybe 0 - _port ^? _Show
                                     )
 
-  x -> 
-                                    error - "SockAddrCan not implemented: " 
-                                            <> show x 
+  x ->
+                                    error - "SockAddrCan not implemented: "
+                                            <> show x
 
 
 portBuilder :: (Integral i) => i -> B.Builder
 portBuilder i =
-  let _i = fromIntegral i :: Word16 
+  let _i = fromIntegral i :: Word16
   in
   foldMapOf both B.word8 -
     (decode - runPut - put _i :: (Word8, Word8))
 
 connectionReplyBuilder :: SockAddr -> B.Builder
-connectionReplyBuilder aSockAddr = 
+connectionReplyBuilder aSockAddr =
   let _r@(__addressType, _port) = sockAddr_To_Pair aSockAddr
   in
       B.word8 socksVersion
-  <>  B.word8 _Request_Granted 
+  <>  B.word8 _Request_Granted
   <>  B.word8 _ReservedByte
   <>  addressTypeBuilder __addressType
   <>  portBuilder _port
 
 addressTypeBuilder :: AddressType -> B.Builder
-addressTypeBuilder aAddressType = 
+addressTypeBuilder aAddressType =
   case aAddressType of
-    IPv4_Address _address -> 
+    IPv4_Address _address ->
                           B.word8 1
                        <> foldMapOf each B.word8 _address
-    DomainName x ->   
+    DomainName x ->
                           B.word8 3
                        <> B.word8 (fromIntegral (S.length (review utf8 x)))
                        <> B.byteString (review utf8 x)
 
-    IPv6_Address _address ->  
+    IPv6_Address _address ->
                           B.word8 4
                        <> foldMapOf each B.word16BE _address
 
@@ -128,7 +128,7 @@ connectionType_To_Word8 UDP_Port = 3
 
 
 requestBuilder :: ClientRequest -> B.Builder
-requestBuilder aClientRequest = 
+requestBuilder aClientRequest =
       B.word8 (connectionType_To_Word8 - aClientRequest ^. connectionType)
   <>  B.word8 _ReservedByte
   <>  addressTypeBuilder (aClientRequest ^. addressType)
@@ -169,7 +169,7 @@ requestParser :: Parser ClientRequest
 requestParser = do
   __connectionType <- choice
       [
-        TCP_IP_StreamConnection <$ word8 1 
+        TCP_IP_StreamConnection <$ word8 1
       {-, TCP_IP_PortBinding <$ word8 2-}
       , UDP_Port <$ word8 3
       ]
@@ -177,13 +177,13 @@ requestParser = do
   word8 _ReservedByte
   __addressType <- addressTypeParser
   __portNumber <- portParser
-  pure - 
+  pure -
           ClientRequest
             __connectionType
-            __addressType 
+            __addressType
             __portNumber
 
-connectionParser :: Parser ClientRequest 
+connectionParser :: Parser ClientRequest
 connectionParser = do
   socksHeader
   requestParser
@@ -203,16 +203,16 @@ addressTypeParser = choice
                         _a <- anyWord8
                         _b <- anyWord8
                         _c <- anyWord8
-                        _d <- anyWord8 
+                        _d <- anyWord8
                         pure - (_a, _b, _c, _d)
-  
-  , DomainName <$>   do 
+
+  , DomainName <$>   do
                         word8 3
                         _nameLength <- anyWord8
                         view utf8 <$> (take - fromIntegral _nameLength)
 
   , IPv6_Address <$>  do
-                        word8 4 
+                        word8 4
                         _r <- count 8 anyWord16
                         {-pure - trace ("parsed IPv6: " <> show _r) _r-}
                         pure _r
@@ -224,8 +224,8 @@ shadowSocksRequestParser _connectionType = do
   _addressType <- addressTypeParser
   _portNumber <- portParser
 
-  pure - 
+  pure -
           ClientRequest
-            _connectionType 
-            _addressType 
+            _connectionType
+            _addressType
             _portNumber
