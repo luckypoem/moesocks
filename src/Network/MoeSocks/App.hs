@@ -7,22 +7,20 @@ import Control.Concurrent.Async hiding (waitBoth)
 import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad
-import Control.Monad.Except
-import Control.Monad.Reader hiding (local)
 import Control.Monad.Writer hiding (listen)
 import Data.Text.Lens
 import Network.MoeSocks.Encrypt (safeMethods, unsafeMethods)
+import Network.MoeSocks.Handler
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Modules.Resource (loadConfig)
 import Network.MoeSocks.Runtime
 import Network.MoeSocks.Type
-import Network.MoeSocks.Type.Bootstrap.Option
-import Network.MoeSocks.Handler
 import Prelude hiding ((-), take)
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 
-withGateOptions :: Options -> IO a -> IO ()
+withGateOptions :: O.Options -> IO a -> IO ()
 withGateOptions aOption aIO = do
-  if aOption ^. listMethods
+  if aOption ^. O.listMethods
     then do
       let _br = putStrLn ""
 
@@ -60,11 +58,11 @@ runApp aEnv someJobs = do
   pure ()
 
 
-moeApp:: MoeMonadT ()
-moeApp = do
-  _options <- ask
-  _config <- lift - loadConfig - _options
+moeApp:: O.Options -> MoeMonad ()
+moeApp someOptions = do
+  let _options = someOptions
+  _config <- loadConfig - _options
 
-  (_runtime, _jobs) <- lift - initRuntime _config _options 
+  (_runtime, _jobs) <- initRuntime _config _options 
 
   io - runApp (_runtime ^. env) _jobs

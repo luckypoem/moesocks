@@ -1,7 +1,6 @@
 module Main where
 
 import Control.Monad.Except
-import Control.Monad.Reader hiding (local)
 import Network.MoeSocks.App
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Options
@@ -14,7 +13,7 @@ main = do
   _options <- execParser opts
   
   withGateOptions _options - do
-    r <- runExceptT - runReaderT moeApp _options
+    r <- runExceptT - moeApp _options
     case r of
       Left e -> error_ e >> exitFailure
       Right _ -> pure ()

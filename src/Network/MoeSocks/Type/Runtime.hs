@@ -7,13 +7,11 @@ import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Word
 import Data.IP
-import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.MoeSocks.Type.Common
 import Numeric (showHex)
 import qualified Data.List as L
@@ -168,5 +166,5 @@ data Runtime = Runtime
 
 makeLenses ''Runtime
 
-type MoeMonadT = ReaderT O.Options (ExceptT String IO)
+type MoeMonad = ExceptT String IO
 
