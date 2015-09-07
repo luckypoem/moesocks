@@ -12,7 +12,8 @@ import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Options
 import Network.MoeSocks.Type
-import Network.MoeSocks.Type.Config
+import Network.MoeSocks.Type.Bootstrap.Option
+import Network.MoeSocks.Type.Bootstrap.Config
 import Prelude hiding ((-))
 import System.Exit
 import System.Log.Logger

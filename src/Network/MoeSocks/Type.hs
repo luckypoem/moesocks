@@ -15,7 +15,8 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Data.Word
 import GHC.Generics (Generic)
-import qualified Network.MoeSocks.Type.Config as C
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
+import Network.MoeSocks.Type.Bootstrap.Option hiding (Port)
 import Numeric (showHex)
 import System.Log.Logger
 import qualified Data.List as L
@@ -66,46 +67,8 @@ data ClientRequest = ClientRequest
 makeLenses ''ClientRequest
 
 
-
-data RunningMode = RemoteMode | LocalMode | DebugMode
-      deriving (Show, Eq)
-
 data Verbosity = Normal | Verbose
       deriving (Show, Eq)
-
-data Forward = Forward
-  {
-    _forwardLocalPort :: Port
-  , _forwardTargetHost :: Text
-  , _forwardTargetPort :: Port
-  }
-  deriving (Show, Eq)
-
-
-makeLenses ''Forward
-
-{-data Profile =    Mac-}
-                {-| Linux-}
-  {-deriving (Show, Eq, Read)-}
-
-{-makePrisms ''Profile-}
-
-data Options = Options
-  {
-    _runningMode :: RunningMode
-  , _configFile :: Maybe Text
-  , _verbosity :: Priority
-  , _forward_TCPs :: [Forward]
-  , _forward_UDPs :: [Forward]
-  , _disable_SOCKS5 :: Bool
-  , _obfuscation :: Bool
-  , _forbidden_IPs :: [IPRange]
-  , _listMethods :: Bool
-  , _params :: [(Text, Value)]
-  }
-  deriving (Show, Eq)
-
-makeLenses ''Options
 
 type Cipher = S.Maybe ByteString -> IO ByteString 
 type IV = ByteString

@@ -20,7 +20,8 @@ import Network.MoeSocks.Modules.Resource (loadConfig)
 import Network.MoeSocks.Runtime
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
-import qualified Network.MoeSocks.Type.Config as C
+import Network.MoeSocks.Type.Bootstrap.Option
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Network.MoeSocks.UDP
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString

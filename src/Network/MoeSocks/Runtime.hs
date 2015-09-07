@@ -7,8 +7,9 @@ import Control.Lens
 import Control.Monad.Writer hiding (listen)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import Network.MoeSocks.Type.Bootstrap.Option
 import Network.MoeSocks.Default
-import qualified Network.MoeSocks.Type.Config as C
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple

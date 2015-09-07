@@ -13,7 +13,8 @@ import Network.MoeSocks.Common
 import Network.MoeSocks.Encrypt (identityCipher)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import qualified Network.MoeSocks.Type.Config as C
+import Network.MoeSocks.Type.Bootstrap.Option
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString (recv)
 import Prelude hiding ((-), take)

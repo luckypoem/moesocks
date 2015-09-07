@@ -1,8 +1,7 @@
-
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Network.MoeSocks.Type.Config where
+module Network.MoeSocks.Type.Bootstrap.Config where
 
 import Control.Lens
 import Control.Monad.Except
