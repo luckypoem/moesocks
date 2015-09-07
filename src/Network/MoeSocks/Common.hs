@@ -10,6 +10,7 @@ import Data.Maybe
 import Data.Text.Lens
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import qualified Network.MoeSocks.Type.Config as C
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 
@@ -84,9 +85,9 @@ initTarget _clientRequest = do
   getSocketWithHint _family _hostName _port _socketType
 
 
-setSocketConfig:: Config -> Socket -> IO ()
+setSocketConfig:: C.Config -> Socket -> IO ()
 setSocketConfig aConfig aSocket = do
   setSocketOption aSocket NoDelay 1 
-  when (aConfig ^. socketOption_TCP_NOTSENT_LOWAT) - do
+  when (aConfig ^. C.socketOption_TCP_NOTSENT_LOWAT) - do
     tryIO "setSocket_TCP_NOTSENT_LOWAT" - setSocket_TCP_NOTSENT_LOWAT aSocket
     pure ()

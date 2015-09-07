@@ -12,16 +12,17 @@ import Data.Aeson.Lens
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Lens
-import Network.MoeSocks.Config
+import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import qualified Network.MoeSocks.Type.Config as C
 import Prelude hiding ((-), take)
 import qualified Data.HashMap.Strict as H
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
-loadConfig :: Options -> MoeMonadT Config
+loadConfig :: Options -> MoeMonadT C.Config
 loadConfig aOption = do
   let _maybeFilePath = aOption ^. configFile 
 
@@ -68,7 +69,7 @@ loadConfig aOption = do
       toReadableConfig :: Value -> Value
       toReadableConfig = asList - each . _1 %~ T.tail 
 
-      showConfig :: Config -> Text
+      showConfig :: C.Config -> Text
       showConfig =  review _JSON
                     . toReadableConfig 
                     . review _JSON 

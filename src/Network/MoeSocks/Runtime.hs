@@ -7,6 +7,8 @@ import Control.Lens
 import Control.Monad.Writer hiding (listen)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import Network.MoeSocks.Default
+import qualified Network.MoeSocks.Type.Config as C
 import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple
@@ -31,38 +33,39 @@ initLogger aLevel = do
   updateGlobalLogger "moe" - setLevel aLevel
 
 
-loadJobs :: Config -> Options -> [Job]
-loadJobs aConfig aOptions = 
+
+loadJobs :: C.Config -> Options -> [Job]
+loadJobs aConfig someOptions = 
   let _c = aConfig
 
       _remote_TCP_Relay =   
           RemoteRelay
             Remote_TCP_Relay
-            (_c ^. remoteHost)
-            (_c ^. remotePort)
+            (_c ^. C.remoteHost)
+            (_c ^. C.remotePort)
 
       _remote_UDP_Relay = 
           RemoteRelay
             Remote_UDP_Relay
-            (_c ^. remoteHost)
-            (_c ^. remotePort)
+            (_c ^. C.remoteHost)
+            (_c ^. C.remotePort)
 
       _localService :: LocalServiceType -> LocalService
       _localService = LocalService 
-                        (_c ^. localHost)
-                        (_c ^. remoteHost)
-                        (_c ^. remotePort)
+                        (_c ^. C.localHost)
+                        (_c ^. C.remoteHost)
+                        (_c ^. C.remotePort)
 
       _localService_TCP_Forwards = 
-          aOptions ^. forward_TCPs 
+          someOptions ^. forward_TCPs 
             & map (_localService . LocalService_TCP_Forward)
 
       _localService_UDP_Forwards =
-          aOptions ^. forward_UDPs 
+          someOptions ^. forward_UDPs 
             & map (_localService . LocalService_UDP_Forward)
 
       _localService_SOCKS5 =
-          LocalService_SOCKS5 (_c ^. localPort)
+          LocalService_SOCKS5 (_c ^. C.localPort)
             & _localService
 
       _remoteRelays = [_remote_TCP_Relay, _remote_UDP_Relay]
@@ -79,3 +82,17 @@ filterJobs = \case
   DebugMode -> id
   RemoteMode -> filter - is _RemoteRelayJob
   LocalMode -> filter - is _LocalServiceJob
+
+
+initRuntime :: C.Config -> Options -> Runtime
+initRuntime aConfig someOptions = 
+  let _c = aConfig
+  in
+  defaultRuntime
+    & timeout                        .~ _c ^. C.timeout
+    & tcpBufferSize                  .~ _c ^. C.tcpBufferSize
+    & throttle                       .~ _c ^. C.throttle
+    & throttleSpeed                  .~ _c ^. C.throttleSpeed
+    & obfuscationFlushBound          .~ _c ^. C.obfuscationFlushBound 
+    & fastOpen                       .~ _c ^. C.fastOpen
+    & socketOption_TCP_NOTSENT_LOWAT .~ _c ^. C.socketOption_TCP_NOTSENT_LOWAT

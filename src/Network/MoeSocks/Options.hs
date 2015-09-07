@@ -8,9 +8,10 @@ import Data.IP
 import Data.Maybe
 import Data.Text (Text)
 import Data.Text.Lens
-import Network.MoeSocks.Config
+import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import qualified Network.MoeSocks.Type.Config as C
 import Options.Applicative hiding (Parser)
 import Prelude hiding ((-), takeWhile)
 import System.Log.Logger
@@ -70,7 +71,7 @@ optionParser =
       _tcpBufferSize = intParam -
                               long "tcp-buffer-size"
                           <>  metavar "SIZE"
-                          <>  defaultHelp (_c ^. tcpBufferSize
+                          <>  defaultHelp (_c ^. C.tcpBufferSize
                                             & show
                                             & view (from _Text))
                                           ("The number of packets used as a "
@@ -86,13 +87,13 @@ optionParser =
       _remote = textParam -
                       short 's'
                   <>  metavar "REMOTE"
-                  <>  defaultHelp (_c ^. remoteHost)
+                  <>  defaultHelp (_c ^. C.remoteHost)
                                   "remote address"
   
       _remotePort = intParam -
                           short 'p'
                       <>  metavar "REMOTE_PORT"
-                      <>  defaultHelp (_c ^. remotePort 
+                      <>  defaultHelp (_c ^. C.remotePort 
                                           & show 
                                           & view (from _Text))
                                       "remote port"
@@ -100,13 +101,13 @@ optionParser =
       _local = textParam -
                       short 'b'
                   <>  metavar "LOCAL"
-                  <>  defaultHelp (_c ^. localHost)
+                  <>  defaultHelp (_c ^. C.localHost)
                                   "local address"
 
       _localPort = intParam -
                         short 'l'
                     <>  metavar "LOCAL PORT"
-                    <>  defaultHelp (_c ^. localPort
+                    <>  defaultHelp (_c ^. C.localPort
                                         & show
                                         & view (from _Text))
                                     "local port"
@@ -119,13 +120,13 @@ optionParser =
       _method   = textParam -
                         short 'm'
                     <>  metavar "METHOD"
-                    <> defaultHelp (_c ^. method)
+                    <> defaultHelp (_c ^. C.method)
                                     "encryption method"
 
       _timeout  = intParam - 
                         short 't'
                     <>  metavar "TIMEOUT"
-                    <>  defaultHelp (_c ^. timeout
+                    <>  defaultHelp (_c ^. C.timeout
                                         & show
                                         & view (from _Text))
                                     "Timeout connection in seconds"

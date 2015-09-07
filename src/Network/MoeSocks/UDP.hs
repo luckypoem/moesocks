@@ -12,6 +12,7 @@ import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
+import Network.MoeSocks.Type.Config
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import Prelude hiding ((-), take)

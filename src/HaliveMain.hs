@@ -8,10 +8,11 @@ import Control.Monad.Reader hiding (local)
 import Data.ByteString.Lens
 import Data.Maybe
 import Network.MoeSocks.App
-import Network.MoeSocks.Config
+import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Options
 import Network.MoeSocks.Type
+import Network.MoeSocks.Type.Config
 import Prelude hiding ((-))
 import System.Exit
 import System.Log.Logger

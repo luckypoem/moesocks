@@ -20,6 +20,7 @@ import Network.MoeSocks.Modules.Resource (loadConfig)
 import Network.MoeSocks.Runtime
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
+import qualified Network.MoeSocks.Type.Config as C
 import Network.MoeSocks.UDP
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
@@ -58,9 +59,9 @@ moeApp = do
   _config <- loadConfig - _options
   let _c = _config
 
-  let _method = _config ^. method
+  let _method = _config ^. C.method
 
-  _cipherBox <- (io - initCipherBox _method (_config ^. password)) >>= \case
+  _cipherBox <- (io - initCipherBox _method (_config ^. C.password)) >>= \case
     Nothing -> throwError - "Invalid method '"
                             <> _method ^. _Text
     Just (a, b, c, d) -> pure - CipherBox a b c d
@@ -83,7 +84,7 @@ moeApp = do
             TCP_Service -> do
               info_ - "LT: " <> aID <> " nyaa!"
 
-              when (_c ^. fastOpen) -
+              when (_c ^. C.fastOpen) -
                 setSocket_TCP_FAST_OPEN _localSocket
 
               listen _localSocket maxListenQueue
@@ -156,7 +157,7 @@ moeApp = do
           setSocketOption _remoteSocket ReuseAddr 1
           bindSocket _remoteSocket _remoteAddr
 
-          when (_c ^. fastOpen) -
+          when (_c ^. C.fastOpen) -
             setSocket_TCP_FAST_OPEN _remoteSocket
 
           listen _remoteSocket maxListenQueue
