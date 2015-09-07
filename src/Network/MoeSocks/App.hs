@@ -4,7 +4,7 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent.Async hiding (waitBoth)
-import Control.Concurrent.STM
+{-import Control.Concurrent.STM-}
 import Control.Lens
 import Control.Monad
 import Network.MoeSocks.Handler (runRemoteRelay, runLocalService)
@@ -16,25 +16,36 @@ import Prelude hiding ((-), take)
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 
 
-runJob :: Env -> Job -> TVar JobStatus -> IO ()
-runJob aEnv (RemoteRelayJob x) _ = runRemoteRelay aEnv x
-runJob aEnv (LocalServiceJob x) _ = runLocalService aEnv x
+{-runJob :: Env -> Job -> TVar JobStatus -> IO ()-}
+{-runJob aEnv (RemoteRelayJob x) _ = runRemoteRelay aEnv x-}
+{-runJob aEnv (LocalServiceJob x) _ = runLocalService aEnv x-}
+
+{-runApp :: Env -> [Job] -> IO ()-}
+{-runApp aEnv someJobs = do-}
+  {-_jobs <- (forM someJobs - \_job -> (,) _job-}
+                                      {-<$> newTVarIO initialJobStatus)-}
+  {-_asyncs <- mapM (async . foreverRun . (uncurry (runJob aEnv))) _jobs-}
+
+  {-_mainThread <- async - do-}
+    {-waitAnyCancel - _asyncs-}
+
+  {-_uiThread <- async - forever - do-}
+    {-let _statuses = _jobs ^.. each . _2 :: [TVar JobStatus]-}
+    {-[>forM_ _statuses - readTVarIO >=> print<]-}
+    {-sleep 5-}
+
+  {-waitAnyCancel [_mainThread, _uiThread]-}
+
+  {-pure ()-}
+
+runJob :: Env -> Job -> IO ()
+runJob aEnv (RemoteRelayJob x)  = runRemoteRelay aEnv x
+runJob aEnv (LocalServiceJob x)  = runLocalService aEnv x
 
 runApp :: Env -> [Job] -> IO ()
 runApp aEnv someJobs = do
-  _jobs <- (forM someJobs - \_job -> (,) _job
-                                      <$> newTVarIO initialJobStatus)
-  _asyncs <- mapM (async . foreverRun . (uncurry (runJob aEnv))) _jobs
-
-  _mainThread <- async - do
-    waitAnyCancel - _asyncs
-
-  _uiThread <- async - forever - do
-    let _statuses = _jobs ^.. each . _2 :: [TVar JobStatus]
-    {-forM_ _statuses - readTVarIO >=> print-}
-    sleep 5
-
-  waitAnyCancel [_mainThread, _uiThread]
+  _asyncs <- mapM (async . foreverRun . runJob aEnv) someJobs
+  waitAnyCancel - _asyncs
 
   pure ()
 

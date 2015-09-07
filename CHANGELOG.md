@@ -1,3 +1,7 @@
+0.1.2.30
+--------
+* Refactor internal to make a runtime independent of Config and Options
+
 0.1.2.20
 --------
 * Fix IPv6, finally tested on a real IPv6 network..
