@@ -5,7 +5,6 @@ module Network.MoeSocks.TCP where
 import Control.Concurrent.STM
 import Control.Exception
 import Control.Lens
-import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.ByteString (ByteString)
 import Data.Text (Text)
@@ -14,8 +13,6 @@ import Network.MoeSocks.Common
 import Network.MoeSocks.Encrypt (identityCipher)
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import qualified Network.MoeSocks.Type.Bootstrap.Config as C
-import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString (recv)
 import Prelude hiding ((-), take)

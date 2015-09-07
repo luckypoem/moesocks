@@ -13,7 +13,6 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Data.Word
 import Data.IP
-import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.MoeSocks.Type.Common
 import Numeric (showHex)
@@ -155,8 +154,6 @@ data Env = Env
   , _obfuscation :: Bool
   , _forbidden_IPs :: [IPRange]
 
-  {-, _options :: O.Options-}
-  {-, _config :: C.Config-}
   , _cipherBox :: CipherBox
   }
 

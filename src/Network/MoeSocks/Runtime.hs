@@ -5,7 +5,6 @@ module Network.MoeSocks.Runtime where
 
 import Control.Lens
 import Control.Monad.Writer hiding (listen)
-import Control.Monad
 import Control.Monad.Except
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type

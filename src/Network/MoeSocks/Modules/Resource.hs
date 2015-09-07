@@ -14,14 +14,13 @@ import Data.Text (Text)
 import Data.Text.Lens
 import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
 import Network.MoeSocks.Type.Bootstrap.Option
-import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Prelude hiding ((-), take)
 import qualified Data.HashMap.Strict as H
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 
 loadConfig :: Options -> ExceptT String IO C.Config
 loadConfig aOption = do

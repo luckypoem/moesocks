@@ -7,14 +7,12 @@ import Control.Lens
 import Control.Monad
 import Control.Monad.Writer hiding (listen)
 import Data.Attoparsec.ByteString
-import Data.Text (Text)
 import Data.ByteString (ByteString)
+import Data.Text (Text)
 import Network.MoeSocks.BuilderAndParser
 import Network.MoeSocks.Common
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.MoeSocks.Type.Bootstrap.Config
-import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Network.Socket.ByteString
 import Prelude hiding ((-), take)

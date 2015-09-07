@@ -10,7 +10,6 @@ import Data.Maybe
 import Data.Text.Lens
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
 import Prelude hiding ((-), take)
 
