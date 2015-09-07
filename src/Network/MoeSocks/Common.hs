@@ -85,9 +85,9 @@ initTarget _clientRequest = do
   getSocketWithHint _family _hostName _port _socketType
 
 
-setSocketConfig:: C.Config -> Socket -> IO ()
-setSocketConfig aConfig aSocket = do
+setSocketConfig:: Env -> Socket -> IO ()
+setSocketConfig aEnv aSocket = do
   setSocketOption aSocket NoDelay 1 
-  when (aConfig ^. C.socketOption_TCP_NOTSENT_LOWAT) - do
+  when (aEnv ^. socketOption_TCP_NOTSENT_LOWAT) - do
     tryIO "setSocket_TCP_NOTSENT_LOWAT" - setSocket_TCP_NOTSENT_LOWAT aSocket
     pure ()
