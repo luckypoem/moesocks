@@ -56,17 +56,17 @@ executable moesocks
   default-language:    Haskell2010
   other-modules:
                       Network.MoeSocks.App
+                      Network.MoeSocks.Bootstrap
                       Network.MoeSocks.BuilderAndParser
                       Network.MoeSocks.Common
                       Network.MoeSocks.Default
                       Network.MoeSocks.Encrypt
                       Network.MoeSocks.Helper
                       Network.MoeSocks.Internal.Socket
-                      Network.MoeSocks.Modules.Resource
                       Network.MoeSocks.Options
                       Network.MoeSocks.Runtime
                       Network.MoeSocks.TCP
-                      Network.MoeSocks.Type.Bootstrap.Option
-                      Network.MoeSocks.Type.Bootstrap.Config
                       Network.MoeSocks.Type
+                      Network.MoeSocks.Type.Bootstrap.Config
+                      Network.MoeSocks.Type.Bootstrap.Option
                       Network.MoeSocks.UDP

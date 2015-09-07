@@ -7,6 +7,7 @@ import Control.Monad.Except
 import Data.ByteString.Lens
 import Data.Maybe
 import Network.MoeSocks.App
+import Network.MoeSocks.Bootstrap
 import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Options

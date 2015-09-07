@@ -2,6 +2,7 @@ module Main where
 
 import Control.Monad.Except
 import Network.MoeSocks.App
+import Network.MoeSocks.Bootstrap
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Options
 import Options.Applicative hiding (Parser)

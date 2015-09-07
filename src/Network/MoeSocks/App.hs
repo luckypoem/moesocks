@@ -7,34 +7,14 @@ import Control.Concurrent.Async hiding (waitBoth)
 import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad
-import Control.Monad.Writer (tell) 
-import Data.Monoid ((<>))
-import Data.Text.Lens
-import Network.MoeSocks.Encrypt (safeMethods, unsafeMethods)
 import Network.MoeSocks.Handler (runRemoteRelay, runLocalService)
 import Network.MoeSocks.Helper 
-import Network.MoeSocks.Modules.Resource (loadConfig)
+import Network.MoeSocks.Bootstrap (loadConfig)
 import Network.MoeSocks.Runtime (initRuntime)
 import Network.MoeSocks.Type
 import Prelude hiding ((-), take)
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 
-withGateOptions :: O.Options -> IO a -> IO ()
-withGateOptions aOption aIO = do
-  if aOption ^. O.listMethods
-    then do
-      let _br = putStrLn ""
-
-      _br
-      putStrLn "Recommended:"
-      itraverse_ (\k _ -> putStrLn - "\t\t" <> k ^. _Text) - safeMethods
-
-      _br
-      putStrLn "Supported:"
-      itraverse_ (\k _ -> putStrLn - "\t\t" <> k ^. _Text) - unsafeMethods
-
-    else
-      () <$ aIO
 
 runJob :: Env -> Job -> TVar JobStatus -> IO ()
 runJob aEnv (RemoteRelayJob x) _ = runRemoteRelay aEnv x

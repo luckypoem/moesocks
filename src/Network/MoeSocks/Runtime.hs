@@ -8,7 +8,7 @@ import Control.Monad.Writer hiding (listen)
 import Control.Monad.Except
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.MoeSocks.Modules.Resource
+import Network.MoeSocks.Bootstrap
 import Network.MoeSocks.Encrypt
 import Network.MoeSocks.Default
 import Data.Text.Lens
