@@ -23,7 +23,7 @@ import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
-loadConfig :: Options -> MoeMonadT C.Config
+loadConfig :: Options -> ExceptT String IO C.Config
 loadConfig aOption = do
   let _maybeFilePath = aOption ^. configFile
 

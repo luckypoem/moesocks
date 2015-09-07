@@ -22,6 +22,7 @@ import Network.MoeSocks.Default
 import Network.MoeSocks.TCP
 import Network.MoeSocks.Type
 import Network.MoeSocks.Type.Bootstrap.Option
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Network.MoeSocks.UDP
 import Network.Socket hiding (send, recv, recvFrom, sendTo)
@@ -51,6 +52,9 @@ withGateOptions aOption aIO = do
 data ServiceType = TCP_Service | UDP_Service
   deriving (Show, Eq)
 
+
+
+
 moeApp:: MoeMonadT ()
 moeApp = do
   _options <- ask
@@ -58,7 +62,8 @@ moeApp = do
 
   io - debug_ - show _options
 
-  _config <- loadConfig - _options
+  _config <- lift - loadConfig - _options
+
   let _c = _config
 
   let _method = _config ^. C.method
@@ -261,4 +266,6 @@ moeApp = do
         pure ()
 
 
-  io - runApp - filterJobs (_options ^. runningMode) - loadJobs _c _options
+  (_runtime, _jobs) <- lift - initRuntime _c _options 
+
+  io - runApp - _jobs
