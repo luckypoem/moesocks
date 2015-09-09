@@ -36,9 +36,12 @@ nemesis = do
       sh "cd .cabal-sandbox/bin; sha256sum moesocks-x86-64 moesocks-armhf"
 
     task "compress" - do
-      let tar x y = sh - "tar -c -J -f " <> x <> " " <> y
-      tar "dist/moesocks-x86-64.tar.xz" ".cabal-sandbox/bin/moesocks-x86-64"
-      tar "dist/moesocks-armhf.tar.xz"  ".cabal-sandbox/bin/moesocks-armhf"
+      let tar x y = 
+            sh - "cd .cabal-sandbox/bin;"
+                  <> "tar -c -J -f " <> "../../dist/" <> x <> " " <> y
+
+      tar "moesocks-x86-64.tar.xz" "moesocks-x86-64"
+      tar "moesocks-armhf.tar.xz"  "moesocks-armhf"
   
 
   desc "halive"
