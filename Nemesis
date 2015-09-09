@@ -25,6 +25,13 @@ run x = do
   sh cmd
 
 nemesis = do
+  namespace "build" - do
+    task "x86-64" - do
+      sh "cabal install --program-suffix='-x86-64'"
+
+    task "armhf" - do
+      sh "cabal install --program-suffix='-armhf'"
+  
 
   desc "halive"
   task "h" - do
