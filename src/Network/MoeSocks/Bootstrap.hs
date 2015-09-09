@@ -123,7 +123,7 @@ loadConfig aOption = do
     Nothing -> do
       let _r =
             execWriter - do
-              tell "\n\n"
+              tell "\n"
               case _maybeFilePath of
                 Just _filePath -> do
                                     tell "Failed to parse configuration file: "
