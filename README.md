@@ -15,7 +15,7 @@ Usage
 
 * Download a sample [config.json] to your current path
 
-* Edit `config.json` to fit your setup (at least the `remote` and `password`
+* Edit `config.json` to fit your setup (at least the `remoteHost` and `password`
   fields)
 
 * Start a remote node outside a firewall:
