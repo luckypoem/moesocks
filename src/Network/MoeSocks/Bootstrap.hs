@@ -135,6 +135,10 @@ loadConfig aOption = do
                             tell "The password argument '-k' is required.\n"
                             tell "Alternatively, use '-c' to provide a "
                             tell "configuration file.\n"
+                            tell "\n"
+                            tell "Use '-h' to show help text"
+
+              tell "\n"
 
       throwError - _r ^. _Text
 
