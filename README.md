@@ -1,4 +1,5 @@
 MoeSocks
+
 ========
 
 A SOCKS5 proxy using the client / server architecture.
@@ -8,7 +9,7 @@ MoeSocks is greatly inspired by [ss] and can be used in place of it.
 Installation
 ============
 
-* Need `GHC 7.10.2`.
+* Need `GHC 7.10.2` on Linux.
 
 Usage
 =====
