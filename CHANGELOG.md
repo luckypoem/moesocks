@@ -1,3 +1,7 @@
+1.0.0.0
+-------
+* Tag a stable release, clean up types
+
 0.1.2.30
 --------
 * Refactor internal to make a runtime independent of Config and Options
