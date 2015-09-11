@@ -13,7 +13,7 @@ cabal-version:      >=1.10
 copyright:          Copyright (C) 2015 Jinjing Wang
 tested-with:        GHC == 7.10.2
 
-extra-source-files:     config.json
+extra-doc-files:        config.json
                       , README.md
                       , CHANGELOG.md
 
