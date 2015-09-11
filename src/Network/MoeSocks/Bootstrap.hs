@@ -24,8 +24,8 @@ import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 
 withGateOptions :: O.Options -> IO a -> IO ()
-withGateOptions aOption aIO = do
-  if aOption ^. O.listMethods
+withGateOptions someOptions aIO = do
+  if someOptions ^. O.listMethods
     then do
       let _br = putStrLn ""
 
@@ -41,8 +41,8 @@ withGateOptions aOption aIO = do
       () <$ aIO
 
 loadConfig :: O.Options -> ExceptT String IO C.Config
-loadConfig aOption = do
-  let _maybeFilePath = aOption ^. O.configFile
+loadConfig someOptions = do
+  let _maybeFilePath = someOptions ^. O.configFile
 
   _v <- case _maybeFilePath of
           Nothing -> pure - Just - Object mempty
@@ -116,7 +116,7 @@ loadConfig aOption = do
                       >>= decode
                           . encode
                           . fallbackConfig optionalConfig
-                          . insertParams (aOption ^. O.params)
+                          . insertParams (someOptions ^. O.params)
                           . toParsableConfig
 
   case _maybeConfig of
