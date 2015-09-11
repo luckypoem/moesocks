@@ -109,7 +109,7 @@ initEnv aConfig someOptions = do
 
   pure - _env
 
-initRuntime :: C.Config -> O.Options -> ExceptT String IO (Runtime, [Job])
+initRuntime :: C.Config -> O.Options -> ExceptT String IO (Runtime)
 initRuntime aConfig someOptions = do
   let _c = aConfig
       _o = someOptions
@@ -132,5 +132,5 @@ initRuntime aConfig someOptions = do
 
   pure -  ( defaultRuntime
               & env .~ _env'
-          , _jobs
+              & jobs .~ _jobs
           )

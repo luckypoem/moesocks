@@ -3,8 +3,6 @@
 
 module Network.MoeSocks.Type.Runtime where
 
-import Control.Concurrent.Async
-import Control.Concurrent.STM
 import Control.Lens
 import Control.Monad.Except
 import Data.ByteString (ByteString)
@@ -122,24 +120,6 @@ data Job =
 
 makePrisms ''Job
 
-type Async_ID = Async ()
-
-data JobStatus = JobStatus
-      {
-        _incomingSpeed :: Double
-      , _incomingTotal :: Double
-      , _outgoingSpeed :: Double
-      , _outgoingTotal :: Double
-      , _numberOfRequests :: Int
-      }
-      deriving (Show, Eq)
-
-makeLenses ''JobStatus
-
-initialJobStatus :: JobStatus
-initialJobStatus = JobStatus 0 0 0 0 0
-
-
 data Env = Env
   {
     _timeout :: Int
@@ -160,7 +140,7 @@ makeLenses ''Env
 
 data Runtime = Runtime
   {
-    _jobs :: [(Job, Async_ID, TVar JobStatus)]
+    _jobs :: [Job]
   , _env :: Env
   }
 
