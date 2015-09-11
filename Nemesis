@@ -33,7 +33,7 @@ nemesis = do
       sh "cabal install --program-suffix='-armhf'"
     
     task "hash" - do
-      sh "cd .cabal-sandbox/bin; sha256sum moesocks-x86-64 moesocks-armhf"
+      sh "cd .cabal-sandbox/bin; sha256sum moesocks-armhf moesocks-x86-64"
 
     task "compress" - do
       let tar x y = 
