@@ -8,11 +8,6 @@ import Data.Time
 
 main = N.run nemesis
 
-ping = do
-        sh "curl -x socks5://127.0.0.1:1090 'http://127.0.0.1:8080'; exit 0"
-
-pingNone = do
-        sh "curl -x socks5://127.0.0.1:1090 'http://127.0.0.1:8081'; exit 0"
 
 runP :: String -> IO ()
 runP = run . ("--forbidden-ip '' " <>)
@@ -135,17 +130,32 @@ nemesis = do
     sh "cabal sdist"
 
 
-  desc "test"
-  task "test" - do
-    forever - do
-      ping
-      sleep 3
+  namespace "halive" - do
+    let curlHalive _url = sh - 
+          "curl -x socks5://127.0.0.1:1090 " <> _url <> "; exit 0"
 
-  desc "ping"
-  task "ping" - ping
-  
-  desc "ping-none"
-  task "ping-none" - pingNone
+    let ping = curlHalive "http://127.0.0.1:8080"
+    let pingNone = curlHalive "http://127.0.0.1:8081"
+
+    desc "test"
+    task "test" - do
+      forever - do
+        ping
+        sleep 3
+
+    desc "load-one"
+    task "load" - do
+      curlHalive "http://127.0.0.1:8080/test.mp4 -o /dev/null" 
+
+    desc "load"
+    task "load" - do
+      forever - curlHalive "http://127.0.0.1:8080/test.mp4 -o /dev/null" 
+    
+    desc "ping"
+    task "ping" - ping
+    
+    desc "ping-none"
+    task "ping-none" - pingNone
   
   desc "remote"
   task "remote" - do
