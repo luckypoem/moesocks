@@ -40,7 +40,7 @@ Usage
   auto restart the program if it crashes, likely due to [#10590], the fix of
   which was not included in the `7.10.2` release.
 
-* On `OSX`, If you only run `moesocks local`, then it should work. Occasional
+* On `OSX`, If you only run `moesocks -r local`, then it should work. Occasional
   manual restart should be expected. `fastOpen` field should be `false` for now.
 
 
