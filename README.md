@@ -8,7 +8,7 @@ MoeSocks is greatly inspired by [ss] and can be used in place of it.
 Installation
 ============
 
-* Need `GHC 7.10.2` on Linux.
+* Need `GHC 7.10.2` on Unix.
 
 Usage
 =====
@@ -40,6 +40,9 @@ Usage
   auto restart the program if it crashes, likely due to [#10590], the fix of
   which was not included in the `7.10.2` release.
 
+* On `OSX`, If you only run `moesocks local`, then it should work. Occasional
+  manual restart should be expected. `fastOpen` field should be `false` for now.
+
 
 Features
 ========
@@ -56,7 +59,7 @@ Drawbacks
 ==========
 
 * UDP over SOCKS5 is not implemented.
-* TCP bind over SOCKS5 is not implemented.
+* TCP bind over SOCKS5 is not implemented* More then 2 times slower then the original Python implementation (measured at
 * More then 2 times slower then the original Python implementation (measured at
   20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method, in software
   AES).
