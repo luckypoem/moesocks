@@ -29,7 +29,8 @@ defaultHelp val x = help - x <> ", default: " <> val & view _Text
 textParam :: O.Mod O.OptionFields String -> O.Parser (Maybe Value)
 textParam = optional . fmap toJSON . textOption
 
-commaSeperatedArrayParam :: O.Mod O.OptionFields String -> O.Parser (Maybe Value)
+commaSeperatedArrayParam :: O.Mod O.OptionFields String 
+                          -> O.Parser (Maybe Value)
 commaSeperatedArrayParam = 
   optional . fmap toJSON . fmap (filter (isn't _Empty)
                                     . map T.strip 
