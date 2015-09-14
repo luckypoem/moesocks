@@ -100,7 +100,7 @@ payload. An example command is:
 [Controlled Delay] (CoDel) and [Explicit Congestion Notification] (ECN)
 ======================================================================
 
-## no buffer at the app level
+## no buffer by default
 
 After version v1.0.0.0, moesocks will default to no buffer at the application
 level. TCP buffer should be handled by the kernel.
