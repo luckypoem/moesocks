@@ -110,10 +110,11 @@ In app buffer can still be tuned on by setting "tcpBufferSize" in
 
 ## Force ECN
 
-On Linux 3.7+ (as root)
+On Linux 2.4.20+ (as root)
 
     echo 1 > /proc/sys/net/ipv4/tcp_ecn
 
+ECN is recommended on both `local` and `remote`.
 
 Credits
 =======
