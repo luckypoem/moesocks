@@ -105,7 +105,7 @@ Explicit Congestion Notification ([ECN])
 After version v1.0.0.0, moesocks will default to no buffer at the application
 level. Smart buffer is expected from the kernel.
 
-In app buffer can still be tuned on by setting "tcpBufferSizeInPacket" in
+In app buffer can still be tuned on by setting "tcpBufferSize" in
 `config.json` a value greater then 1.
 
 ## Force ECN
