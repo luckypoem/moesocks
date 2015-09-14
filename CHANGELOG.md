@@ -1,3 +1,8 @@
+1.0.0.1
+-------
+* Default to no buffer, rely on buffer in the kernel. Add force Explicit
+  Congestion Notification in Readme.
+
 1.0.0.0
 -------
 * Tag a stable release, clean up types
