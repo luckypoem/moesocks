@@ -460,7 +460,7 @@ toHaskellNamingConvention :: Text -> Text
 toHaskellNamingConvention x = 
   let xs = x & T.split (`elem` ['_', '-'])
   in
-  if xs & anyOf each (T.all isUpper)
+  if xs & anyOf each (T.all isUpper . T.dropWhile (== 's') . T.reverse)
     then x
     else xs
             & over (_tail . traversed) T.toTitle

@@ -6,9 +6,8 @@ module Network.MoeSocks.Type.Bootstrap.Option where
 import Control.Lens
 import Data.Aeson
 import Data.Text (Text)
-import Data.IP
-import System.Log.Logger
 import Network.MoeSocks.Type.Common
+import System.Log.Logger
 
 data RunningMode = RemoteMode | LocalMode | DebugMode
       deriving (Show, Eq)
@@ -22,8 +21,8 @@ data Options = Options
   , _forward_UDPs :: [Forward]
   , _disable_SOCKS5 :: Bool
   , _obfuscation :: Bool
-  , _forbidden_IPs :: [IPRange]
   , _listMethods :: Bool
+  , _showDefaultConfig :: Bool
   , _params :: [(Text, Value)]
   }
   deriving (Show, Eq)

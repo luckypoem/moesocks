@@ -8,6 +8,10 @@ import Network.MoeSocks.Type
 import System.Log.Logger
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
+import qualified Data.Text as T
+import Data.Text (Text)
+import Data.IP
+import Data.Text.Lens
 
 defaultConfig :: C.Config
 defaultConfig = C.Config
@@ -25,6 +29,11 @@ defaultConfig = C.Config
   , C._obfuscationFlushBound = 4096
   , C._fastOpen = False
   , C._socketOption_TCP_NOTSENT_LOWAT = True
+  , C._forbidden_IPs =  [
+                          "127.0.0.1"
+                        , "0.0.0.0"
+                        , "::1"
+                        ]
   }
 
 
@@ -38,10 +47,18 @@ defaultOptions = O.Options
   , O._forward_UDPs = []
   , O._disable_SOCKS5 = False
   , O._obfuscation = False
-  , O._forbidden_IPs = ["127.0.0.1", "0.0.0.0", "::1"]
   , O._listMethods = False
+  , O._showDefaultConfig = False
   , O._params = []
   } 
+
+parseForbidden_IPs :: [Text] -> [IPRange]
+parseForbidden_IPs =
+                    toListOf $ each
+                              . to T.strip
+                              . _Text
+                              . _Show
+                     
 
 defaultEnv :: Env
 defaultEnv =
@@ -58,7 +75,8 @@ defaultEnv =
     , _fastOpen                       = _c ^. C.fastOpen
     , _socketOption_TCP_NOTSENT_LOWAT = _c ^. C.socketOption_TCP_NOTSENT_LOWAT
     , _obfuscation                    = _o ^. O.obfuscation
-    , _forbidden_IPs                  = _o ^. O.forbidden_IPs
+    , _forbidden_IPs                  = _c ^. C.forbidden_IPs 
+                                            & parseForbidden_IPs
     {-, _config = defaultConfig-}
     , _cipherBox = let (a,b,c,d) = constCipherBox in CipherBox a b c d
   }

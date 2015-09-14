@@ -23,12 +23,24 @@ import qualified Data.Text.IO as TIO
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 
+
+asList :: ([(Text, Value)] -> [(Text, Value)]) -> Value -> Value
+asList f = over _Object - H.fromList . f . H.toList
+
+toReadableConfig :: Value -> Value
+toReadableConfig = asList - each . _1 %~ T.tail
+
+showConfig :: C.Config -> Text
+showConfig =  review _JSON
+              . toReadableConfig
+              . review _JSON
+
 withGateOptions :: O.Options -> IO a -> IO ()
 withGateOptions someOptions aIO = do
+  let _br = putStrLn ""
+
   if someOptions ^. O.listMethods
     then do
-      let _br = putStrLn ""
-
       _br
       putStrLn "Recommended:"
       itraverse_ (\k _ -> putStrLn - "\t\t" <> k ^. _Text) - safeMethods
@@ -37,8 +49,12 @@ withGateOptions someOptions aIO = do
       putStrLn "Supported:"
       itraverse_ (\k _ -> putStrLn - "\t\t" <> k ^. _Text) - unsafeMethods
 
-    else
-      () <$ aIO
+    else 
+      if someOptions ^. O.showDefaultConfig
+        then
+          putStrLn - showConfig defaultConfig ^. _Text
+        else
+          () <$ aIO
 
 loadConfig :: O.Options -> ExceptT String IO C.Config
 loadConfig someOptions = do
@@ -50,9 +66,6 @@ loadConfig someOptions = do
                             io - TIO.readFile - _filePath ^. _Text
 
   let
-
-      asList :: ([(Text, Value)] -> [(Text, Value)]) -> Value -> Value
-      asList f = over _Object - H.fromList . f . H.toList
 
       fixConfig:: Text -> Text
       fixConfig x =
@@ -84,14 +97,6 @@ loadConfig someOptions = do
                                                 . fixConfig
                                                 )
 
-      toReadableConfig :: Value -> Value
-      toReadableConfig = asList - each . _1 %~ T.tail
-
-      showConfig :: C.Config -> Text
-      showConfig =  review _JSON
-                    . toReadableConfig
-                    . review _JSON
-
       filterEssentialConfig :: Value -> Value
       filterEssentialConfig = over _Object - \_obj ->
                                 foldl (flip H.delete) _obj -
@@ -111,7 +116,7 @@ loadConfig someOptions = do
 
       optionalConfig = filterEssentialConfig - toJSON defaultConfig
 
-      _maybeConfig = -- trace ("JSON: " <> show _v)
+      _maybeConfig =  -- trace' "JSON: "
                       _v
                       >>= decode
                           . encode

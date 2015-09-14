@@ -4,7 +4,6 @@ module Network.MoeSocks.Options where
 
 import Control.Lens
 import Data.Aeson
-import Data.IP
 import Data.Maybe
 import Data.Text (Text)
 import Data.Text.Lens
@@ -12,11 +11,11 @@ import Network.MoeSocks.Default
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type.Bootstrap.Option
 import Network.MoeSocks.Type.Common
-import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import Options.Applicative hiding (Parser)
 import Prelude hiding ((-), takeWhile)
 import System.Log.Logger
 import qualified Data.Text as T
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Options.Applicative as O
 import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace,
                               parseOnly, many', choice)
@@ -69,6 +68,11 @@ optionParser =
                       long "list-methods"
                   <>  help "Show supported encryption methods"
 
+      _showDefaultConfig :: O.Parser Bool
+      _showDefaultConfig = switch -
+                      long "show-default-config"
+                  <>  help "Show default json configuration"
+      
       _tcpBufferSize = intParam -
                               long "tcp-buffer-size"
                           <>  metavar "SIZE"
@@ -209,27 +213,15 @@ optionParser =
           & parseOnly forwardListParser
           & toListOf (traverse . traverse)
 
-      _forbidden_IPs :: O.Parser (Maybe Text)
-      _forbidden_IPs = optional - textOption -
+      _forbidden_IPs = textParam -
                           long "forbidden-ip"
                       <>  metavar "IPLIST"
-                      <>  defaultHelp (defaultOptions ^. forbidden_IPs
-                                        & map show
-                                        & map (review _Text)
+                      <>  defaultHelp (defaultConfig ^. C.forbidden_IPs
                                         & T.intercalate ", ")
                                 (""
                                 <> "comma seperated IP list forbidden to "
                                 <> "connect"
                                 )
-
-      parseForbidden_IP :: Maybe Text -> [IPRange]
-      parseForbidden_IP = maybe (defaultOptions ^. forbidden_IPs) -
-                                (toListOf - each
-                                          . to T.strip
-                                          . _Text
-                                          . _Show
-                                ) . T.splitOn ","
-
 
       tag :: a -> O.Parser (Maybe b) -> O.Parser (Maybe (a, b))
       tag x = fmap . fmap - ((,) x)
@@ -246,6 +238,7 @@ optionParser =
         , tag "_timeout"        _timeout
         , tag "_tcpBufferSize"  _tcpBufferSize
         , tag "_fastOpen"       _fastOpen
+        , tag "_forbidden_IPs"  _forbidden_IPs
         ]
         & sequenceA
         & fmap catMaybes
@@ -261,8 +254,9 @@ optionParser =
               <*> fmap parseForwarding _forwardUDP
               <*> _disable_SOCKS5
               <*> _obfuscation
-              <*> fmap parseForbidden_IP _forbidden_IPs
+              {-<*> fmap parseForbidden_IP _forbidden_IPs-}
               <*> _listMethods
+              <*> _showDefaultConfig
               <*> _params
 
 opts :: ParserInfo Options

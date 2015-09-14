@@ -1,3 +1,8 @@
+1.0.0.10
+--------
+* Add `forbidden_IPs` field in `config.json`
+* Add `show-default-config` to options
+
 1.0.0.1
 -------
 * Default to no buffer, rely on buffer in the kernel. Add force Explicit

@@ -22,14 +22,12 @@ import System.Random
 main :: IO ()
 main = do
   let _options = defaultOptions 
-                                    {-& configFile .~ Just "halive.json"-}
-                                    & O.configFile .~ Just "config.json"
+                                    & O.configFile .~ Just "halive.json"
                                     & O.forward_UDPs .~ 
                                                 [Forward 5301 "localhost" 53]
                                     {-& verbosity .~ INFO-}
                                     {-& verbosity .~ DEBUG-}
                                     & O.obfuscation .~ True
-                                    & O.forbidden_IPs .~ []
                                     {-& listMethods .~ True-}
 
   withGateOptions _options - do

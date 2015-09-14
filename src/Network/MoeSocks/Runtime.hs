@@ -126,7 +126,10 @@ initRuntime aConfig someOptions = do
         & fastOpen                       .~ _c ^. C.fastOpen
         & socketOption_TCP_NOTSENT_LOWAT .~ _s
         & obfuscation                    .~ _o ^. O.obfuscation
-        & forbidden_IPs                  .~ _o ^. O.forbidden_IPs
+        & forbidden_IPs                  .~ (_c ^. C.forbidden_IPs
+                                                & parseForbidden_IPs)
+                                            
+                                        
   
   let _jobs = loadJobs _c _o & filterJobs (_o ^. O.runningMode)
 

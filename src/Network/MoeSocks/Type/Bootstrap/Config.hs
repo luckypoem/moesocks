@@ -23,6 +23,7 @@ data Config = Config
   , _obfuscationFlushBound :: Int -- should be greater then MTU
   , _fastOpen :: Bool
   , _socketOption_TCP_NOTSENT_LOWAT :: Bool
+  , _forbidden_IPs :: [Text]
   }
   deriving (Show, Eq, Generic)
 
