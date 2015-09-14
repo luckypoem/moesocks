@@ -30,9 +30,11 @@ defaultConfig = C.Config
   , C._fastOpen = False
   , C._socketOption_TCP_NOTSENT_LOWAT = True
   , C._forbidden_IPs =  [
-                          "127.0.0.1"
-                        , "0.0.0.0"
-                        , "::1"
+                          "::1"
+                        , "0.0.0.0/16"
+                        , "10.0.0.0/8"
+                        , "127.0.0.0/24"
+                        , "192.168.0.0/16"
                         ]
   }
 
