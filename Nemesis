@@ -27,16 +27,34 @@ nemesis = do
     task "armhf" - do
       sh "cabal install --program-suffix='-armhf'"
     
+    task "darwin-x86-64" - do
+      sh "cabal install --program-suffix='-darwin-x86-64'"
+
     task "hash" - do
-      sh "cd .cabal-sandbox/bin; sha256sum moesocks-armhf moesocks-x86-64"
+      sh - "cd .cabal-sandbox/bin; sha256sum "
+          <> "moesocks-armhf"
+          <> "moesocks-x86-64"
+          <> "moesocks-darwin-x86-64"
+    
+    task "hash-mac" - do
+      sh - "cd .cabal-sandbox/bin; shasum -a 256 "
+          <> "moesocks-darwin-x86-64"
 
-    task "compress" - do
-      let tar x y = 
-            sh - "cd .cabal-sandbox/bin;"
-                  <> "tar -c -J -f " <> "../../dist/" <> x <> " " <> y
+    let tar x y = 
+          sh - "cd .cabal-sandbox/bin;"
+                <> "tar -c -J -f " <> "../../dist/" <> x <> " " <> y
 
+    task "compress-x86-64" - do
       tar "moesocks-x86-64.tar.xz" "moesocks-x86-64"
+    
+    task "compress-armhf" - do
       tar "moesocks-armhf.tar.xz"  "moesocks-armhf"
+    
+    task "compress-darwin-x86-64" - do
+      tar "moesocks-darwin-x86-64.tar.xz"  "moesocks-darwin-x86-64"
+
+    task "compress:compress-x86-64 compress-armhf compress-darwin-x86-64" - 
+      return ()
   
 
   desc "halive"
