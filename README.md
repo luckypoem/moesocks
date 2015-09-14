@@ -100,10 +100,10 @@ payload. An example command is:
 Explicit Congestion Notification ([ECN])
 =========================================
 
-## no buffer by default
+## No buffer by default
 
 After version v1.0.0.0, moesocks will default to no buffer at the application
-level. Smarter TCP buffer is expected from the kernel.
+level. Smart buffer is expected from the kernel.
 
 In app buffer can still be tuned on by setting "tcpBufferSizeInPacket" in
 `config.json` a value greater then 1.
