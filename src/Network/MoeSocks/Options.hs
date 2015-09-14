@@ -29,6 +29,13 @@ defaultHelp val x = help - x <> ", default: " <> val & view _Text
 textParam :: O.Mod O.OptionFields String -> O.Parser (Maybe Value)
 textParam = optional . fmap toJSON . textOption
 
+commaSeperatedArrayParam :: O.Mod O.OptionFields String -> O.Parser (Maybe Value)
+commaSeperatedArrayParam = 
+  optional . fmap toJSON . fmap (filter (isn't _Empty)
+                                    . map T.strip 
+                                    . T.splitOn ",") 
+                          . textOption
+
 intParam :: O.Mod O.OptionFields Int -> O.Parser (Maybe Value)
 intParam = optional . fmap toJSON . option auto
 
@@ -213,7 +220,7 @@ optionParser =
           & parseOnly forwardListParser
           & toListOf (traverse . traverse)
 
-      _forbidden_IPs = textParam -
+      _forbidden_IPs = commaSeperatedArrayParam -
                           long "forbidden-ip"
                       <>  metavar "IPLIST"
                       <>  defaultHelp (defaultConfig ^. C.forbidden_IPs
