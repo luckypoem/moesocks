@@ -262,7 +262,6 @@ optionParser =
               <*> fmap parseForwarding _forwardUDP
               <*> _disable_SOCKS5
               <*> _obfuscation
-              {-<*> fmap parseForbidden_IP _forbidden_IPs-}
               <*> _listMethods
               <*> _showDefaultConfig
               <*> _params
