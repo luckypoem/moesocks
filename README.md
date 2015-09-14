@@ -94,6 +94,23 @@ payload. An example command is:
 
     tcpdump port 8388 -i any -X -v
 
+[Controlled Delay] (CoDel) and [Explicit Congestion Notification] (ECN)
+======================================================================
+
+## no buffer at the app level
+
+After version v1.0.0.0, moesocks will default to no buffer at the application
+level. TCP buffer should be handled by the kernel.
+
+In app buffer can still be tuned on by setting "tcpBufferSizeInPacket" in
+`config.json` a value greater then 1.
+
+## Force ECN
+
+On Linux 3.7+ (as root)
+
+    echo 1 > /proc/sys/net/ipv4/tcp_ecn
+
 
 Credits
 =======
@@ -125,3 +142,6 @@ limitations under the License.
 [config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json
 [#10590]:https://ghc.haskell.org/trac/ghc/ticket/10590
 [TFO]:https://en.wikipedia.org/wiki/TCP_Fast_Open
+[Controlled Delay]:https://en.wikipedia.org/wiki/CoDel
+[Explicit Congestion Notification]:https://en.wikipedia.org/wiki/Explicit_Congestion_Notification
+
