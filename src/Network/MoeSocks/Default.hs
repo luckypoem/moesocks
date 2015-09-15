@@ -3,15 +3,16 @@
 module Network.MoeSocks.Default where
 
 import Control.Lens
+import Control.Monad.Writer
+import Data.IP
+import Data.Text (Text)
+import Data.Text.Lens
 import Network.MoeSocks.Encrypt (constCipherBox)
 import Network.MoeSocks.Type
 import System.Log.Logger
+import qualified Data.Text as T
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
-import qualified Data.Text as T
-import Data.Text (Text)
-import Data.IP
-import Data.Text.Lens
 
 defaultConfig :: C.Config
 defaultConfig = C.Config
@@ -29,14 +30,45 @@ defaultConfig = C.Config
   , C._obfuscationFlushBound = 4096
   , C._fastOpen = False
   , C._socketOption_TCP_NOTSENT_LOWAT = True
-  , C._forbidden_IPs =  [
-                          "::1"
-                        , "0.0.0.0/16"
-                        , "10.0.0.0/8"
-                        , "127.0.0.0/24"
-                        , "192.168.0.0/16"
-                        ]
+  , C._forbidden_IPs = _reserved_IP_Addresses
   }
+
+  where
+    _reserved_IP_Addresses :: [Text]
+    _reserved_IP_Addresses = execWriter $ do
+      let ip = tell . pure
+
+      -- https://en.wikipedia.org/wiki/Reserved_IP_addresses
+      ip "0.0.0.0/8"
+      ip "10.0.0.0/8"
+      ip "100.64.0.0/10"
+      ip "127.0.0.0/8"
+      ip "169.254.0.0/16"
+      ip "172.16.0.0/12"
+      ip "192.0.0.0/24"
+      ip "192.0.2.0/24"
+      ip "192.88.99.0/24"
+      ip "192.168.0.0/16"
+      ip "198.18.0.0/15"
+      ip "198.51.100.0/24"
+      ip "203.0.113.0/24"
+      ip "224.0.0.0/4"
+      ip "240.0.0.0/4"
+      ip "255.255.255.255/32"
+
+      ip "::/128"
+      ip "::1/128"
+      ip "::ffff:0:0/96"
+      ip "100::/64"
+      ip "64:ff9b::/96"
+      ip "2001::/32"
+      ip "2001:10::/28"
+      ip "2001:20::/28"
+      ip "2001:db8::/32"
+      ip "2002::/16"
+      ip "fc00::/7"
+      ip "fe80::/10"
+      ip "ff00::/8"
 
 
 defaultOptions :: O.Options
