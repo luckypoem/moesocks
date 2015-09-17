@@ -49,7 +49,7 @@ executable moesocks
                       , text
                       , time
                       , transformers
-                      , unix
+                      --, unix
                       , unordered-containers
 
   hs-source-dirs:      src

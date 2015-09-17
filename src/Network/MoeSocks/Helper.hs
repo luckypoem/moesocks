@@ -27,7 +27,7 @@ import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.Log.Logger
-import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
+-- import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import System.Random
 import System.Timeout (timeout)
 import qualified Data.ByteString as S
@@ -448,9 +448,12 @@ setSocket_TCP_NOTSENT_LOWAT aSocket =
 
 -- Copied and slightly modified from: 
 -- https://github.com/mzero/plush/blob/master/src/Plush/Server/Warp.hs
+{-setSocketCloseOnExec :: Socket -> IO ()-}
+{-setSocketCloseOnExec aSocket =-}
+    {-setFdOption (fromIntegral - fdSocket aSocket) CloseOnExec True-}
+
 setSocketCloseOnExec :: Socket -> IO ()
-setSocketCloseOnExec aSocket =
-    setFdOption (fromIntegral - fdSocket aSocket) CloseOnExec True
+setSocketCloseOnExec = const - pure ()
 
 
 tryIO :: String -> IO a -> IO (Either IOException a)
