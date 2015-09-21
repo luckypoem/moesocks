@@ -21,6 +21,7 @@ runJob aEnv (RemoteRelayJob x)  = runRemoteRelay aEnv x
 runJob aEnv (LocalServiceJob x)  = runLocalService aEnv x
 
 runApp :: Env -> [Job] -> IO ()
+runApp _ [] = error_ "No job to run"
 runApp aEnv someJobs = do
   _asyncs <- mapM (async . foreverRun . runJob aEnv) someJobs
   waitAnyCancel - _asyncs

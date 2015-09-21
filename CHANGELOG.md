@@ -1,3 +1,7 @@
+1.0.0.20
+--------
+* Fix respect '--disable-socks5'
+
 1.0.0.10
 --------
 * Add `forbidden_IPs` field in `config.json`
