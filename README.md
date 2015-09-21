@@ -53,7 +53,7 @@ Features
 * TCP per connection throttling (as a side effect of trying to find a bug in the
 remote)
 * SOCKS5 service on local can be turned off
-* Understand ss' configuration file
+* Understand ss's configuration file
 
 Drawbacks
 ==========
