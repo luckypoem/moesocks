@@ -33,8 +33,9 @@ nemesis = do
     task "hash" - do
       sh - "cd .cabal-sandbox/bin; sha256sum "
           <> "moesocks-armhf"
+          <> " "
           <> "moesocks-x86-64"
-          <> "moesocks-darwin-x86-64"
+          -- <> "moesocks-darwin-x86-64"
     
     task "hash-mac" - do
       sh - "cd .cabal-sandbox/bin; shasum -a 256 "
