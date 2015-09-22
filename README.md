@@ -114,7 +114,7 @@ On Linux 2.4.20+ (as root)
 
     echo 1 > /proc/sys/net/ipv4/tcp_ecn
 
-Force ECN is currently not recommended.
+Forced ECN is currently not recommended.
 
 Credits
 =======
