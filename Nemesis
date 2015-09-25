@@ -217,6 +217,10 @@ nemesis = do
   task "local2-o" - do
     run - "-r local -o -c dev2.json" <> _c 
   
+  desc "local3"
+  task "local3" - do
+    run - "-r local -c dev3.json" <> _c 
+  
   desc "i"
   task "i" - do
     sh "cabal repl"
