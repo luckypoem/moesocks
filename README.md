@@ -97,24 +97,6 @@ payload. An example command is:
 
     tcpdump port 8388 -i any -X -v
 
-Explicit Congestion Notification ([ECN])
-=========================================
-
-## No buffer by default
-
-After version v1.0.0.0, moesocks will default to no buffer at the application
-level. Smart buffer is expected from the kernel.
-
-In app buffer can still be tuned on by setting "tcpBufferSize" in
-`config.json` a value greater then 1.
-
-## Force ECN
-
-On Linux 2.4.20+ (as root)
-
-    echo 1 > /proc/sys/net/ipv4/tcp_ecn
-
-ECN is recommended only on `remote`.
 
 Credits
 =======
