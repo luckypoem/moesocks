@@ -29,3 +29,4 @@ debug
 session_ticket.yaml
 
 .stack-work
+.DS_Store
