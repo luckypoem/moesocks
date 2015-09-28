@@ -72,9 +72,17 @@ loadJobs aConfig someOptions =
             & _localService
 
       _remoteRelays = [_remote_TCP_Relay, _remote_UDP_Relay]
-      _localServices = _localService_TCP_Forwards
-                    <> _localService_UDP_Forwards
-                    <> pure _localService_SOCKS5
+      _localServices = 
+        let
+          _localService_SOCKS5s = 
+            if someOptions ^. O.disable_SOCKS5
+              then []
+              else pure _localService_SOCKS5
+        in
+
+        _localService_TCP_Forwards
+        <> _localService_UDP_Forwards
+        <> _localService_SOCKS5s
   in
 
   map RemoteRelayJob _remoteRelays

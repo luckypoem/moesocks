@@ -1,6 +1,6 @@
 name:               moesocks
 category:           Network
-version:            1.0.0.10
+version:            1.0.0.20
 license:            Apache-2.0
 synopsis:           A functional firewall killer
 description:        A SOCKS5 proxy using the client / server architecture.
@@ -49,7 +49,7 @@ executable moesocks
                       , text
                       , time
                       , transformers
-                      , unix
+                      --, unix
                       , unordered-containers
 
   hs-source-dirs:      src

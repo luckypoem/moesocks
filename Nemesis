@@ -33,8 +33,9 @@ nemesis = do
     task "hash" - do
       sh - "cd .cabal-sandbox/bin; sha256sum "
           <> "moesocks-armhf"
+          <> " "
           <> "moesocks-x86-64"
-          <> "moesocks-darwin-x86-64"
+          -- <> "moesocks-darwin-x86-64"
     
     task "hash-mac" - do
       sh - "cd .cabal-sandbox/bin; shasum -a 256 "
@@ -183,45 +184,42 @@ nemesis = do
   task "remote-o" - do
     run "-r remote -o -c dev.json"
   
+  let commonOptions = " -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53 "
+                      <> "--tcp-buffer-size 256"
+      
+      _c = commonOptions
+
   desc "local-profile"
   task "local-profile" - do
-    runP "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
+    runP - "-r local -c dev.json" <> _c
   
   desc "local"
   task "local" - do
-    run "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
+    run - "-r local -c dev.json" <> _c
   
   desc "local-o"
   task "local-o" - do
-    run "-r local -o -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
+    run - "-r local -o -c dev.json" <> _c 
 
-  desc "local-obfs"
-  task "local-obfs" - do
-    run "-r local -c dev-obfs.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
-
-  desc "local128"
-  task "local128" - do
-    run "-r local -c dev-128.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
-  
   desc "remote-debug"
   task "remote-debug" - do
-    run "-r remote -c dev.json -v"
+    run - "-r remote -c dev.json -v"
   
   desc "local-debug"
   task "local-debug" - do
-    run "-r local -c dev.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53 -v"
-
-  desc "ssserver"
-  task "ssserver" - do
-    sh "ssserver -c dev.json"
-  
-  desc "sslocal"
-  task "sslocal" - do
-    sh "sslocal -c dev.json"
+    run - "-r local -c dev.json -v" <> _c
 
   desc "local2"
   task "local2" - do
-    run "-r local -c dev2.json -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53"
+    run - "-r local -c dev2.json" <> _c 
+  
+  desc "local2-o"
+  task "local2-o" - do
+    run - "-r local -o -c dev2.json" <> _c 
+  
+  desc "local3"
+  task "local3" - do
+    run - "-r local -c dev3.json" <> _c 
   
   desc "i"
   task "i" - do

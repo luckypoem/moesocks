@@ -1,8 +1,8 @@
 {
   "remoteHost":"0.0.0.0",
-  "remotePort":1190,
+  "remotePort":8388,
   "localHost":"localhost",
-  "localPort":1090,
+  "localPort":1080,
   "password":"birthday!",
   "fastOpen":false,
   "method":"aes-256-cfb"

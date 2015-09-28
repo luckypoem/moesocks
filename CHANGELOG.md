@@ -1,6 +1,13 @@
+1.0.0.20
+--------
+* Fix respect '--disable-socks5'
+
 1.0.0.10
 --------
 * Add `forbidden_IPs` field in `config.json`
+* Use 
+  [Reserved IP addresses](https://en.wikipedia.org/wiki/Reserved_IP_addresses)
+  as the default value for `forbidden_IPs`
 * Add `show-default-config` to options
 
 1.0.0.1
