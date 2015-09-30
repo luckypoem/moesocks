@@ -9,6 +9,7 @@ let
       , lens, lens-aeson, mtl, network, optparse-applicative, random
       , stdenv, stm, strict, text, time, transformers
       , unordered-containers
+      , nemesis
       }:
       mkDerivation {
         pname = "moesocks";
@@ -21,6 +22,7 @@ let
           hslogger HsOpenSSL iproute lens lens-aeson mtl network
           optparse-applicative random stm strict text time transformers
           unordered-containers
+          nemesis
         ];
         homepage = "https://github.com/nfjinjing/moesocks";
         description = "A functional firewall killer";

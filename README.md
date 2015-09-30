@@ -17,7 +17,7 @@ Easy
 
 ### Install moesocks
 
-    nix-env -iP -A nixpkgs.haskellPackages.moesocks
+    nix-env -i -A nixpkgs.haskellPackages.moesocks
 
 Hard
 ----
