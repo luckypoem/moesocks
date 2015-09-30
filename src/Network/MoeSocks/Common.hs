@@ -16,28 +16,39 @@ import Prelude hiding ((-), take)
 
 makePrisms ''IPRange
 
-checkForbidden_IP_List :: AddressType -> [IPRange] -> Bool
-checkForbidden_IP_List _address@(IPv4_Address _) aForbidden_IP_List =
+check_IP_List :: AddressType -> [IPRange] -> Bool
+check_IP_List _address@(IPv4_Address _) a_IP_List =
   isJust - 
     do
       _ip <- show _address  ^? _Show
-      findOf (each . _IPv4Range) (isMatchedTo _ip) aForbidden_IP_List
+      findOf (each . _IPv4Range) (isMatchedTo _ip) a_IP_List
 
-checkForbidden_IP_List _address@(IPv6_Address _) aForbidden_IP_List =
+check_IP_List _address@(IPv6_Address _) a_IP_List =
   isJust -
     do
       _ip <- show _address ^? _Show
-      findOf (each . _IPv6Range) (isMatchedTo _ip) aForbidden_IP_List
+      findOf (each . _IPv6Range) (isMatchedTo _ip) a_IP_List
 
-checkForbidden_IP_List _ _ = False
+check_IP_List _ _ = False
 
-withCheckedForbidden_IP_List :: AddressType -> [IPRange] -> IO a -> IO ()
-withCheckedForbidden_IP_List aAddressType aForbidden_IP_List aIO = 
-  if checkForbidden_IP_List aAddressType aForbidden_IP_List 
+withChecked_IP_List :: AddressType -> ([IPRange], Maybe [IPRange]) 
+                        -> IO a -> IO ()
+withChecked_IP_List aAddressType (aDenyList, aAllowList) aIO = 
+  if check_IP_List aAddressType aDenyList
     then error_ - show aAddressType
-                <> " is in forbidden-ip list"
-    else () <$ aIO
+                <> " is in the denied list"
+    else 
+      case aAllowList of
+        Nothing -> () <$ aIO
+        Just _allowList ->
+          if not - check_IP_List aAddressType _allowList
+            then error_ - show aAddressType
+                    <> " is NOT in the allowed list"
+            else
+              () <$ aIO
 
+getIPLists :: Env -> ([IPRange], Maybe [IPRange])
+getIPLists aEnv = (aEnv ^. denyList <> aEnv ^. forbidden_IPs, mempty)
 
 showConnectionType :: ConnectionType -> String
 showConnectionType TCP_IP_StreamConnection = "TCP_Stream"

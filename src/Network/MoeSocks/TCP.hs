@@ -92,10 +92,10 @@ local_TCP_RequestHandler aEnv
                         (_partialBytesAfterClientRequest, _clientRequest) 
                         shouldReplyClient aSocket = do
   let _addr = _clientRequest ^. addressType
-      _forbidden_IPs = aEnv ^. forbidden_IPs
+      _IPLists = getIPLists aEnv
 
-  debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
-  withCheckedForbidden_IP_List _addr _forbidden_IPs - do
+  debug_ - "checking: " <> show _addr 
+  withChecked_IP_List _addr _IPLists - do
     let 
         _cipherBox = aEnv ^. cipherBox
         _obfuscation = aEnv ^. obfuscation
@@ -234,10 +234,10 @@ remote_TCP_RequestHandler aEnv aSocket = do
   logSA "R target socket" (initTarget _clientRequest) - \_r -> do
     let (_targetSocket, _targetHost) = _r 
         (_addr, _) = sockAddr_To_Pair _targetHost
-        _forbidden_IPs = aEnv ^. forbidden_IPs
+        _IPLists = getIPLists aEnv
 
-    debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
-    withCheckedForbidden_IP_List _addr _forbidden_IPs - do
+    debug_ - "checking: " <> show _addr 
+    withChecked_IP_List _addr _IPLists - do
       setSocketConfig aEnv _targetSocket
 
       _remotePeerAddr <- getPeerName aSocket

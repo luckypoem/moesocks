@@ -64,11 +64,11 @@ local_UDP_ForwardRequestHandler aEnv
   {-debug_ - "L UDP: " <> show _clientRequest-}
 
   let _addr = _clientRequest ^. addressType
-      _forbidden_IPs = aEnv ^. forbidden_IPs
+      _IPLists = getIPLists aEnv
 
-  debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
+  debug_ - "checking: " <> show _addr 
 
-  withCheckedForbidden_IP_List _addr _forbidden_IPs - do
+  withChecked_IP_List _addr _IPLists - do
     _sa <- getSocket aRemoteHost aRemotePort Datagram
 
     logSA "L UDP -->:" (pure _sa) -
@@ -130,10 +130,10 @@ remote_UDP_RequestHandler aEnv
 
     let (_targetSocket, _targetSocketAddress) = _r
         (_addr, _) = sockAddr_To_Pair _targetSocketAddress
-        _forbidden_IPs = aEnv ^. forbidden_IPs
+        _IPLists = getIPLists aEnv
 
-    debug_ - "checking: " <> show _addr <> " ? " <> show _forbidden_IPs
-    withCheckedForbidden_IP_List _addr _forbidden_IPs - do
+    debug_ - "checking: " <> show _addr 
+    withChecked_IP_List _addr _IPLists - do
       let _msg = showRelay aSockAddr _clientRequest
       info_ - "RU: " <> _msg
 

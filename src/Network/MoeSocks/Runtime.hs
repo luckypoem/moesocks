@@ -7,7 +7,8 @@ import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Writer hiding (listen)
 import Data.IP
-import Data.Text (Text)
+{-import Data.List (intercalate)-}
+{-import Data.Text (Text)-}
 import Data.Text.IO as T
 import Data.Text.Lens
 import Network.MoeSocks.Bootstrap
@@ -127,6 +128,8 @@ initEnv aConfig someOptions = do
                 
 
   _denyList <- io - _readDenyList
+
+  io - debug_ - "denyList: " <> show (length _denyList) <> " items"
 
   let _env = defaultEnv
               & cipherBox .~ _cipherBox
