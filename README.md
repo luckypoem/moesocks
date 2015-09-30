@@ -12,7 +12,7 @@ Installation
 
     curl https://nixos.org/nix/install | sh 
 
-### Install MoeSocks
+### Install moesocks
 
     nix-env -iP -A nixpkgs.haskellPackages.moesocks
 
