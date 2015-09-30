@@ -8,7 +8,14 @@ MoeSocks is greatly inspired by [ss] and can be used in place of it.
 Installation
 ============
 
-* Need `GHC 7.10.2` on Unix.
+### Install [Nix]
+
+    curl https://nixos.org/nix/install | sh 
+
+### Install MoeSocks
+
+    nix-env -iP -A nixpkgs.haskellPackages.moesocks
+
 
 Usage
 =====
@@ -125,6 +132,7 @@ limitations under the License.
 
 [ss]:https://github.com/shadowsocks/shadowsocks
 [ss-haskell]:https://github.com/rnons/shadowsocks-haskell
+[Nix]:https://nixos.org/nix/
 [config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json
 [#10590]:https://ghc.haskell.org/trac/ghc/ticket/10590
 [TFO]:https://en.wikipedia.org/wiki/TCP_Fast_Open
