@@ -1,11 +1,11 @@
 1.0.0.30
 --------
-* Add `deny-list` option to specify an access control list file for blocking a
+* Add a `deny-list` option to specify an access control list file for blocking a
     large list of IPs.
 
 1.0.0.20
 --------
-* Fix respect '--disable-socks5'
+* Fix: respect `disable-socks5`
 
 1.0.0.10
 --------
