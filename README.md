@@ -8,6 +8,9 @@ MoeSocks is greatly inspired by [ss] and can be used in place of it.
 Installation
 ============
 
+Easy
+----
+
 ### Install [Nix]
 
     curl https://nixos.org/nix/install | sh 
@@ -15,6 +18,30 @@ Installation
 ### Install moesocks
 
     nix-env -iP -A nixpkgs.haskellPackages.moesocks
+
+Hard
+----
+
+### Install GHC 7.10.2 and cabal-install
+    
+read manual
+
+### Download moesocks
+
+    git clone https://github.com/nfjinjing/moesocks
+
+### Sandbox!
+
+    cd moesocks
+    cabal sandbox init
+
+### Install
+
+    cabal install
+
+### Run
+
+    .cabal-sandbox/bin/moesocks
 
 
 Usage
