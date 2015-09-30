@@ -75,7 +75,7 @@ defaultOptions :: O.Options
 defaultOptions = O.Options
   {
     O._runningMode = O.DebugMode
-  , O._configFile = Nothing
+  , O._configFile = mempty
   , O._verbosity = DEBUG
   , O._forward_TCPs = []
   , O._forward_UDPs = []
@@ -84,10 +84,11 @@ defaultOptions = O.Options
   , O._listMethods = False
   , O._showDefaultConfig = False
   , O._params = []
+  , O._denyList = mempty
   } 
 
-parseForbidden_IPs :: [Text] -> [IPRange]
-parseForbidden_IPs =
+parseIPRangeList :: [Text] -> [IPRange]
+parseIPRangeList =
                     toListOf $ each
                               . to T.strip
                               . _Text
@@ -110,7 +111,8 @@ defaultEnv =
     , _socketOption_TCP_NOTSENT_LOWAT = _c ^. C.socketOption_TCP_NOTSENT_LOWAT
     , _obfuscation                    = _o ^. O.obfuscation
     , _forbidden_IPs                  = _c ^. C.forbidden_IPs 
-                                            & parseForbidden_IPs
+                                            & parseIPRangeList
+    , _denyList                       = []
     {-, _config = defaultConfig-}
     , _cipherBox = let (a,b,c,d) = constCipherBox in CipherBox a b c d
   }

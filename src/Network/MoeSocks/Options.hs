@@ -97,6 +97,12 @@ optionParser =
                   <>  metavar "CONFIG"
                   <>  help "Set the path of the configuration file"
 
+      _denyList = optional - textOption -
+                        long "deny-list"
+                    <>  metavar "ACL"
+                    <>  help "Block IPs from an access control list file."
+                              
+
       _remoteHost = textParam -
                       short 's'
                   <>  metavar "REMOTE"
@@ -265,6 +271,7 @@ optionParser =
               <*> _listMethods
               <*> _showDefaultConfig
               <*> _params
+              <*> _denyList 
 
 opts :: ParserInfo Options
 opts = info (helper <*> optionParser) -

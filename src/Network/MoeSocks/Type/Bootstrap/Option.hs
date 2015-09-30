@@ -24,6 +24,7 @@ data Options = Options
   , _listMethods :: Bool
   , _showDefaultConfig :: Bool
   , _params :: [(Text, Value)]
+  , _denyList :: Maybe Text
   }
   deriving (Show, Eq)
 

@@ -131,6 +131,7 @@ data Env = Env
   , _socketOption_TCP_NOTSENT_LOWAT :: Bool
   , _obfuscation :: Bool
   , _forbidden_IPs :: [IPRange]
+  , _denyList :: [IPRange]
   , _cipherBox :: CipherBox
   }
 

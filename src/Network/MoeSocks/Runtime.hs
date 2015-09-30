@@ -4,20 +4,24 @@
 module Network.MoeSocks.Runtime where
 
 import Control.Lens
-import Control.Monad.Writer hiding (listen)
 import Control.Monad.Except
+import Control.Monad.Writer hiding (listen)
+import Data.IP
+import Data.Text (Text)
+import Data.Text.IO as T
+import Data.Text.Lens
+import Network.MoeSocks.Bootstrap
+import Network.MoeSocks.Default
+import Network.MoeSocks.Encrypt
 import Network.MoeSocks.Helper
 import Network.MoeSocks.Type
-import Network.MoeSocks.Bootstrap
-import Network.MoeSocks.Encrypt
-import Network.MoeSocks.Default
-import Data.Text.Lens
-import qualified Network.MoeSocks.Type.Bootstrap.Config as C
-import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import Prelude hiding ((-), take)
 import System.Log.Formatter
 import System.Log.Handler.Simple
 import System.Log.Logger
+import qualified Data.Text as T
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
+import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import qualified System.IO as IO
 import qualified System.Log.Handler as LogHandler
 
@@ -112,8 +116,21 @@ initEnv aConfig someOptions = do
                             <> _method ^. _Text
     Just (a, b, c, d) -> pure - CipherBox a b c d
 
+  let _readDenyList :: IO [IPRange]
+      _readDenyList = 
+        case someOptions ^. O.denyList of
+          Nothing -> pure []
+          Just _denyListPath ->
+            T.readFile (_denyListPath ^. _Text)
+              <&> T.lines 
+              <&> parseIPRangeList
+                
+
+  _denyList <- io - _readDenyList
+
   let _env = defaultEnv
               & cipherBox .~ _cipherBox
+              & denyList .~ _denyList
 
   pure - _env
 
@@ -135,7 +152,7 @@ initRuntime aConfig someOptions = do
         & socketOption_TCP_NOTSENT_LOWAT .~ _s
         & obfuscation                    .~ _o ^. O.obfuscation
         & forbidden_IPs                  .~ (_c ^. C.forbidden_IPs
-                                                & parseForbidden_IPs)
+                                                & parseIPRangeList)
                                             
                                         
   
