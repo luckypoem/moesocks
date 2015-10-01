@@ -185,7 +185,7 @@ nemesis = do
     run "-r remote -o -c dev.json"
   
   let commonOptions = " -U 5300:8.8.8.8:53 -T 5300:8.8.8.8:53 "
-                      <> "--tcp-buffer-size 256"
+                      -- <> "--tcp-buffer-size 256"
       
       _c = commonOptions
 
