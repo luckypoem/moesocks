@@ -260,6 +260,11 @@ portPairToInt = fromIntegral . portPairToWord16
 recv_ :: Socket -> IO ByteString
 recv_ = flip recv 4096
 
+-- 65,507 bytes (65,535 − 8 byte UDP header − 20 byte IP header)
+-- https://en.wikipedia.org/wiki/User_Datagram_Protocol
+recv_UDP :: Socket -> IO ByteString
+recv_UDP = flip recv 65507
+
 send_ :: Socket -> ByteString -> IO ()
 send_ = sendAll
 

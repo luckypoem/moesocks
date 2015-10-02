@@ -92,7 +92,7 @@ local_UDP_ForwardRequestHandler aEnv
 
         send_ _remoteSocket - _encodeIV <> _eMsg
 
-        _response <- recv_ _remoteSocket
+        _response <- recv_UDP _remoteSocket
 
         let (_decodeIV, _responseMsg) = S.splitAt (_cipherBox ^. ivLength)
                                           _response
@@ -141,7 +141,7 @@ remote_UDP_RequestHandler aEnv
 
       send_ _targetSocket _decryptedMessage
 
-      _r <- buildShadowSocksRequest _clientRequest <$> recv_ _targetSocket
+      _r <- buildShadowSocksRequest _clientRequest <$> recv_UDP _targetSocket
 
       {-debug_ - "R UDP <--: " <> show _r-}
 
