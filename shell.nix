@@ -10,6 +10,7 @@ let
       , stdenv, stm, strict, text, time, transformers
       , unordered-containers
       , nemesis
+      , angel
       }:
       mkDerivation {
         pname = "moesocks";
@@ -23,6 +24,7 @@ let
           optparse-applicative random stm strict text time transformers
           unordered-containers
           nemesis
+          angel
         ];
         homepage = "https://github.com/nfjinjing/moesocks";
         description = "A functional firewall killer";
