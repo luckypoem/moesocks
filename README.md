@@ -98,7 +98,7 @@ Drawbacks
 TCP Fast Open (TFO)
 ====================
 
-## [TFO] is perfect for a proxy.
+## [TFO] is perfect for proxies.
 
 Both local and remote will use TFO when instructed. If the browser in use and
 the website to visit both support TFO, you can enjoy TFO all the way through.
