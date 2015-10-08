@@ -24,8 +24,6 @@ Hard
 
 ### Install GHC 7.10.2 and cabal-install
     
-read manual
-
 ### Download moesocks
 
     git clone https://github.com/nfjinjing/moesocks
