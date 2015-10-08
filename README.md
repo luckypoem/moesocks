@@ -24,8 +24,6 @@ Hard
 
 ### Install GHC 7.10.2 and cabal-install
     
-Read the manual.
-
 ### Download moesocks
 
     git clone https://github.com/nfjinjing/moesocks
@@ -47,21 +45,16 @@ Read the manual.
 Usage
 =====
 
-* Download a sample [config.json] to your current path
-
-* Edit `config.json` to fit your setup (at least the `remoteHost` and `password`
-  fields)
-
 * Start a remote node outside a firewall:
 
-        moesocks --role remote -c config.json
+        moesocks -r remote -k birthday!
 
 * Start a local node inside a firewall:
 
-        moesocks --role local -c config.json
+        moesocks -s $REMOTE_IP -k birthday!
 
 * Now you have a SOCKS5 proxy running inside a firewall using port
-  `localPort`.
+  `1080`.
 
 * SS compatible obfuscation can be turned on with the `-o` flag to make
   statistical analysis on packet length a bit more confusing.
@@ -103,7 +96,7 @@ Drawbacks
 TCP Fast Open (TFO)
 ====================
 
-## [TFO] means faster response in this case
+## [TFO] is perfect for proxies.
 
 Both local and remote will use TFO when instructed. If the browser in use and
 the website to visit both support TFO, you can enjoy TFO all the way through.

@@ -1,3 +1,8 @@
+1.0.0.40
+---------
+* Fix UDP packet size
+* Clean up repository
+
 1.0.0.30
 --------
 * Add a `deny-list` option to specify an access control list file for blocking a

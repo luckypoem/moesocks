@@ -32,3 +32,7 @@ session_ticket.yaml
 
 acl
 .DS_Store
+
+angel
+
+shell.nix
