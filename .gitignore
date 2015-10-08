@@ -34,3 +34,5 @@ acl
 .DS_Store
 
 angel
+
+shell.nix
