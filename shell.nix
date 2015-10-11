@@ -11,6 +11,7 @@ let
       , unordered-containers
       , nemesis
       , angel
+      , cabal-install
       }:
       mkDerivation {
         pname = "moesocks";
@@ -25,6 +26,7 @@ let
           unordered-containers
           nemesis
           angel
+          cabal-install
         ];
         homepage = "https://github.com/nfjinjing/moesocks";
         description = "A functional firewall killer";
