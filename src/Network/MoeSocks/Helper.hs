@@ -15,19 +15,19 @@ import Data.Binary
 import Data.Binary.Put
 import Data.ByteString (ByteString)
 import Data.Char (isUpper)
+import Data.Foldable (for_)
+import Data.List (sortOn)
 import Data.Maybe
 import Data.Monoid
 import Data.Text (Text)
 import Data.Text.Lens
 import Data.Time.Clock
-import Data.List (sortOn)
 import Debug.Trace (trace)
 import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
 import Prelude hiding (take, (-)) 
 import System.Log.Logger
--- import System.Posix.IO (FdOption(CloseOnExec), setFdOption)
 import System.Random
 import System.Timeout (timeout)
 import qualified Data.ByteString as S
@@ -353,7 +353,7 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
         
         if (_r & isn't _Empty) 
           then do
-            forM_ aThrottle - \_throttle -> do
+            for_ aThrottle - \_throttle -> do
               _currentTime <- getCurrentTime
               let _timeDiff = realToFrac (diffUTCTime _currentTime 
                                                       _startTime) :: Double
@@ -396,7 +396,7 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
 
       _consume :: Int -> IO ()
       _consume _allBytesSent = do
-        forM_ aThrottle - \_throttle -> do
+        for_ aThrottle - \_throttle -> do
           _currentTime <- getCurrentTime
           let _timeDiff = realToFrac (diffUTCTime _currentTime 
                                                   _startTime) :: Double
