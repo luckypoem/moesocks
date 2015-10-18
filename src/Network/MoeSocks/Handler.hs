@@ -77,7 +77,7 @@ showWrapped :: (Show a) => a -> String
 showWrapped x = "[" <> show x <> "]"
 
 local_SOCKS5 :: Env -> Text -> Int -> (Socket, SockAddr) -> IO ()
-local_SOCKS5 _env _remoteHost _remotePort _s = 
+local_SOCKS5 _env _remoteHost _remotePort _s =
   localService _env TCP_Service
                 ("SOCKS5 proxy " <> showWrapped (_s ^. _2))
                 (local_SOCKS5_RequestHandler _env
@@ -95,25 +95,25 @@ showForwarding (Forward _localPort _remoteHost _remotePort) =
                 <> "]"
 
 
-localForward_TCP :: Env -> Text -> Int -> Forward -> (Socket, SockAddr) 
+localForward_TCP :: Env -> Text -> Int -> Forward -> (Socket, SockAddr)
                                                               -> IO ()
 localForward_TCP _env _remoteHost _remotePort _f _s = do
   let _m = showForwarding _f
   localService _env TCP_Service ("TCP port forwarding " <> _m)
-                          (local_TCP_ForwardRequestHandler 
+                          (local_TCP_ForwardRequestHandler
                             _env
                             _remoteHost
                             _remotePort
                             _f)
                           _s
 
-localForward_UDP :: Env -> Text -> Int -> Forward -> (Socket, SockAddr) 
+localForward_UDP :: Env -> Text -> Int -> Forward -> (Socket, SockAddr)
                                                               -> IO ()
 localForward_UDP _env _remoteHost _remotePort _f _s = do
   let _m = showForwarding _f
   localService _env UDP_Service ("UDP port forwarding " <> _m)
-                          (local_UDP_ForwardRequestHandler 
-                            _env 
+                          (local_UDP_ForwardRequestHandler
+                            _env
                             _remoteHost
                             _remotePort
                             _f)
@@ -188,7 +188,7 @@ runLocalService _env _localService = do
         getSocket (_localService ^. localServiceHost)
           (forwarding ^. forwardLocalPort)
           Stream
-        >>= localForward_TCP _env 
+        >>= localForward_TCP _env
                             (_localService ^. localServiceRemoteHost)
                             (_localService ^. localServiceRemotePort)
                             forwarding
@@ -198,7 +198,7 @@ runLocalService _env _localService = do
         getSocket (_localService ^. localServiceHost)
           (forwarding ^. forwardLocalPort)
           Datagram
-        >>= localForward_UDP _env 
+        >>= localForward_UDP _env
                             (_localService ^. localServiceRemoteHost)
                             (_localService ^. localServiceRemotePort)
                             forwarding
@@ -206,7 +206,6 @@ runLocalService _env _localService = do
     LocalService_SOCKS5 _port ->
       catchExceptAsyncLog "L SOCKS5" - do
         getSocket (_localService ^. localServiceHost) _port Stream
-          >>= local_SOCKS5 _env 
+          >>= local_SOCKS5 _env
                             (_localService ^. localServiceRemoteHost)
                             (_localService ^. localServiceRemotePort)
-

@@ -26,7 +26,7 @@ import Debug.Trace (trace)
 import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
 import Network.Socket hiding (send, recv)
 import Network.Socket.ByteString
-import Prelude hiding (take, (-)) 
+import Prelude hiding (take, (-))
 import System.Log.Logger
 import System.Random
 import System.Timeout (timeout)
@@ -41,14 +41,14 @@ import qualified Data.Text as T
 infixr 0 -
 {-# INLINE (-) #-}
 (-) :: (a -> b) -> a -> b
-f - x = f x 
+f - x = f x
 
 -- END backports
 
 is :: APrism s t a b -> s -> Bool
 is x = not . isn't x
 
-type HCipher = S.Maybe ByteString -> IO ByteString 
+type HCipher = S.Maybe ByteString -> IO ByteString
 type HQueue = TBQueue (S.Maybe ByteString)
 
 io :: (MonadIO m) => IO a -> m a
@@ -74,19 +74,19 @@ trace' aID x = trace ("TRACE " <> aID <> ": " <> show x) x
   {-aIO-}
 
 debug_ :: String -> IO ()
-debug_ = debugM "moe" 
+debug_ = debugM "moe"
 
 error_ :: String -> IO ()
-error_ = errorM "moe" 
+error_ = errorM "moe"
 
 warning_ :: String -> IO ()
-warning_ = warningM "moe" 
+warning_ = warningM "moe"
 
 info_ :: String -> IO ()
-info_ = infoM "moe" 
+info_ = infoM "moe"
 
 notice_ :: String -> IO ()
-notice_ = noticeM "moe" 
+notice_ = noticeM "moe"
 
 error_T :: Text -> IO ()
 error_T = error_ . view _Text
@@ -108,18 +108,18 @@ logClose :: String -> Socket -> IO ()
 logClose aID aSocket = do
   pure aID
   debug_ - "Closing socket " <> aID
-  close aSocket 
+  close aSocket
 
 
-logSocketWithAddress :: String -> IO (Socket, SockAddr) -> 
+logSocketWithAddress :: String -> IO (Socket, SockAddr) ->
                         ((Socket, SockAddr) -> IO a) -> IO a
 logSocketWithAddress aID _init f = do
-  catch (bracket _init (logClose aID . fst) f) - 
+  catch (bracket _init (logClose aID . fst) f) -
       \(e :: SomeException) -> do
       debug_ - "logSocket: Exception in " <> aID <> ": " <> show e
       throw e
 
-logSA:: String -> IO (Socket, SockAddr) -> 
+logSA:: String -> IO (Socket, SockAddr) ->
                         ((Socket, SockAddr) -> IO a) -> IO a
 logSA = logSocketWithAddress
 
@@ -130,41 +130,41 @@ logSocket aID _init f =
       throw e
 
 catchExceptAsyncLog :: String -> IO a -> IO ()
-catchExceptAsyncLog aID aIO = catches (() <$ aIO) 
-                [ 
+catchExceptAsyncLog aID aIO = catches (() <$ aIO)
+                [
                   Handler - \(e :: AsyncException) -> do
-                            error_ - "ASyncException in " 
+                            error_ - "ASyncException in "
                                     <> aID
                                     <> " : " <> show e
                             throw e
-                , Handler - \(e :: SomeException) -> 
+                , Handler - \(e :: SomeException) ->
                             error_ - aID
                                     <> ": " <> show e
                 ]
 
 catchIO:: String -> IO a -> IO ()
 catchIO aID aIO = catch (() <$ aIO) - \e ->
-                error_ - "IOError in " <> aID <> ": " 
+                error_ - "IOError in " <> aID <> ": "
                   <> show (e :: IOException)
-                
+
 logException :: String -> IO a -> IO ()
-logException aID aIO = catch (() <$ aIO) - \e -> 
+logException aID aIO = catch (() <$ aIO) - \e ->
                         do
-                          debug_ - "Error in " <> aID <> ": " 
+                          debug_ - "Error in " <> aID <> ": "
                             <> show (e :: SomeException)
                           throw e
 
 logWaitIO :: (Maybe String, IO a) -> IO ()
 logWaitIO x = do
   let _io = wrapIO x
-      aID = x ^. _1 . _Just 
+      aID = x ^. _1 . _Just
 
   debug_ - "waiting for : " <> aID
   _io
-  
+
 wrapIO :: (Maybe String, IO c) -> IO ()
 wrapIO (s,  _io) = do
-  logException (fromMaybe "" s) _io 
+  logException (fromMaybe "" s) _io
 
 waitBoth :: IO () -> IO () -> IO ()
 waitBoth x y = do
@@ -180,18 +180,18 @@ instance Exception TimeoutException
 waitBothDebug :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
 waitBothDebug x y = do
   concurrently (logWaitIO x) (logWaitIO y)
-  let _xID = x ^. _1 . _Just 
+  let _xID = x ^. _1 . _Just
       _yID = y ^. _1 . _Just
       _hID = _xID <> " / " <> _yID
   debug_ - "All done for " <> _hID
   pure ()
 
 connectTunnel :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
-connectTunnel x y = 
+connectTunnel x y =
   let _prolong _io = _io >> sleep 5
   in
 
-  race_ (_prolong - logWaitIO x) 
+  race_ (_prolong - logWaitIO x)
         (_prolong - logWaitIO y)
 
 connectMarket :: (Maybe String, IO ()) -> (Maybe String, IO ()) -> IO ()
@@ -201,14 +201,14 @@ getSocket :: (Integral i, Show i) => Text -> i -> SocketType ->
                                       IO (Socket, SockAddr)
 getSocket = getSocketWithHint AF_UNSPEC
 
-getSocketWithHint :: (Integral i, Show i) => 
-                        Family -> Text -> i -> SocketType -> 
+getSocketWithHint :: (Integral i, Show i) =>
+                        Family -> Text -> i -> SocketType ->
                         IO (Socket, SockAddr)
 getSocketWithHint aFamily aHost aPort aSocketType = do
     {-info_ - "getSocketWithHint: " <> show aFamily <> -}
               {-" " <> show aHost <> ":" <> show aPort-}
 
-    _addrs <- getAddrInfo (Just hints) 
+    _addrs <- getAddrInfo (Just hints)
                               (Just - aHost ^. _Text) (Just - show aPort)
 
               <&> sortOn addrFamily
@@ -218,7 +218,7 @@ getSocketWithHint aFamily aHost aPort aSocketType = do
     maybeAddrInfo <- firstOf folded <$> pure _addrs
 
     case maybeAddrInfo of
-      Nothing -> error - "Error in getSocket for: " <> aHost ^. _Text 
+      Nothing -> error - "Error in getSocket for: " <> aHost ^. _Text
                               <> ":" <> show aPort
       Just addrInfo -> do
           let family     = addrFamily addrInfo
@@ -231,16 +231,16 @@ getSocketWithHint aFamily aHost aPort aSocketType = do
 
           -- send immediately!
           when (aSocketType == Stream) -
-            setSocketOption _socket NoDelay 1 
+            setSocketOption _socket NoDelay 1
 
           debug_ - "Got socket: " <> show addrInfo
           {-debug_ - "Socket family: " <> show family-}
           {-debug_ - "Socket protocol: " <> show protocol -}
 
           pure (_socket, address)
-          
+
   where
-    hints = defaultHints 
+    hints = defaultHints
             {
               addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]
             , addrSocketType = aSocketType
@@ -251,10 +251,10 @@ builder_To_ByteString :: B.Builder -> ByteString
 builder_To_ByteString = LB.toStrict . B.toLazyByteString
 
 portPairToInt :: (Word8, Word8) -> Int
-portPairToInt = fromIntegral . portPairToWord16 
+portPairToInt = fromIntegral . portPairToWord16
   where
     portPairToWord16 :: (Word8, Word8) -> Word16
-    portPairToWord16 = decode . runPut . put 
+    portPairToWord16 = decode . runPut . put
 
 
 recv_ :: Socket -> IO ByteString
@@ -295,7 +295,7 @@ sendBuilder :: HQueue -> B.Builder -> IO ()
 sendBuilder _queue = sendBytes _queue . builder_To_ByteString
 
 sendBuilderEncrypt :: HQueue -> HCipher -> B.Builder -> IO ()
-sendBuilderEncrypt _queue _encrypt = 
+sendBuilderEncrypt _queue _encrypt =
   sendBytesEncrypt _queue _encrypt . builder_To_ByteString
 
 -- | An exception raised when parsing fails.
@@ -337,25 +337,25 @@ parseSocket aID _partial _decrypt aParser aSocket = do
 
 -- throttle speed in kilobytes per second
 produceLoop :: String -> Timeout -> Maybe Double ->
-              Socket -> HQueue -> 
+              Socket -> HQueue ->
               HCipher -> IO ()
 produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
   _startTime <- getCurrentTime
 
   let _shutdown = do
                     tryIO aID - shutdown aSocket ShutdownReceive
-                  
+
       _produce :: Int -> IO ()
       _produce _bytesReceived = flip onException (f S.Nothing) - do
         _r <- timeoutFor aID aTimeout - recv_ aSocket
         {-when ("L" `isPrefixOf` aID) - do-}
           {-notice_ - "Get chunk: " <> (show - S.length _r) <> " " <> aID-}
-        
-        if (_r & isn't _Empty) 
+
+        if (_r & isn't _Empty)
           then do
             for_ aThrottle - \_throttle -> do
               _currentTime <- getCurrentTime
-              let _timeDiff = realToFrac (diffUTCTime _currentTime 
+              let _timeDiff = realToFrac (diffUTCTime _currentTime
                                                       _startTime) :: Double
 
                   _bytesK = fromIntegral _bytesReceived / 1000 :: Double
@@ -368,29 +368,29 @@ produceLoop aID aTimeout aThrottle aSocket aTBQueue f = do
                 let _sleepTime = ((_bytesK + (-_timeDiff * _throttle))
                                       / _throttle ) * 1000 * 1000
 
-                debug_ - "Produce sleeping for: " <> show _sleepTime 
+                debug_ - "Produce sleeping for: " <> show _sleepTime
                         <> " miliseconds."
                 threadDelay - floor - _sleepTime
-              
+
             f (S.Just _r) >>= atomically . writeTBQueue aTBQueue . S.Just
             yield
             _produce (_bytesReceived + S.length _r)
           else do
-            debug_ -  "Half closed: " <> aID 
+            debug_ -  "Half closed: " <> aID
             f S.Nothing >>= atomically . writeTBQueue aTBQueue . S.Just
             atomically - writeTBQueue aTBQueue S.Nothing
 
   _produce 0 `onException` _shutdown
   pure ()
 
-  
+
 
 consumeLoop :: String -> Timeout -> Maybe Double ->
                 Socket -> HQueue -> Bool -> Int -> IO ()
 consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
   _startTime <- getCurrentTime
-  
-  
+
+
   let _shutdown = do
                     tryIO aID - shutdown aSocket ShutdownSend
 
@@ -398,7 +398,7 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
       _consume _allBytesSent = do
         for_ aThrottle - \_throttle -> do
           _currentTime <- getCurrentTime
-          let _timeDiff = realToFrac (diffUTCTime _currentTime 
+          let _timeDiff = realToFrac (diffUTCTime _currentTime
                                                   _startTime) :: Double
 
               _bytesK = fromIntegral _allBytesSent / 1000 :: Double
@@ -411,47 +411,47 @@ consumeLoop aID aTimeout aThrottle aSocket aTBQueue randomize aBound = do
             let _sleepTime = ((_bytesK + (-_timeDiff * _throttle))
                                   / _throttle ) * 1000 * 1000
 
-            debug_ - "Consume sleeping for: " <> show _sleepTime 
+            debug_ - "Consume sleeping for: " <> show _sleepTime
                     <> " miliseconds."
             threadDelay - floor - _sleepTime
 
-        
-                            
+
+
         _newPacket <- atomically - readTBQueue aTBQueue
 
         case _newPacket of
           S.Nothing -> () <$ _shutdown
           S.Just _data -> do
-                          let _send = if randomize 
+                          let _send = if randomize
                                           then sendAllRandom aBound
                                           else sendAll
-                                                    
-                          timeoutFor aID aTimeout - 
+
+                          timeoutFor aID aTimeout -
                                           _send aSocket _data
                           yield
-                          _consume - 
+                          _consume -
                             _allBytesSent + S.length _data
-  
+
   _consume 0 `onException` _shutdown
   pure ()
 
 
 setSocket_TCP_FAST_OPEN:: Socket -> IO ()
-setSocket_TCP_FAST_OPEN aSocket = 
+setSocket_TCP_FAST_OPEN aSocket =
   let _TCP_FASTOPEN = 23
       _TCP_Option = 6
   in
-  setSocketOption aSocket (CustomSockOpt (_TCP_Option, _TCP_FASTOPEN)) 1 
+  setSocketOption aSocket (CustomSockOpt (_TCP_Option, _TCP_FASTOPEN)) 1
 
 setSocket_TCP_NOTSENT_LOWAT :: Socket -> IO ()
-setSocket_TCP_NOTSENT_LOWAT aSocket = 
+setSocket_TCP_NOTSENT_LOWAT aSocket =
   let _TCP_NOTSENT_LOWAT = 25
       _TCP_Option = 6
   in
-  setSocketOption aSocket (CustomSockOpt (_TCP_Option, _TCP_NOTSENT_LOWAT)) 1 
+  setSocketOption aSocket (CustomSockOpt (_TCP_Option, _TCP_NOTSENT_LOWAT)) 1
 
 
--- Copied and slightly modified from: 
+-- Copied and slightly modified from:
 -- https://github.com/mzero/plush/blob/master/src/Plush/Server/Warp.hs
 {-setSocketCloseOnExec :: Socket -> IO ()-}
 {-setSocketCloseOnExec aSocket =-}
@@ -465,7 +465,7 @@ tryIO :: String -> IO a -> IO (Either IOException a)
 tryIO _ = try -- . logException aID
 
 toHaskellNamingConvention :: Text -> Text
-toHaskellNamingConvention x = 
+toHaskellNamingConvention x =
   let xs = x & T.split (`elem` ['_', '-'])
   in
   if xs & anyOf each (T.all isUpper . T.dropWhile (== 's') . T.reverse)

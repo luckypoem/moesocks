@@ -24,7 +24,7 @@ sendBufToWithFlagNoRetry :: Socket    -- (possibly) bound/connected Socket
           -> SockAddr
           -> Int
           -> IO Int            -- Number of Bytes sent
-sendBufToWithFlagNoRetry 
+sendBufToWithFlagNoRetry
   (MkSocket s _family _stype _protocol _status) ptr nbytes addr flags = do
    withSockAddr addr $ \p_addr sz -> do
     liftM fromIntegral $
@@ -37,7 +37,7 @@ sendToWithFlagNoRetry :: Socket      -- ^ Socket
        -> Int
        -> IO Int      -- ^ Number of bytes sent
 sendToWithFlagNoRetry sock xs addr flags =
-    unsafeUseAsCStringLen xs $ \(str, len) -> 
+    unsafeUseAsCStringLen xs $ \(str, len) ->
       sendBufToWithFlagNoRetry sock str len addr flags
 
 sendAllToFastOpen :: Socket      -- ^ Socket
@@ -45,8 +45,6 @@ sendAllToFastOpen :: Socket      -- ^ Socket
           -> SockAddr    -- ^ Recipient address
           -> IO ()
 sendAllToFastOpen sock xs addr = do
-    let _MSG_FASTOPEN  = 0x20000000  
+    let _MSG_FASTOPEN  = 0x20000000
     sent <- sendToWithFlagNoRetry sock xs addr _MSG_FASTOPEN
     when (sent < S.length xs) $ sendAll sock (S.drop sent xs)
-
-

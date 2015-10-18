@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Network.MoeSocks.Encrypt 
+module Network.MoeSocks.Encrypt
 (
   initCipherBox
 , constCipherBox
@@ -46,7 +46,7 @@ infixr 0 -
 type KeyLength = Int
 type IV_Length = Int
 
-type Cipher = S.Maybe ByteString -> IO ByteString 
+type Cipher = S.Maybe ByteString -> IO ByteString
 type IV = ByteString
 type CipherBuilder = IV -> IO Cipher
 
@@ -60,8 +60,8 @@ type ExceptT_IO = ExceptT () IO
 type Methods = Map Text KeyLength
 
 safeMethods :: Methods
-safeMethods = fromList - 
-  [ 
+safeMethods = fromList -
+  [
     ("aes-128-cfb"        , 16)
   , ("aes-192-cfb"        , 24)
   , ("aes-256-cfb"        , 32)
@@ -101,7 +101,7 @@ safeMethods = fromList -
 
 
 unsafeMethods :: Methods
-unsafeMethods = fromList - 
+unsafeMethods = fromList -
   [
     ("rc2-cfb"            , 16) -- unsafe
   , ("rc4"                , 16) -- unsafe
@@ -111,13 +111,13 @@ methods :: Methods
 methods = safeMethods <> unsafeMethods
 
 hashKey :: ByteString -> KeyLength -> IV_Length -> ByteString
-hashKey aPassword aKeyLen a_IV_len = loop mempty mempty 
+hashKey aPassword aKeyLen a_IV_len = loop mempty mempty
   where
     _stopLength = aKeyLen + a_IV_len
 
     loop :: ByteString -> ByteString -> ByteString
     loop _lastHashedBytes _accumHashedBytes
-      | S.length _accumHashedBytes >= _stopLength 
+      | S.length _accumHashedBytes >= _stopLength
         = S.take aKeyLen _accumHashedBytes
       | otherwise = let _new = hash - _lastHashedBytes <> aPassword
                     in
@@ -138,16 +138,16 @@ identityCipher :: Cipher
 identityCipher = pure . S.fromMaybe mempty
 
 constCipherBox :: CipherBox
-constCipherBox = 
+constCipherBox =
   let constCipher = const - pure identityCipher
-  in 
+  in
   (0, pure mempty, constCipher, constCipher)
 
 
 initCipherBox :: Text -> Text -> IO (Maybe CipherBox)
-initCipherBox aMethod aPassword 
+initCipherBox aMethod aPassword
   | aMethod == "none" = pure - Just constCipherBox
-  | otherwise = ssl - 
+  | otherwise = ssl -
       fmap (preview _Right) - runExceptT - initCipherBox' aMethod aPassword
 
 initCipherBox' :: Text -> Text -> ExceptT_IO CipherBox
@@ -174,7 +174,7 @@ initCipherBox' aMethod aPassword = do
 
           pure _encrypt
 
-      _decryptBuilder :: CipherBuilder 
+      _decryptBuilder :: CipherBuilder
       _decryptBuilder _iv = do
           _ctx <- E.cipherInitBS _method _hashed _iv Decrypt
 
@@ -183,11 +183,10 @@ initCipherBox' aMethod aPassword = do
                   S.Nothing -> E.cipherFinalBS _ctx
                   S.Just _bytes -> do
                     if (_bytes & isn't _Empty)
-                      then E.cipherUpdateBS _ctx _bytes 
+                      then E.cipherUpdateBS _ctx _bytes
                       else pure mempty
-          
+
           pure _decrypt
-          
+
 
   pure - (_IV_Length, _IV_Maker, _encryptBuilder, _decryptBuilder)
-

@@ -29,7 +29,7 @@ import qualified System.Log.Handler as LogHandler
 initLogger :: Priority -> IO ()
 initLogger aLevel = do
   stdoutHandler <- streamHandler IO.stdout DEBUG
-  let formattedHandler = 
+  let formattedHandler =
           LogHandler.setFormatter stdoutHandler -
             --"[$time : $loggername : $prio]
             simpleLogFormatter "$time $prio\t $msg"
@@ -43,33 +43,33 @@ initLogger aLevel = do
 
 
 loadJobs :: C.Config -> O.Options -> [Job]
-loadJobs aConfig someOptions = 
+loadJobs aConfig someOptions =
   let _c = aConfig
 
-      _remote_TCP_Relay =   
+      _remote_TCP_Relay =
           RemoteRelay
             Remote_TCP_Relay
             (_c ^. C.remoteHost)
             (_c ^. C.remotePort)
 
-      _remote_UDP_Relay = 
+      _remote_UDP_Relay =
           RemoteRelay
             Remote_UDP_Relay
             (_c ^. C.remoteHost)
             (_c ^. C.remotePort)
 
       _localService :: LocalServiceType -> LocalService
-      _localService = LocalService 
+      _localService = LocalService
                         (_c ^. C.localHost)
                         (_c ^. C.remoteHost)
                         (_c ^. C.remotePort)
 
-      _localService_TCP_Forwards = 
-          someOptions ^. O.forward_TCPs 
+      _localService_TCP_Forwards =
+          someOptions ^. O.forward_TCPs
             & map (_localService . LocalService_TCP_Forward)
 
       _localService_UDP_Forwards =
-          someOptions ^. O.forward_UDPs 
+          someOptions ^. O.forward_UDPs
             & map (_localService . LocalService_UDP_Forward)
 
       _localService_SOCKS5 =
@@ -77,9 +77,9 @@ loadJobs aConfig someOptions =
             & _localService
 
       _remoteRelays = [_remote_TCP_Relay, _remote_UDP_Relay]
-      _localServices = 
+      _localServices =
         let
-          _localService_SOCKS5s = 
+          _localService_SOCKS5s =
             if someOptions ^. O.disable_SOCKS5
               then []
               else pure _localService_SOCKS5
@@ -107,7 +107,7 @@ initEnv aConfig someOptions = do
 
   io - initLogger - _o ^. O.verbosity
   io - debug_ - show _o
-  
+
   _config <- loadConfig - _o
 
   let _method = _c ^. C.method
@@ -118,14 +118,14 @@ initEnv aConfig someOptions = do
     Just (a, b, c, d) -> pure - CipherBox a b c d
 
   let _readDenyList :: IO [IPRange]
-      _readDenyList = 
+      _readDenyList =
         case someOptions ^. O.denyList of
           Nothing -> pure []
           Just _denyListPath ->
             T.readFile (_denyListPath ^. _Text)
-              <&> T.lines 
+              <&> T.lines
               <&> parseIPRangeList
-                
+
 
   _denyList <- io - _readDenyList
 
@@ -144,21 +144,21 @@ initRuntime aConfig someOptions = do
       _s = _c ^. C.socketOption_TCP_NOTSENT_LOWAT
 
   _env <- initEnv aConfig someOptions
-  
+
   let _env' = _env
         & timeout                        .~ _c ^. C.timeout
         & tcpBufferSize                  .~ _c ^. C.tcpBufferSize
         & throttle                       .~ _c ^. C.throttle
         & throttleSpeed                  .~ _c ^. C.throttleSpeed
-        & obfuscationFlushBound          .~ _c ^. C.obfuscationFlushBound 
+        & obfuscationFlushBound          .~ _c ^. C.obfuscationFlushBound
         & fastOpen                       .~ _c ^. C.fastOpen
         & socketOption_TCP_NOTSENT_LOWAT .~ _s
         & obfuscation                    .~ _o ^. O.obfuscation
         & forbidden_IPs                  .~ (_c ^. C.forbidden_IPs
                                                 & parseIPRangeList)
-                                            
-                                        
-  
+
+
+
   let _jobs = loadJobs _c _o & filterJobs (_o ^. O.runningMode)
 
   pure -  ( defaultRuntime

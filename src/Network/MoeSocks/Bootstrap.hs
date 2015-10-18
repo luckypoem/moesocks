@@ -49,7 +49,7 @@ withGateOptions someOptions aIO = do
       putStrLn "Supported:"
       itraverse_ (\k _ -> putStrLn - "\t\t" <> k ^. _Text) - unsafeMethods
 
-    else 
+    else
       if someOptions ^. O.showDefaultConfig
         then
           putStrLn - showConfig defaultConfig ^. _Text

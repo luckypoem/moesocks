@@ -8,7 +8,7 @@ import Control.Concurrent.Async hiding (waitBoth)
 import Control.Lens
 import Control.Monad
 import Network.MoeSocks.Handler (runRemoteRelay, runLocalService)
-import Network.MoeSocks.Helper 
+import Network.MoeSocks.Helper
 import Network.MoeSocks.Bootstrap (loadConfig)
 import Network.MoeSocks.Runtime (initRuntime)
 import Network.MoeSocks.Type
@@ -34,6 +34,6 @@ moeApp someOptions = do
   let _options = someOptions
   _config <- loadConfig - _options
 
-  _runtime <- initRuntime _config _options 
+  _runtime <- initRuntime _config _options
 
   io - runApp (_runtime ^. env) (_runtime ^. jobs)

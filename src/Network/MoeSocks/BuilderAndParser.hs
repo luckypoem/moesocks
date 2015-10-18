@@ -19,7 +19,6 @@ import qualified Data.ByteString.Builder as B
 import qualified Prelude as P
 
 
-
 _No_authentication :: Word8
 _No_authentication = 0
 

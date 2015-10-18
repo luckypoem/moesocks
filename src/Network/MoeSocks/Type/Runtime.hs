@@ -29,7 +29,7 @@ data ConnectionType =
   | UDP_Port
   deriving (Show, Eq)
 
-data AddressType = 
+data AddressType =
     IPv4_Address (Word8, Word8, Word8, Word8)
   | DomainName Text
   | IPv6_Address [Word16]
@@ -40,12 +40,12 @@ instance Show AddressType where
     where
       showAddressType :: AddressType -> String
       showAddressType (IPv4_Address xs) = xs ^.. each . to show
-                                             ^.. folding 
+                                             ^.. folding
                                                   (concat . L.intersperse ".")
-                                            
+
       showAddressType (DomainName x)   = x ^. _Text
       showAddressType (IPv6_Address xs) = xs ^.. each . to (flip showHex "")
-                                             ^.. folding 
+                                             ^.. folding
                                                   (concat . L.intersperse ":")
 data ClientRequest = ClientRequest
   {
@@ -61,7 +61,7 @@ makeLenses ''ClientRequest
 data Verbosity = Normal | Verbose
       deriving (Show, Eq)
 
-type Cipher = S.Maybe ByteString -> IO ByteString 
+type Cipher = S.Maybe ByteString -> IO ByteString
 type IV = ByteString
 type CipherBuilder = IV -> IO Cipher
 
@@ -113,7 +113,7 @@ data RemoteRelay = RemoteRelay
 
 makeLenses ''RemoteRelay
 
-data Job = 
+data Job =
       RemoteRelayJob RemoteRelay
     | LocalServiceJob LocalService
     deriving (Show, Eq)
@@ -147,4 +147,3 @@ data Runtime = Runtime
 makeLenses ''Runtime
 
 type MoeMonad = ExceptT String IO
-

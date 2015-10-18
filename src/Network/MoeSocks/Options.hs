@@ -29,12 +29,12 @@ defaultHelp val x = help - x <> ", default: " <> val & view _Text
 textParam :: O.Mod O.OptionFields String -> O.Parser (Maybe Value)
 textParam = optional . fmap toJSON . textOption
 
-commaSeperatedArrayParam :: O.Mod O.OptionFields String 
+commaSeperatedArrayParam :: O.Mod O.OptionFields String
                           -> O.Parser (Maybe Value)
-commaSeperatedArrayParam = 
+commaSeperatedArrayParam =
   optional . fmap toJSON . fmap (filter (isn't _Empty)
-                                    . map T.strip 
-                                    . T.splitOn ",") 
+                                    . map T.strip
+                                    . T.splitOn ",")
                           . textOption
 
 intParam :: O.Mod O.OptionFields Int -> O.Parser (Maybe Value)
@@ -80,7 +80,7 @@ optionParser =
       _showDefaultConfig = switch -
                       long "show-default-config"
                   <>  help "Show default json configuration"
-      
+
       _tcpBufferSize = intParam -
                               long "tcp-buffer-size"
                           <>  metavar "SIZE"
@@ -101,7 +101,7 @@ optionParser =
                         long "deny-list"
                     <>  metavar "ACL"
                     <>  help "Block IPs from an access control list file."
-                              
+
 
       _remoteHost = textParam -
                       short 's'
@@ -271,7 +271,7 @@ optionParser =
               <*> _listMethods
               <*> _showDefaultConfig
               <*> _params
-              <*> _denyList 
+              <*> _denyList
 
 opts :: ParserInfo Options
 opts = info (helper <*> optionParser) -

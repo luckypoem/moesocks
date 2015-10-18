@@ -52,7 +52,7 @@ local_UDP_ForwardRequestHandler aEnv
                                 aMessage
                                 (aSocket, aSockAddr) = do
 
-  let 
+  let
       _cipherBox = aEnv ^. cipherBox
 
   let _clientRequest = ClientRequest
@@ -66,7 +66,7 @@ local_UDP_ForwardRequestHandler aEnv
   let _addr = _clientRequest ^. addressType
       _IPLists = getIPLists aEnv
 
-  debug_ - "checking: " <> show _addr 
+  debug_ - "checking: " <> show _addr
 
   withChecked_IP_List _addr _IPLists - do
     _sa <- getSocket aRemoteHost aRemotePort Datagram
@@ -132,7 +132,7 @@ remote_UDP_RequestHandler aEnv
         (_addr, _) = sockAddr_To_Pair _targetSocketAddress
         _IPLists = getIPLists aEnv
 
-    debug_ - "checking: " <> show _addr 
+    debug_ - "checking: " <> show _addr
     withChecked_IP_List _addr _IPLists - do
       let _msg = showRelay aSockAddr _clientRequest
       info_ - "RU: " <> _msg

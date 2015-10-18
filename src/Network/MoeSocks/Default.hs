@@ -18,7 +18,7 @@ defaultConfig :: C.Config
 defaultConfig = C.Config
   {
     C._remoteHost = "0.0.0.0"
-  , C._remotePort = 8388 
+  , C._remotePort = 8388
   , C._localHost = "127.0.0.1"
   , C._localPort = 1080
   , C._password = "moesocks"
@@ -85,7 +85,7 @@ defaultOptions = O.Options
   , O._showDefaultConfig = False
   , O._params = []
   , O._denyList = mempty
-  } 
+  }
 
 parseIPRangeList :: [Text] -> [IPRange]
 parseIPRangeList =
@@ -93,7 +93,7 @@ parseIPRangeList =
                               . to T.strip
                               . _Text
                               . _Show
-                     
+
 
 defaultEnv :: Env
 defaultEnv =
@@ -106,11 +106,11 @@ defaultEnv =
     , _tcpBufferSize                  = _c ^. C.tcpBufferSize
     , _throttle                       = _c ^. C.throttle
     , _throttleSpeed                  = _c ^. C.throttleSpeed
-    , _obfuscationFlushBound          = _c ^. C.obfuscationFlushBound 
+    , _obfuscationFlushBound          = _c ^. C.obfuscationFlushBound
     , _fastOpen                       = _c ^. C.fastOpen
     , _socketOption_TCP_NOTSENT_LOWAT = _c ^. C.socketOption_TCP_NOTSENT_LOWAT
     , _obfuscation                    = _o ^. O.obfuscation
-    , _forbidden_IPs                  = _c ^. C.forbidden_IPs 
+    , _forbidden_IPs                  = _c ^. C.forbidden_IPs
                                             & parseIPRangeList
     , _denyList                       = []
     {-, _config = defaultConfig-}

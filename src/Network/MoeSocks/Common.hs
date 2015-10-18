@@ -18,7 +18,7 @@ makePrisms ''IPRange
 
 check_IP_List :: AddressType -> [IPRange] -> Bool
 check_IP_List _address@(IPv4_Address _) a_IP_List =
-  isJust - 
+  isJust -
     do
       _ip <- show _address  ^? _Show
       findOf (each . _IPv4Range) (isMatchedTo _ip) a_IP_List
@@ -31,13 +31,13 @@ check_IP_List _address@(IPv6_Address _) a_IP_List =
 
 check_IP_List _ _ = False
 
-withChecked_IP_List :: AddressType -> ([IPRange], Maybe [IPRange]) 
+withChecked_IP_List :: AddressType -> ([IPRange], Maybe [IPRange])
                         -> IO a -> IO ()
-withChecked_IP_List aAddressType (aDenyList, aAllowList) aIO = 
+withChecked_IP_List aAddressType (aDenyList, aAllowList) aIO =
   if check_IP_List aAddressType aDenyList
     then error_ - show aAddressType
                 <> " is in the denied list"
-    else 
+    else
       case aAllowList of
         Nothing -> () <$ aIO
         Just _allowList ->
@@ -56,13 +56,13 @@ showConnectionType TCP_IP_StreamConnection = "TCP_Stream"
 showConnectionType UDP_Port                = "UDP       "
 
 showRequest :: ClientRequest -> String
-showRequest _r =  
+showRequest _r =
                    _r ^. addressType . to show
                 <> ":"
                 <> _r ^. portNumber . to show
 
 showRelay :: SockAddr -> ClientRequest -> String
-showRelay aSockAddr aClientRequest = 
+showRelay aSockAddr aClientRequest =
       show aSockAddr <> " -> " <> showRequest aClientRequest
 
 addressType_To_Family :: AddressType -> Family
@@ -91,13 +91,13 @@ initTarget _clientRequest = do
       _hostName   = _clientRequest ^. addressType . to show . re _Text
       _port       = _clientRequest ^. portNumber
       _family     = _clientRequest ^. addressType . to addressType_To_Family
-  
+
   getSocketWithHint _family _hostName _port _socketType
 
 
 setSocketConfig:: Env -> Socket -> IO ()
 setSocketConfig aEnv aSocket = do
-  setSocketOption aSocket NoDelay 1 
+  setSocketOption aSocket NoDelay 1
   when (aEnv ^. socketOption_TCP_NOTSENT_LOWAT) - do
     tryIO "setSocket_TCP_NOTSENT_LOWAT" - setSocket_TCP_NOTSENT_LOWAT aSocket
     pure ()

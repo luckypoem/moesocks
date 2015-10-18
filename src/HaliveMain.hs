@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Main where
+module HaliveMain where
 
 import Control.Lens
 import Control.Monad.Except
