@@ -4,12 +4,11 @@
 module Network.MoeSocks.App where
 
 import Control.Concurrent.Async hiding (waitBoth)
-{-import Control.Concurrent.STM-}
 import Control.Lens
 import Control.Monad
+import Network.MoeSocks.Bootstrap (loadConfig)
 import Network.MoeSocks.Handler (runRemoteRelay, runLocalService)
 import Network.MoeSocks.Helper
-import Network.MoeSocks.Bootstrap (loadConfig)
 import Network.MoeSocks.Runtime (initRuntime)
 import Network.MoeSocks.Type
 import Prelude hiding ((-), take)
