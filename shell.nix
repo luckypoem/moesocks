@@ -12,6 +12,7 @@ let
       , nemesis
       , angel
       , cabal-install
+      , halive
       }:
       mkDerivation {
         pname = "moesocks";
@@ -27,6 +28,7 @@ let
           nemesis
           angel
           cabal-install
+          halive
         ];
         homepage = "https://github.com/nfjinjing/moesocks";
         description = "A functional firewall killer";
