@@ -21,9 +21,9 @@ import System.Random
 
 main :: IO ()
 main = do
-  let _options = defaultOptions 
+  let _options = defaultOptions
                                     & O.configFile .~ Just "halive.json"
-                                    & O.forward_UDPs .~ 
+                                    & O.forward_UDPs .~
                                                 [Forward 5301 "localhost" 53]
                                     {-& verbosity .~ INFO-}
                                     {-& verbosity .~ DEBUG-}

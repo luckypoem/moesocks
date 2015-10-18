@@ -12,7 +12,7 @@ import System.Exit
 main :: IO ()
 main = do
   _options <- execParser opts
-  
+
   withGateOptions _options - do
     r <- runExceptT - moeApp _options
     case r of
