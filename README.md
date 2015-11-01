@@ -53,8 +53,7 @@ Usage
 
         moesocks -s $REMOTE_IP -k birthday!
 
-* Now you have a SOCKS5 proxy running inside a firewall using port
-  `1080`.
+* Now you have a SOCKS5 proxy running inside a firewall on port `1080`.
 
 * SS compatible obfuscation can be turned on with the `-o` flag to make
   statistical analysis on packet length a bit more confusing.
