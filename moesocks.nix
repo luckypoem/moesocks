@@ -155,7 +155,8 @@ let
 ; config = mkIf cfg.enable
     { users.extraUsers = singleton
         { name = "moesocks"
-        ; uid = 2000 # config.ids.uids.moesocks
+        # FIXME: why moesocks is not in uids?
+        # uid = config.ids.uids.moesocks
         ; description = "moesocks dummy user"
         ; }
 
