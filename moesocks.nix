@@ -44,7 +44,7 @@ let
         { enable = mkOption
             { type = types.bool
             ; default = false
-            ; description = "Whether to run the moesocks socks5 proxy"
+            ; description = "Whether to run the moesocks SOCKS5 proxy"
             ; }
 
         ; verbose = mkOption
@@ -155,15 +155,14 @@ let
 ; config = mkIf cfg.enable
     { users.extraUsers = singleton
         { name = "moesocks"
-        # FIXME: why moesocks is not in uids?
-        # uid = config.ids.uids.moesocks
-        ; description = "moesocks dummy user"
+        # ; uid = config.ids.uids.moesocks
+        ; description = "moesocks user"
         ; }
 
     ; systemd.services.moesocks =
         { wantedBy = [ "multi-user.target" ]
         ; after = [ "network.target" ]
-        ; description = "moesocks socks5 local proxy"
+        ; description = "moesocks SOCKS5 proxy server"
         ; serviceConfig =
             { User = "moesocks"
             ; ExecStart =
