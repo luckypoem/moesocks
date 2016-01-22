@@ -4,7 +4,7 @@ with lib;
 
 let
   cfg = config.services.moesocks
-; confFile = pkgs.writeText "moesocks.json" (builtins.toJSON cfg)
+; configFile = pkgs.writeText "moesocks.json" (builtins.toJSON cfg)
 ; localIPs =
     [
       "0.0.0.0/8"
@@ -45,6 +45,12 @@ let
             { type = types.bool
             ; default = false
             ; description = "Whether to run the moesocks socks5 proxy"
+            ; }
+
+        ; verbose = mkOption
+            { type = types.bool
+            ; default = false
+            ; description = "Turn on logging"
             ; }
 
         ; role = mkOption
@@ -161,7 +167,7 @@ let
             { User = "moesocks"
             ; ExecStart =
             ''
-             ${pkgs.haskellPackages.moesocks}/bin/moesocks -v -r ${cfg.role} ${optionalString (cfg.tcp != []) "-T ${concatStringsSep " " cfg.tcp}"} ${optionalString (cfg.udp != []) "-U ${concatStringsSep " " cfg.udp}"} ${optionalString (cfg.disableSOCKS5) "--disable-socks5"} -c ${confFile}
+             ${pkgs.haskellPackages.moesocks}/bin/moesocks ${optionalString (cfg.verbose) "-v"} -r ${cfg.role} ${optionalString (cfg.tcp != []) "-T ${concatStringsSep " " cfg.tcp}"} ${optionalString (cfg.udp != []) "-U ${concatStringsSep " " cfg.udp}"} ${optionalString (cfg.disableSOCKS5) "--disable-socks5"} -c ${configFile}
             ''
           ; }
       ; }
