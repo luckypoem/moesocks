@@ -77,7 +77,7 @@ in
               example = [ "5300:8.8.8.8:53" ];
               description =
                 ''
-
+                  Specify that the given UDP port on the local(client)
                   host is to be forwarded to the given host and port on
                   the remote side.
                 '';
