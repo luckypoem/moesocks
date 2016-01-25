@@ -148,7 +148,7 @@ in
     };
 
   config = mkIf cfg.enable {
- 
+
     assertions =
       [
         { assertion = cfg.password != "";
@@ -159,6 +159,7 @@ in
     users.extraUsers = singleton {
       name = "moesocks";
       # uid = config.ids.uids.moesocks;
+      uid = 2000;
       description = "moesocks user";
     };
 
@@ -175,8 +176,8 @@ in
                     ${pkgs.haskellPackages.moesocks}/bin/moesocks
                     ${optionalString (cfg.verbose) "-v"}
                     -r ${cfg.role}
-                    ${optionalString (cfg.tcp != []) "-T ${concatStringsSep " " cfg.tcp}"}
-                    ${optionalString (cfg.udp != []) "-U ${concatStringsSep " " cfg.udp}"}
+                    ${optionalString (cfg.tcp != []) "-T '${concatStringsSep " " cfg.tcp}'"}
+                    ${optionalString (cfg.udp != []) "-U '${concatStringsSep " " cfg.udp}'"}
                     ${optionalString (cfg.disableSOCKS5) "--disable-socks5"}
                     -c ${configFile}
                   ''
