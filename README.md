@@ -3,13 +3,13 @@ MoeSocks
 
 A SOCKS5 proxy using the client / server architecture.
 
-MoeSocks is greatly inspired by [ss] and can be used in place of it.
+MoeSocks is compatible with [ss] at the protocal and most of the configuration level.
 
 Installation
 ============
 
-Easy
-----
+From binary
+-----------
 
 ### Install [Nix]
 
@@ -19,10 +19,14 @@ Easy
 
     nix-env -i -A nixpkgs.haskellPackages.moesocks
 
-Hard
-----
+### Run
 
-### Install GHC 7.10.2 and cabal-install
+    moesocks 
+
+From source
+-----------
+
+### Install GHC and cabal-install
     
 ### Download moesocks
 
@@ -55,34 +59,39 @@ Usage
 
 * Now you have a SOCKS5 proxy running inside a firewall on port `1080`.
 
-* SS compatible obfuscation can be turned on with the `-o` flag to make
-  statistical analysis on packet length a bit more confusing.
-
 * See more options:
 
         moesocks --help
 
-* You might want to run `moesocks` under some kind of a supervising daemon to
-  auto restart the program if it crashes, likely due to [#10590], the fix of
-  which was not included in the `7.10.2` release.
+* Not tested in `OSX`, but it should just work.
 
-* On `OSX`, If you only run `moesocks -r local`, then it should work. Occasional
-  manual restart should be expected. `fastOpen` field should be `false` for now.
+System wide proxy for NixOS
+===========================
 
+* Add `moesocks.nix` and `moesocks-bento.nix` to `/etc/nixos` 
+* Modify the following and add it to `configuration.nix`:
+
+        imports = [ ./moesocks-bento.nix ];
+  
+        networking.moesocks-bento =
+          {
+            enable = true;
+            remote = "my-server";
+            remotePort = 8388;
+            password = "birthday!";
+          };
 
 Features
 ========
 
-* SOCKS5 proxy service, obviously
+* SOCKS5 proxy service
 * TCP port forwarding
-* UDP port forwarding, for example `-U 5300:8.8.8.8:53`
-* TCP per connection throttling (as a side effect of trying to find a bug in the
-remote)
+* UDP port forwarding, for example to tunnel DNS request: `-U 5300:8.8.8.8:53`
 * SOCKS5 service on local can be turned off
-* Understand ss's configuration file
+* Understand `ss`' configuration file
 
-Drawbacks
-==========
+Know issues
+===========
 
 * UDP over SOCKS5 is not implemented.
 * TCP bind over SOCKS5 is not implemented
@@ -95,11 +104,9 @@ Drawbacks
 TCP Fast Open (TFO)
 ====================
 
-## [TFO] is perfect for proxies.
+## Benefit of using [TFO]
 
-Both local and remote will use TFO when instructed. If the browser in use and
-the website to visit both support TFO, you can enjoy TFO all the way through.
-This could lead to a huge reduction of latency.
+TFO can bypass the TCP three-way handshake in successive connections, thus reducing latency.
 
 ## Enable TFO in your OS runtime.
 
@@ -114,7 +121,7 @@ On Linux 3.7+, to enable TFO (as root):
 ## Enable TFO in MoeSocks
 
 TFO can be turned on by adding a `"fastOpen":true` field in `config.json` or
-specifying a `--fast-open` flag in the command line arguments.
+adding a `--fast-open` argument in the command line.
 
 ## Verify
 
