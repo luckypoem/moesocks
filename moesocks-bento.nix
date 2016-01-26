@@ -3,7 +3,7 @@
 with lib;
 
 let
-  cfg = config.services.moesocksBento
+  cfg = config.networking.moesocksBento
 ; in
 
 {
@@ -11,7 +11,7 @@ let
 
 ; options =
     {
-      services.moesocksBento =
+      networking.moesocksBento =
         { enable = mkEnableOption "moesocks bento proxy suite"
 
         ; socks5ProxyPort = mkOption
