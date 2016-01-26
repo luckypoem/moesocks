@@ -78,7 +78,7 @@ let
 
     ; services.moesocks =
         { enable = true
-        ; udp = [ "${toString cfg.dnsPort}:8.8.8.8:53" ]
+        ; udp = [ "${toString cfg.dnsPort}:${cfg.remoteDNS}:53" ]
         ; remote = cfg.remote
         ; remotePort = cfg.remotePort
         ; localPort = cfg.socks5ProxyPort
