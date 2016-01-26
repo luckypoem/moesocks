@@ -1,3 +1,8 @@
+1.0.0.41
+--------
+* Update README for GHC 7.10.3
+* Add instructions to configure system wide proxy for NixOS
+
 1.0.0.40
 ---------
 * Fix UDP packet size
