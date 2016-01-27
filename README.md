@@ -90,8 +90,8 @@ Features
 * SOCKS5 service on local can be turned off
 * Understand `ss`' configuration file
 
-Know issues
-===========
+Known issues
+============
 
 * UDP over SOCKS5 is not implemented.
 * TCP bind over SOCKS5 is not implemented
