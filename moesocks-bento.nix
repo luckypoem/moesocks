@@ -57,10 +57,17 @@ let
             ; }
 
         ; password = mkOption
-            {  type = types.str
+            { type = types.str
             ; default = ""
             ; description = "moesocks password"
             ; }
+
+        ; method = mkOption
+            { type = types.str
+            ; default = "aes-256-cfb"
+            ; description = "encryption method"
+            ; }
+
         ; }
     ; }
 
@@ -83,6 +90,7 @@ let
         ; remotePort = cfg.remotePort
         ; localPort = cfg.socks5ProxyPort
         ; password = cfg.password
+        ; method = cfg.method
         ; fastOpen = true
         ; }
 
