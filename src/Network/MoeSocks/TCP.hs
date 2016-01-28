@@ -30,8 +30,8 @@ local_SOCKS5_RequestHandler :: Env
                             -> IO ()
 local_SOCKS5_RequestHandler aEnv aRemoteHost aRemotePort _ (aSocket,_) = do
   (_partialBytesAfterGreeting, _r) <-
-      parseSocket "clientGreeting" mempty identityCipher
-        greetingParser aSocket
+    parseSocket "clientGreeting" mempty identityCipher
+      greetingParser aSocket
 
   when (not - _No_authentication `elem` (_r ^. authenticationMethods)) -
     throwIO - ParseException
