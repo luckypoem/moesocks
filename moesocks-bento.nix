@@ -95,7 +95,8 @@ let
         ; }
 
     ; networking =
-        { proxy.default = "socks5://${cfg.local}:${toString cfg.socks5ProxyPort}"
+        { # proxy.default = "socks5://${cfg.local}:${toString cfg.socks5ProxyPort}"
+          proxy.default = "http://${cfg.local}:${toString cfg.httpProxyPort}"
         ; dhcpcd.extraConfig =
             ''
             nooption domain_name_servers
