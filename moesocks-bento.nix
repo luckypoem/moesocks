@@ -88,6 +88,7 @@ let
         ; udp = [ "${toString cfg.dnsPort}:${cfg.remoteDNS}:53" ]
         ; remote = cfg.remote
         ; remotePort = cfg.remotePort
+        ; local = cfg.local
         ; localPort = cfg.socks5ProxyPort
         ; password = cfg.password
         ; method = cfg.method
