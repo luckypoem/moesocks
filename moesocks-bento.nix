@@ -122,8 +122,15 @@ let
         ; }
 
     ; services.dnsmasq =
+        # dnsmasq won't work with :: or 0.0.0.0
+
+        let dnsmasqUpstream =
+              if isIPv6 cleanLocal
+                then "::1"
+                else "127.0.0.1"
+        ; in
         { enable = true
-        ; servers = [ "${cleanLocal}#${toString cfg.dnsPort}" ]
+        ; servers = [ "${dnsmasqUpstream}#${toString cfg.dnsPort}" ]
         ; }
 
     ; }
