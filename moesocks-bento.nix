@@ -7,6 +7,13 @@ let
 ; cleanIPv6 = x: removeSuffix "]" (removePrefix "[" x)
 ; isIPv6 = x: length (splitString ":" x) > 1
 ; cleanIP = x: if isIPv6 x then cleanIPv6 x else x
+; socketAddress = address: port:
+    if isIPv6 address
+      then "[${address}]:${toString port}"
+      else "${address}:${toString port}"
+
+; cleanRemote = cleanIP cfg.remote
+; cleanLocal = cleanIP cfg.local
 ; in
 
 {
@@ -43,7 +50,7 @@ let
 
         ; local = mkOption
             { type = types.str
-            ; default = "[::1]"
+            ; default = "::1"
             ; description = "local address"
             ; }
 
@@ -89,9 +96,9 @@ let
     ; services.moesocks =
         { enable = true
         ; udp = [ "${toString cfg.dnsPort}:${cfg.remoteDNS}:53" ]
-        ; remote = cfg.remote
+        ; remote = cleanRemote
         ; remotePort = cfg.remotePort
-        ; local = cleanIP cfg.local
+        ; local = cleanLocal
         ; localPort = cfg.socks5ProxyPort
         ; password = cfg.password
         ; method = cfg.method
@@ -99,8 +106,8 @@ let
         ; }
 
     ; networking =
-        { # proxy.default = "socks5://${cfg.local}:${toString cfg.socks5ProxyPort}"
-          proxy.default = "http://${cfg.local}:${toString cfg.httpProxyPort}"
+        { 
+          proxy.default = "http://${socketAddress cleanLocal cfg.httpProxyPort}"
         ; dhcpcd.extraConfig =
             ''
             nooption domain_name_servers
@@ -110,13 +117,13 @@ let
 
     ; services.privoxy =
         { enable = true
-        ; listenAddress = "${cfg.local}:${toString cfg.httpProxyPort}"
-        ; extraConfig = "forward-socks5 / ${cfg.local}:${toString cfg.socks5ProxyPort} ."
+        ; listenAddress = socketAddress cleanLocal cfg.httpProxyPort
+        ; extraConfig = "forward-socks5 / ${socketAddress cleanLocal cfg.socks5ProxyPort} ."
         ; }
 
     ; services.dnsmasq =
         { enable = true
-        ; servers = [ "${cleanIP cfg.local}#${toString cfg.dnsPort}" ]
+        ; servers = [ "${cleanLocal}#${toString cfg.dnsPort}" ]
         ; }
 
     ; }
