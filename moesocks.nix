@@ -170,18 +170,15 @@ in
         serviceConfig =
           { User = "moesocks";
             ExecStart =
-              concatStringsSep " "
-                (splitString "\n"
-                  ''
-                    ${pkgs.haskellPackages.moesocks}/bin/moesocks
-                    ${optionalString (cfg.verbose) "-v"}
-                    -r ${cfg.role}
-                    ${optionalString (cfg.tcp != []) "-T '${concatStringsSep " " cfg.tcp}'"}
-                    ${optionalString (cfg.udp != []) "-U '${concatStringsSep " " cfg.udp}'"}
-                    ${optionalString (cfg.disableSOCKS5) "--disable-socks5"}
-                    -c ${configFile}
-                  ''
-                );
+              ''
+                ${pkgs.haskellPackages.moesocks}/bin/moesocks \
+                  ${optionalString (cfg.verbose) "-v"} \
+                  -r ${cfg.role} \
+                  ${optionalString (cfg.tcp != []) "-T '${concatStringsSep " " cfg.tcp}'"} \
+                  ${optionalString (cfg.udp != []) "-U '${concatStringsSep " " cfg.udp}'"} \
+                  ${optionalString (cfg.disableSOCKS5) "--disable-socks5"} \
+                  -c ${configFile}
+              '';
           };
       };
   };
