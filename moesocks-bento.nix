@@ -4,6 +4,9 @@ with lib;
 
 let
   cfg = config.networking.moesocks-bento
+; cleanIPv6 = x: removeSuffix "]" (removePrefix "[" x)
+; isIPv6 = x: length (splitString ":" x) > 1
+; cleanIP = x: if isIPv6 x then cleanIPv6 x else x
 ; in
 
 {
@@ -88,7 +91,7 @@ let
         ; udp = [ "${toString cfg.dnsPort}:${cfg.remoteDNS}:53" ]
         ; remote = cfg.remote
         ; remotePort = cfg.remotePort
-        ; local = cfg.local
+        ; local = cleanIP cfg.local
         ; localPort = cfg.socks5ProxyPort
         ; password = cfg.password
         ; method = cfg.method
@@ -112,11 +115,8 @@ let
         ; }
 
     ; services.dnsmasq =
-        let dnsmasqHost = removeSuffix "]" (removePrefix "[" cfg.local)
-        ; in
-
         { enable = true
-        ; servers = [ "${dnsmasqHost}#${toString cfg.dnsPort}" ]
+        ; servers = [ "${cleanIP cfg.local}#${toString cfg.dnsPort}" ]
         ; }
 
     ; }
