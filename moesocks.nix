@@ -109,8 +109,6 @@ in
 
           local = mkOption {
             type = types.str;
-            # Default to listening on an IPv6 localhost address since otherwise
-            # initial start of moesocks will mysteriously fail.
             default = "::1";
             description = "local address";
           };
