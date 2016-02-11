@@ -142,25 +142,25 @@ let
 
               query_method=tcp_only;
             ''
+        ; serverConfig =
+            ''
+              label="proxy";
+              ip = "${cleanLocal}";
+              port = ${toString cfg.dnsPort};
+
+              purge_cache = off;
+
+              proxy_only=on;
+
+              exclude = .localdomain;
+              exclude = .lan;
+            ''
         ; extraConfig =
             ''
-              server {
-                label="proxy";
-                ip = "${cleanLocal}";
-                port = ${toString cfg.dnsPort};
-
-                purge_cache = off;
-
-                proxy_only=on;
-
-                exclude = .localdomain;
-                exclude = .lan;
-              }
-
-              source {
-                owner=localhost;
-                file="/etc/hosts";
-              }
+              # source {
+              #   owner=localhost;
+              #   file="/etc/hosts";
+              # }
             ''
         ; }
     ; }

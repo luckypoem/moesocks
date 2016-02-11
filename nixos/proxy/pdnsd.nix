@@ -12,7 +12,6 @@ let
                  ];
              }
            );
-
   cacheDir = "/var/cache/pdnsd";
   pdnsdConf = pkgs.writeText "pdnsd.conf"
     ''
@@ -21,6 +20,9 @@ let
         ${cfg.globalConfig}
       }
 
+      server {
+        ${cfg.serverConfig}
+      }
       ${cfg.extraConfig}
     '';
 in
@@ -33,9 +35,17 @@ in
             type = types.lines;
             default = "";
             description = ''
-              Global configuration that should be added to
-              the global directory of 
-              <literal>pdnsd.conf</literal>.
+              Global configuration that should be added to the global directory
+              of <literal>pdnsd.conf</literal>.
+            '';
+          };
+
+          serverConfig = mkOption {
+            type = types.lines;
+            default = "";
+            description = ''
+              Server configuration that should be added to the server directory
+              of <literal>pdnsd.conf</literal>.
             '';
           };
 
