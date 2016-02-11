@@ -17,7 +17,11 @@ let
 ; in
 
 {
-  imports = [ ./moesocks.nix ]
+  imports =
+    [
+      ./moesocks.nix
+      ./pdnsd.nix
+    ]
 
 ; options =
     {
@@ -95,7 +99,7 @@ let
 
     ; services.moesocks =
         { enable = true
-        ; udp = [ "${toString cfg.dnsPort}:${cfg.remoteDNS}:53" ]
+        ; tcp = [ "${toString cfg.dnsPort}:${cfg.remoteDNS}:53" ]
         ; remote = cleanRemote
         ; remotePort = cfg.remotePort
         ; local = cleanLocal
@@ -113,6 +117,7 @@ let
             nooption domain_name_servers
             nohook resolv.conf
             ''
+        ; nameservers = [ "::1" ]
         ; }
 
     ; services.privoxy =
@@ -121,18 +126,43 @@ let
         ; extraConfig = "forward-socks5 / ${socketAddress cleanLocal cfg.socks5ProxyPort} ."
         ; }
 
-    ; services.dnsmasq =
-        # dnsmasq won't work with :: or 0.0.0.0
-
-        let dnsmasqUpstream =
-              if isIPv6 cleanLocal
-                then "::1"
-                else "127.0.0.1"
-        ; in
+    ; services.pdnsd =
         { enable = true
-        ; servers = [ "${dnsmasqUpstream}#${toString cfg.dnsPort}" ]
-        ; }
+        ; globalConfig =
+            ''
+              perm_cache=4096;
 
+              run_ipv4=off;
+              server_ip = "${cleanLocal}";
+              status_ctl = on;
+
+              neg_domain_pol=on;
+              neg_rrs_pol=on;
+              par_queries=1;
+
+              query_method=tcp_only;
+            ''
+        ; extraConfig =
+            ''
+              server {
+                label="proxy";
+                ip = "${cleanLocal}";
+                port = ${toString cfg.dnsPort};
+
+                purge_cache = off;
+
+                proxy_only=on;
+
+                exclude = .localdomain;
+                exclude = .lan;
+              }
+
+              source {
+                owner=localhost;
+                file="/etc/hosts";
+              }
+            ''
+        ; }
     ; }
 
 ; }
