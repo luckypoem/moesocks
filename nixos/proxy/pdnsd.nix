@@ -68,6 +68,8 @@ in
       description = "pdnsd user";
     };
 
+    users.extraGroups.pdnsd.gid = 2010;
+
     systemd.services.pdnsd =
       { wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];

@@ -157,10 +157,10 @@ let
             ''
         ; extraConfig =
             ''
-              # source {
-              #   owner=localhost;
-              #   file="/etc/hosts";
-              # }
+              source {
+                owner=localhost;
+                file="/etc/hosts";
+              }
             ''
         ; }
     ; }
