@@ -68,10 +68,10 @@ Usage
 System wide proxy for NixOS
 ===========================
 
-* Add `moesocks.nix` and `moesocks-bento.nix` to `/etc/nixos` 
+* Copy `nixos/proxy` to `/etc/nixos/proxy` 
 * Modify the following and add it to `configuration.nix`:
 
-        imports = [ ./moesocks-bento.nix ];
+        imports = [ ./proxy/moesocks-bento.nix ];
   
         networking.moesocks-bento =
           {
