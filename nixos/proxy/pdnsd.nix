@@ -70,10 +70,6 @@ in
         description = "pdnsd";
         serviceConfig =
           {
-            # pdnsd expects the user starting the daemon to own the
-            # configuration file
-            User = "root"; 
-            # PermissionsStartOnly = true;
             ExecStart = "${pdnsd}/bin/pdnsd -c ${pdnsdConf}";
           };
       };
