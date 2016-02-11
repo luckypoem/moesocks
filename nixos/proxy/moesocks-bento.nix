@@ -17,6 +17,7 @@ let
 ; in
 
 {
+
   imports =
     [
       ./moesocks.nix
@@ -132,7 +133,7 @@ let
             ''
               perm_cache=4096;
 
-              run_ipv4=off;
+              run_ipv4=${if isIPv6 cleanLocal then "off" else "on"};
               server_ip = "${cleanLocal}";
               status_ctl = on;
 
