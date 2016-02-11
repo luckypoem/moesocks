@@ -12,11 +12,12 @@ let
                  ];
              }
            );
-  cacheDir = "/var/cache/pdnsd";
+  pdnsdUser = "pdnsd";
   pdnsdConf = pkgs.writeText "pdnsd.conf"
     ''
       global {
-        run_as="pdnsd";
+        run_as=${pdnsdUser};
+        cache_dir="${cfg.cacheDir}";
         ${cfg.globalConfig}
       }
 
@@ -30,6 +31,12 @@ in
 { options =
     { services.pdnsd =
         { enable = mkEnableOption "pdnsd";
+
+          cacheDir = mkOption {
+            type = types.str;
+            default = "/var/cache/pdnsd";
+            description = "Directory holding the pdnsd cache.";
+          };
 
           globalConfig = mkOption {
             type = types.lines;
@@ -62,22 +69,20 @@ in
 
   config = mkIf cfg.enable {
     users.extraUsers = singleton {
-      name = "pdnsd";
+      name = pdnsdUser;
       # uid = config.ids.uids.pdnsd;
       uid = 2010;
       description = "pdnsd user";
     };
-
-    users.extraGroups.pdnsd.gid = 2010;
 
     systemd.services.pdnsd =
       { wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         preStart =
           ''
-            mkdir -p ${cacheDir}
-            touch ${cacheDir}/pdnsd.cache
-            chown -R pdnsd ${cacheDir}
+            mkdir -p ${cfg.cacheDir}
+            touch ${cfg.cacheDir}/pdnsd.cache
+            chown -R ${pdnsdUser} ${cfg.cacheDir}
           '';
         description = "pdnsd";
         serviceConfig =
