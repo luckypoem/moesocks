@@ -5,14 +5,16 @@ with lib;
 let
   cfg = config.services.pdnsd;
   pdnsd = pkgs.lib.overrideDerivation pkgs.pdnsd
-           (attrs:
-             {
-               configureFlags =
-                 [ "--enable-ipv6"
-                 ];
-             }
-           );
+            (attrs:
+               {
+                 configureFlags =
+                   [ "--enable-ipv6"
+                   ];
+               }
+            );
+
   pdnsdUser = "pdnsd";
+  pdnsdGroup = "pdnsd";
   pdnsdConf = pkgs.writeText "pdnsd.conf"
     ''
       global {
@@ -35,7 +37,7 @@ in
           cacheDir = mkOption {
             type = types.str;
             default = "/var/cache/pdnsd";
-            description = "Directory holding the pdnsd cache.";
+            description = "Directory holding the pdnsd cache";
           };
 
           globalConfig = mkOption {
@@ -72,7 +74,14 @@ in
       name = pdnsdUser;
       # uid = config.ids.uids.pdnsd;
       uid = 2010;
+      group = pdnsdGroup;
       description = "pdnsd user";
+    };
+
+    users.extraGroups = singleton {
+      name = pdnsdGroup;
+      # gid = config.ids.gids.pdnsd;
+      gid = 2010;
     };
 
     systemd.services.pdnsd =
@@ -80,9 +89,9 @@ in
         after = [ "network.target" ];
         preStart =
           ''
-            mkdir -p ${cfg.cacheDir}
-            touch ${cfg.cacheDir}/pdnsd.cache
-            chown -R ${pdnsdUser} ${cfg.cacheDir}
+            mkdir -p "${cfg.cacheDir}"
+            touch "${cfg.cacheDir}/pdnsd.cache"
+            chown -R ${pdnsdUser}:${pdnsdGroup} "${cfg.cacheDir}"
           '';
         description = "pdnsd";
         serviceConfig =
