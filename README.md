@@ -76,7 +76,7 @@ System wide proxy for NixOS
         networking.moesocks-bento =
           {
             enable = true;
-            remote = "my-server";
+            remoteHost = "my-server";
             remotePort = 8388;
             password = "birthday!";
           };

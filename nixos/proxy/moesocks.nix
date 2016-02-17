@@ -46,13 +46,13 @@ in
           verbose = mkOption {
             type = types.bool;
             default = false;
-            description = "Turn on logging";
+            description = "Turn on logging.";
           };
 
           role = mkOption {
             type = types.str;
             default = "local";
-            description = "Tell moesocks to run as local or remote";
+            description = "Tell moesocks to run as local or remote.";
           };
 
           tcp = mkOption {
@@ -85,7 +85,7 @@ in
             description =
               ''
                 Do not start a SOCKS5 server on local. It can be
-                useful to run moesocks only as a secure tunnel
+                useful to run moesocks only as a secure tunnel.
               '';
           };
 
@@ -95,7 +95,7 @@ in
             description = "IP list declared invalid as destinations";
           };
 
-          remote = mkOption {
+          remoteHost = mkOption {
             type = types.str;
             default = "::";
             description = "remote address";
@@ -107,7 +107,7 @@ in
             description = "remote port";
           };
 
-          local = mkOption {
+          localHost = mkOption {
             type = types.str;
             default = "::1";
             description = "local address";
@@ -140,7 +140,7 @@ in
           fastOpen = mkOption {
             type = types.bool;
             default = false;
-            description = "Use TCP_FASTOPEN, requires Linux 3.7+";
+            description = "Use TCP_FASTOPEN, requires Linux 3.7+.";
           };
         };
     };
@@ -150,7 +150,7 @@ in
     assertions =
       [
         { assertion = cfg.password != "";
-          message = "moesocks' password must be set";
+          message = "moesocks' password must be set.";
         }
       ];
 

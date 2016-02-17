@@ -12,8 +12,8 @@ let
       then "[${address}]:${toString port}"
       else "${address}:${toString port}"
 
-; cleanRemote = cleanIP cfg.remote
-; cleanLocal = cleanIP cfg.local
+; cleanRemoteHost = cleanIP cfg.remoteHost
+; cleanLocalHost = cleanIP cfg.localHost
 ; in
 
 {
@@ -47,13 +47,13 @@ let
            ; description = "port for tunneling DNS"
            ; }
 
-        ; remote = mkOption
+        ; remoteHost = mkOption
             { type = types.str
             ; default = ""
             ; description = "moesocks remote address"
             ; }
 
-        ; local = mkOption
+        ; localHost = mkOption
             { type = types.str
             ; default = "::1"
             ; description = "local address"
@@ -89,7 +89,7 @@ let
 ; config = mkIf cfg.enable
     { assertions =
         [
-          { assertion = cfg.remote != ""
+          { assertion = cfg.remoteHost != ""
           ; message = "moesocks' remote address must be set"
           ; }
         ]
@@ -101,9 +101,9 @@ let
     ; services.moesocks =
         { enable = true
         ; tcp = [ "${toString cfg.dnsPort}:${cfg.remoteDNS}:53" ]
-        ; remote = cleanRemote
+        ; remoteHost = cleanRemoteHost
         ; remotePort = cfg.remotePort
-        ; local = cleanLocal
+        ; localHost = cleanLocalHost
         ; localPort = cfg.socks5ProxyPort
         ; password = cfg.password
         ; method = cfg.method
@@ -112,7 +112,7 @@ let
 
     ; networking =
         { 
-          proxy.default = "http://${socketAddress cleanLocal cfg.httpProxyPort}"
+          proxy.default = "http://${socketAddress cleanLocalHost cfg.httpProxyPort}"
         ; dhcpcd.extraConfig =
             ''
             nooption domain_name_servers
@@ -123,8 +123,8 @@ let
 
     ; services.privoxy =
         { enable = true
-        ; listenAddress = socketAddress cleanLocal cfg.httpProxyPort
-        ; extraConfig = "forward-socks5 / ${socketAddress cleanLocal cfg.socks5ProxyPort} ."
+        ; listenAddress = socketAddress cleanLocalHost cfg.httpProxyPort
+        ; extraConfig = "forward-socks5 / ${socketAddress cleanLocalHost cfg.socks5ProxyPort} ."
         ; }
 
     ; services.pdnsd =
@@ -133,8 +133,8 @@ let
             ''
               perm_cache=4096;
 
-              run_ipv4=${if isIPv6 cleanLocal then "off" else "on"};
-              server_ip = "${cleanLocal}";
+              run_ipv4=${if isIPv6 cleanLocalHost then "off" else "on"};
+              server_ip = "${cleanLocalHost}";
               status_ctl = on;
 
               neg_domain_pol=on;
@@ -146,7 +146,7 @@ let
         ; serverConfig =
             ''
               label="proxy";
-              ip = "${cleanLocal}";
+              ip = "${cleanLocalHost}";
               port = ${toString cfg.dnsPort};
 
               purge_cache = off;
