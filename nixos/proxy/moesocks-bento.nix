@@ -118,7 +118,7 @@ let
             nooption domain_name_servers
             nohook resolv.conf
             ''
-        ; nameservers = [ "::1" ]
+        ; nameservers = [ cleanLocalHost ]
         ; }
 
     ; services.privoxy =
