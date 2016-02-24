@@ -16,7 +16,7 @@ let
 ; useIPv6 = cfg.useIPv6
 ; localHost = if useIPv6 then "::1" else "127.0.0.1"
 ; localHostAllIPs = if useIPv6 then "::" else "0.0.0.0"
-; sharedHost = x: if x then localhost else localHostAllIPs
+; sharedHost = x: if x then localHostAllIPs else localHost
 ; socks5LocalHost = sharedHost cfg.shareSOCKS5-Proxy
 ; dnsLocalHost = sharedHost cfg.shareDNS
 ; httpLocalHost = sharedHost cfg.shareHTTP-Proxy
