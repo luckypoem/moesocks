@@ -13,7 +13,13 @@ let
       else "${address}:${toString port}"
 
 ; cleanRemoteHost = cleanIP cfg.remoteHost
-; cleanLocalHost = cleanIP cfg.localHost
+; useIPv6 = cfg.useIPv6
+; localHost = if useIPv6 then "::1" else "127.0.0.1"
+; localHostAllIPs = if useIPv6 then "::" else "0.0.0.0"
+; sharedHost = x: if x then localhost else localHostAllIPs
+; socks5LocalHost = sharedHost cfg.shareSOCKS5-Proxy
+; dnsLocalHost = sharedHost cfg.shareDNS
+; httpLocalHost = sharedHost cfg.shareHTTP-Proxy
 ; in
 
 {
@@ -53,11 +59,30 @@ let
             ; description = "moesocks remote address"
             ; }
 
-        ; localHost = mkOption
-            { type = types.str
-            ; default = "::1"
-            ; description = "local address"
-            ; }
+
+        ; shareDNS = mkOption
+           { type = types.bool
+           ; default = false
+           ; description = "share the DNS server with other network users."
+           ; }
+
+        ; shareSOCKS5-Proxy = mkOption
+           { type = types.bool
+           ; default = false
+           ; description = "share the SOCKS5 proxy server with other network users."
+           ; }
+
+        ; shareHTTP-Proxy = mkOption
+           { type = types.bool
+           ; default = false
+           ; description = "share the HTTP proxy server with other network users."
+           ; }
+
+        ; useIPv6 = mkOption
+          { type = types.bool
+          ; default = true
+          ; description = "whether to use the IPv6 stack"
+          ; }
 
         ; remotePort = mkOption
             { type = types.int
@@ -103,7 +128,7 @@ let
         ; tcp = [ "${toString cfg.dnsPort}:${cfg.remoteDNS}:53" ]
         ; remoteHost = cleanRemoteHost
         ; remotePort = cfg.remotePort
-        ; localHost = cleanLocalHost
+        ; localHost = socks5LocalHost
         ; localPort = cfg.socks5ProxyPort
         ; password = cfg.password
         ; method = cfg.method
@@ -112,19 +137,19 @@ let
 
     ; networking =
         { 
-          proxy.default = "http://${socketAddress cleanLocalHost cfg.httpProxyPort}"
+          proxy.default = "http://${socketAddress httpLocalHost cfg.httpProxyPort}"
         ; dhcpcd.extraConfig =
             ''
             nooption domain_name_servers
             nohook resolv.conf
             ''
-        ; nameservers = [ cleanLocalHost ]
+        ; nameservers = [ dnsLocalHost]
         ; }
 
     ; services.privoxy =
         { enable = true
-        ; listenAddress = socketAddress cleanLocalHost cfg.httpProxyPort
-        ; extraConfig = "forward-socks5 / ${socketAddress cleanLocalHost cfg.socks5ProxyPort} ."
+        ; listenAddress = socketAddress httpLocalHost cfg.httpProxyPort
+        ; extraConfig = "forward-socks5 / ${socketAddress localHost cfg.socks5ProxyPort} ."
         ; }
 
     ; services.pdnsd =
@@ -133,8 +158,8 @@ let
             ''
               perm_cache=4096;
 
-              run_ipv4=${if isIPv6 cleanLocalHost then "off" else "on"};
-              server_ip = "${cleanLocalHost}";
+              run_ipv4=${if useIPv6 then "off" else "on"};
+              server_ip = "${dnsLocalHost}";
               status_ctl = on;
 
               neg_domain_pol=on;
@@ -146,7 +171,7 @@ let
         ; serverConfig =
             ''
               label="proxy";
-              ip = "${cleanLocalHost}";
+              ip = "${localHost}";
               port = ${toString cfg.dnsPort};
 
               purge_cache = off;
