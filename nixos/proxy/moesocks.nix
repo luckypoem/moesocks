@@ -5,7 +5,7 @@ with lib;
 let
   cfg = config.services.moesocks;
   configFile = pkgs.writeText "moesocks.json" (builtins.toJSON cfg);
-  aclFile = pkgs.writeText "localIPs.acl" 
+  localIPs =
     '' 
       0.0.0.0/8
       10.0.0.0/8
@@ -36,6 +36,12 @@ let
       fc00::/7
       fe80::/10
       ff00::/8
+    '';
+  aclFile = pkgs.writeText "deny.acl"
+    ''
+      ${optionalString cfg.forbidLocalIPs localIPs}
+
+      ${cfg.extraDenyList}
     '';
 in
 
@@ -141,6 +147,18 @@ in
             type = types.bool;
             default = false;
             description = "Use TCP_FASTOPEN, requires Linux 3.7+.";
+          };
+
+          forbidLocalIPs = mkOption {
+            type = types.bool;
+            default = true;
+            description = "Do not proxy local IPs";
+          };
+
+          extraDenyList = mkOption {
+            type = types.str;
+            default = "";
+            description = "Extra deny list";
           };
         };
     };
