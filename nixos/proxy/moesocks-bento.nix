@@ -27,7 +27,7 @@ let
   imports =
     [
       ./moesocks.nix
-      ./pdnsd.nix
+      # ./pdnsd.nix
     ]
 
 ; options =
@@ -143,7 +143,7 @@ let
             nooption domain_name_servers
             nohook resolv.conf
             ''
-        ; nameservers = [ dnsLocalHost]
+        ; nameservers = [ localHost ]
         ; }
 
     ; services.privoxy =
