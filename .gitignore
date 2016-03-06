@@ -16,7 +16,6 @@ cabal.sandbox.config
 
 
 *.json
-
 *.mp4
 
 vendor
@@ -36,3 +35,4 @@ acl
 angel
 
 shell.nix
+*.link
