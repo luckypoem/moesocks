@@ -3,7 +3,7 @@ MoeSocks
 
 A SOCKS5 proxy using the client / server architecture.
 
-MoeSocks is compatible with [ss] at the protocal and most of the configuration level.
+MoeSocks is compatible with [shadowsocks] at the protocal and most of the configuration level.
 
 Installation
 ============
@@ -88,7 +88,7 @@ Features
 * TCP port forwarding
 * UDP port forwarding, for example to tunnel DNS request: `-U 5300:8.8.8.8:53`
 * SOCKS5 service on local can be turned off
-* Understand `ss`' configuration file
+* Understand `shadowsocks`' configuration file
 
 Known issues
 ============
@@ -134,10 +134,10 @@ payload. An example command is:
 Credits
 =======
 
-* [ss] greatly inspired MoeSocks.
-* [ss-haskell] another implementation of ss in Haskell, also greatly inspired
+* [shadowsocks] greatly inspired MoeSocks.
+* [shadowsocks-haskell] another implementation of ss in Haskell, also greatly inspired
   MoeSocks. Much of the understanding of the internal of ss was gained by
-  reading ss-haskell.
+  reading shadowsocks-haskell.
 
 License
 =======
@@ -156,8 +156,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[ss]:https://github.com/shadowsocks/shadowsocks
-[ss-haskell]:https://github.com/rnons/shadowsocks-haskell
+[shadowsocks]:https://github.com/shadowsocks/shadowsocks
+[shadowsocks-haskell]:https://github.com/rnons/shadowsocks-haskell
 [Nix]:https://nixos.org/nix/
 [config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json
 [#10590]:https://ghc.haskell.org/trac/ghc/ticket/10590
