@@ -3,7 +3,7 @@ MoeSocks
 
 A SOCKS5 proxy using the client / server architecture.
 
-MoeSocks is compatible with [shadowsocks] at the protocal and most of the configuration level.
+MoeSocks is mostly compatible with [shadowsocks].
 
 Installation
 ============
@@ -63,52 +63,35 @@ Usage
 
         moesocks --help
 
-* Not tested in `OSX`, but it should just work.
-
-System wide proxy for NixOS
-===========================
-
-* Copy `nixos/proxy` to `/etc/nixos/proxy` 
-* Modify the following and add it to `configuration.nix`:
-
-        imports = [ ./proxy/moesocks-bento.nix ];
-  
-        networking.moesocks-bento =
-          {
-            enable = true;
-            remoteHost = "my-server";
-            remotePort = 8388;
-            password = "birthday!";
-          };
-
 Features
 ========
 
-* SOCKS5 proxy service
-* TCP port forwarding
-* UDP port forwarding, for example to tunnel DNS request: `-U 5300:8.8.8.8:53`
-* SOCKS5 service on local can be turned off
-* Understand `shadowsocks`' configuration file
+* SOCKS5 proxy service, tested with GFW.
+* TCP port forwarding.
+* UDP port forwarding, for example to tunnel DNS request: `-U 5300:8.8.8.8:53`.
+* SOCKS5 service on local can be turned off.
+* Understand `shadowsocks`' json configuration file.
 
 Known issues
 ============
 
 * UDP over SOCKS5 is not implemented.
-* TCP bind over SOCKS5 is not implemented
-* More then 2 times slower then the original Python implementation (measured at
-  20M/s vs 43M/s on an Intel P8800, using the AES-256-CFB method, in software
-  AES).
-* Currently only works on Unix.
+* TCP bind over SOCKS5 is not implemented.
+* A bit slower then the Python implementation.
+* Only works on Unix.
 
+
+Tips
+====
 
 TCP Fast Open (TFO)
-====================
+-------------------
 
-## Benefit of using [TFO]
+### Benefit of using [TFO]
 
 TFO can bypass the TCP three-way handshake in successive connections, thus reducing latency.
 
-## Enable TFO in your OS runtime.
+### Enable TFO in your OS runtime.
 
 On Linux 3.7+, to check the availability of TFO:
 
@@ -118,25 +101,30 @@ On Linux 3.7+, to enable TFO (as root):
 
     echo 3 > /proc/sys/net/ipv4/tcp_fastopen
 
-## Enable TFO in MoeSocks
+### Enable TFO in MoeSocks
 
 TFO can be turned on by adding a `"fastOpen":true` field in `config.json` or
 adding a `--fast-open` argument in the command line.
 
-## Verify
+### Verify
 
 Use `tcpdump` on the `remotePort`, check for that `SYN` should start to carry
 payload. An example command is:
 
     tcpdump port 8388 -i any -X -v
+    
+TCP BBR
+-------
+
+Using tcp-bbr as the congestion control algorithm should dramatically increase your bandwith in most cases.
 
 
 Credits
 =======
 
 * [shadowsocks] greatly inspired MoeSocks.
-* [shadowsocks-haskell] another implementation of ss in Haskell, also greatly inspired
-  MoeSocks. Much of the understanding of the internal of ss was gained by
+* [shadowsocks-haskell] another implementation of shadowsocks in Haskell, also greatly inspired
+  MoeSocks. Much of the understanding of the internal of shadowsocks was gained by
   reading shadowsocks-haskell.
 
 License
@@ -160,7 +148,6 @@ limitations under the License.
 [shadowsocks-haskell]:https://github.com/rnons/shadowsocks-haskell
 [Nix]:https://nixos.org/nix/
 [config.json]:https://raw.githubusercontent.com/nfjinjing/moesocks/master/config.json
-[#10590]:https://ghc.haskell.org/trac/ghc/ticket/10590
 [TFO]:https://en.wikipedia.org/wiki/TCP_Fast_Open
 [ECN]:https://en.wikipedia.org/wiki/Explicit_Congestion_Notification
 
