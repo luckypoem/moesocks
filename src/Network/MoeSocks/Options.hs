@@ -19,6 +19,7 @@ import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Options.Applicative as O
 import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace,
                               parseOnly, many', choice)
+import Data.Monoid ((<>))
 
 textOption :: O.Mod O.OptionFields String -> O.Parser Text
 textOption x = strOption x <&> review _Text
