@@ -5,12 +5,16 @@ module Network.MoeSocks.Common where
 
 import Control.Lens
 import Control.Monad.Writer hiding (listen)
-import Data.IP
-import Data.Maybe
+import Data.IP (IPRange, isMatchedTo)
+import Data.Maybe (isJust)
 import Data.Text.Lens
-import Network.MoeSocks.Helper
+import Network.Socket (SockAddr(..), Socket(..), SocketType(..), Family(..))
+import Network.Socket (setSocketOption, SocketOption(..))
+
 import Network.MoeSocks.Type
-import Network.Socket hiding (send, recv, recvFrom, sendTo)
+
+import Network.MoeSocks.Helper ((-), tryIO, error_)
+import Network.MoeSocks.Helper (setSocket_TCP_NOTSENT_LOWAT, getSocketWithHint)
 import Prelude hiding ((-), take)
 
 

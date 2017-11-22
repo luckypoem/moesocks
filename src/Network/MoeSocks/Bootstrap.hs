@@ -3,25 +3,26 @@
 
 module Network.MoeSocks.Bootstrap where
 
-import Control.Lens
-import Control.Monad
-import Control.Monad.Except
-import Control.Monad.Writer hiding (listen)
-import Data.Aeson hiding (Result)
-import Data.Aeson.Lens
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
-import Data.Text.Lens
-import Network.MoeSocks.Default
-import Network.MoeSocks.Encrypt (safeMethods, unsafeMethods)
-import Network.MoeSocks.Helper
-import Prelude hiding ((-), take)
+import           Control.Lens
+import           Control.Monad.Except (ExceptT, throwError)
+import           Control.Monad.Writer hiding (listen)
+import           Data.Aeson hiding (Result)
+import           Data.Aeson.Lens (_Object, _JSON)
+import           Data.Maybe (fromMaybe)
+import           Data.Text (Text)
+import           Data.Text.Lens (_Text)
 import qualified Data.HashMap.Strict as H
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
+import           Network.MoeSocks.Default (defaultConfig)
+import           Network.MoeSocks.Encrypt (safeMethods, unsafeMethods)
+
+import           Network.MoeSocks.Helper ((-), debug_, io, toHaskellNamingConvention)
+import           Prelude hiding ((-), take)
 
 
 asList :: ([(Text, Value)] -> [(Text, Value)]) -> Value -> Value

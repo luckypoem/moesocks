@@ -2,15 +2,16 @@
 
 module Network.MoeSocks.Default where
 
-import Control.Lens
-import Control.Monad.Writer
-import Data.IP
-import Data.Text (Text)
-import Data.Text.Lens
-import Network.MoeSocks.Encrypt (constCipherBox)
-import Network.MoeSocks.Type
-import System.Log.Logger
+import           Control.Lens
+import           Control.Monad.Writer (execWriter, tell)
+import           Data.IP (IPRange)
+import           Data.Text (Text)
+import           Data.Text.Lens
+import           System.Log.Logger (Priority(DEBUG))
 import qualified Data.Text as T
+
+import           Network.MoeSocks.Encrypt (constCipherBox)
+import           Network.MoeSocks.Type
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 

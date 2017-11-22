@@ -16,23 +16,24 @@ module Network.MoeSocks.Encrypt
 )
 where
 
-import Control.Lens
-import Control.Monad.Except
-import Crypto.Hash.MD5 (hash)
-import Data.ByteString (ByteString)
-import Data.Map
-import Data.Monoid ((<>))
-import Data.Text (Text)
-import Data.Text.Lens
-import Data.Text.Strict.Lens (utf8)
-import OpenSSL (withOpenSSL)
-import OpenSSL.EVP.Cipher (getCipherByName, CryptoMode(..))
-import OpenSSL.EVP.Internal (cipherIvLength)
-import OpenSSL.Random (randBytes)
-import Prelude hiding ((-))
+import           Control.Lens
+import           Control.Monad.Except (ExceptT, runExceptT, liftIO, throwError)
+import           Crypto.Hash.MD5 (hash)
+import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
+import           Data.Map (Map,fromList)
+import           Data.Monoid ((<>))
 import qualified Data.Strict as S
+import           Data.Text (Text)
+import           Data.Text.Lens
+import           Data.Text.Strict.Lens (utf8)
+import           OpenSSL (withOpenSSL)
+import           OpenSSL.EVP.Cipher (getCipherByName, CryptoMode(..))
+import           OpenSSL.EVP.Internal (cipherIvLength)
 import qualified OpenSSL.EVP.Internal as E
+import           OpenSSL.Random (randBytes)
+
+import           Prelude hiding ((-))
 
 -- BEGIN backports
 

@@ -3,16 +3,16 @@
 
 module Network.MoeSocks.App where
 
-import Control.Concurrent.Async hiding (waitBoth)
-import Control.Lens
-import Control.Monad
-import Network.MoeSocks.Bootstrap (loadConfig)
-import Network.MoeSocks.Handler (runRemoteRelay, runLocalService)
-import Network.MoeSocks.Helper
-import Network.MoeSocks.Runtime (initRuntime)
-import Network.MoeSocks.Type
-import Prelude hiding ((-), take)
+import           Control.Concurrent.Async hiding (waitBoth)
+import           Control.Lens
+
+import           Network.MoeSocks.Bootstrap (loadConfig)
+import           Network.MoeSocks.Handler (runRemoteRelay, runLocalService)
+import           Network.MoeSocks.Helper ((-), io, error_, foreverRun)
+import           Network.MoeSocks.Runtime (initRuntime)
+import           Network.MoeSocks.Type (Env, Job(..), MoeMonad, env, jobs)
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
+import           Prelude hiding ((-), take)
 
 
 runJob :: Env -> Job -> IO ()

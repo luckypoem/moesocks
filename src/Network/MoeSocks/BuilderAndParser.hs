@@ -2,21 +2,24 @@
 
 module Network.MoeSocks.BuilderAndParser where
 
-import Control.Lens
-import Data.Attoparsec.ByteString
-import Data.Binary
-import Data.Binary.Put
-import Data.Maybe
-import Data.Monoid
-import Data.Text.Lens
-import Data.Text.Strict.Lens (utf8)
-import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
-import Network.Socket
-import Prelude hiding ((-), take)
+import           Control.Lens
+import           Data.Attoparsec.ByteString (Parser, anyWord8, word8, take, count)
+import           Data.Attoparsec.ByteString (satisfy, choice)
+import           Data.Binary (Word16, Word8, decode, put)
+import           Data.Binary.Put (runPut)
+import           Data.Maybe (fromMaybe)
+import           Data.Monoid ((<>))
+import           Data.Text.Lens
+import           Data.Text.Strict.Lens (utf8)
+import           Network.Socket (SockAddr(..))
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Prelude as P
+
+import           Network.MoeSocks.Type
+
+import           Network.MoeSocks.Helper ((-), flip4, portPairToInt)
+import           Prelude hiding ((-), take)
 
 
 _No_authentication :: Word8
