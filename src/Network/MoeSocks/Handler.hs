@@ -3,20 +3,25 @@
 
 module Network.MoeSocks.Handler where
 
-import Control.Concurrent
+import Control.Concurrent (forkIO)
 import Control.Lens
-import Control.Monad
-import Control.Monad.Writer hiding (listen)
+import Control.Monad.Writer (forever, when)
+import Data.Monoid ((<>))
 import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Text.Lens
-import Network.MoeSocks.Common
-import Network.MoeSocks.Helper
-import Network.MoeSocks.TCP
+import Network.Socket (Socket, SockAddr, SocketType(Stream, Datagram), bind)
+import Network.Socket (SocketOption(ReuseAddr), setSocketOption, accept, maxListenQueue)
+import Network.Socket (listen)
+import Network.Socket.ByteString (recvFrom)
+
+import Network.MoeSocks.Common (setSocketConfig)
+import Network.MoeSocks.TCP (local_SOCKS5_RequestHandler, local_TCP_ForwardRequestHandler)
+import Network.MoeSocks.TCP (remote_TCP_RequestHandler)
 import Network.MoeSocks.Type
-import Network.MoeSocks.UDP
-import Network.Socket hiding (send, recv, recvFrom, sendTo)
-import Network.Socket.ByteString
+import Network.MoeSocks.UDP (local_UDP_ForwardRequestHandler, remote_UDP_RequestHandler)
+
+import Network.MoeSocks.Helper
 import Prelude hiding ((-), take)
 
 _PacketLength :: Int
@@ -35,7 +40,7 @@ localService _env aServiceType aID aHandler s =
   logSA "L loop" (pure s) - \(_localSocket, _localAddr) -> do
 
     setSocketOption _localSocket ReuseAddr 1
-    bindSocket _localSocket _localAddr
+    bind _localSocket _localAddr
 
     case aServiceType of
       TCP_Service -> do
@@ -125,7 +130,7 @@ remote_TCP_Relay _env s = logSA "R loop" (pure s) -
     info_ - "RT: TCP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
     setSocketOption _remoteSocket ReuseAddr 1
-    bindSocket _remoteSocket _remoteAddr
+    bind _remoteSocket _remoteAddr
 
     when (_env ^. fastOpen) -
       setSocket_TCP_FAST_OPEN _remoteSocket
@@ -149,7 +154,7 @@ remote_UDP_Relay _env s = logSA "R loop" (pure s) -
     info_ - "RU: UDP relay " <> showWrapped _remoteAddr <> " nyaa!"
 
     setSocketOption _remoteSocket ReuseAddr 1
-    bindSocket _remoteSocket _remoteAddr
+    bind _remoteSocket _remoteAddr
 
     let handleRemote = do
           (_msg, _sockAddr) <- recvFrom _remoteSocket _PacketLength

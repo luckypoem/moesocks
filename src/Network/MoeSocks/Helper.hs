@@ -3,38 +3,49 @@
 
 module Network.MoeSocks.Helper where
 
-import Control.Concurrent
-import Control.Concurrent.Async
-import Control.Concurrent.STM
-import Control.Exception
-import Control.Lens
-import Control.Monad
-import Control.Monad.IO.Class
-import Data.Attoparsec.ByteString hiding (try)
-import Data.Binary
-import Data.Binary.Put
-import Data.ByteString (ByteString)
-import Data.Char (isUpper)
-import Data.Foldable (for_)
-import Data.List (sortOn)
-import Data.Maybe
-import Data.Monoid
-import Data.Text (Text)
-import Data.Text.Lens
-import Data.Time.Clock
-import Debug.Trace (trace)
-import Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
-import Network.Socket hiding (send, recv)
-import Network.Socket.ByteString
-import Prelude hiding (take, (-))
-import System.Log.Logger
-import System.Random
-import System.Timeout (timeout)
+import           Control.Concurrent (threadDelay, yield)
+import           Control.Concurrent.Async (concurrently, race_)
+import           Control.Concurrent.STM (TBQueue, readTBQueue, writeTBQueue, atomically)
+import           Control.Exception (Exception, SomeException, IOException, AsyncException)
+import           Control.Exception (catches, bracket, Handler(Handler))
+import           Control.Exception (try, onException, throw, throwIO, catch)
+import           Control.Lens
+import           Control.Monad (forever, when)
+import           Control.Monad.IO.Class (MonadIO, liftIO)
+import           Data.Attoparsec.ByteString (IResult(Partial, Fail, Done), Result)
+import           Data.Attoparsec.ByteString (Parser, parse)
+import           Data.Binary (Word8, Word16, put, decode)
+import           Data.Binary.Put (runPut)
+import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LB
+import           Data.Char (isUpper)
+import           Data.Foldable (for_)
+import           Data.List (sortOn)
+import           Data.Maybe (fromMaybe)
+import           Data.Monoid ((<>))
 import qualified Data.Strict as S
+import           Data.Text (Text)
 import qualified Data.Text as T
+import           Data.Text.Lens
+import           Data.Time.Clock (getCurrentTime, diffUTCTime)
+import           Debug.Trace (trace)
+import           Network.Socket (AddrInfoFlag(AI_NUMERICSERV, AI_ADDRCONFIG))
+import           Network.Socket (ShutdownCmd(ShutdownSend, ShutdownReceive))
+import           Network.Socket (Socket, SockAddr, SocketType(Stream))
+import           Network.Socket (SocketOption(CustomSockOpt, NoDelay), setSocketOption)
+import           Network.Socket (addrFamily, addrFlags, addrSocketType, shutdown, close)
+import           Network.Socket (defaultHints, socket, addrAddress, addrProtocol)
+import           Network.Socket (getAddrInfo, Family(AF_UNSPEC))
+import           Network.Socket.ByteString (recv, sendAll)
+import           System.Log.Logger  (noticeM, debugM, errorM, warningM, infoM)
+import           System.Random (randomRIO)
+import           System.Timeout (timeout)
+
+import           Network.MoeSocks.Internal.Socket (sendAllToFastOpen)
+
+import           Prelude hiding (take, (-))
 
 -- BEGIN backports
 
