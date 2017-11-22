@@ -2,24 +2,26 @@
 
 module Network.MoeSocks.Options where
 
-import Control.Lens
-import Data.Aeson
-import Data.Maybe
-import Data.Text (Text)
-import Data.Text.Lens
-import Network.MoeSocks.Default
-import Network.MoeSocks.Helper
-import Network.MoeSocks.Type.Bootstrap.Option
-import Network.MoeSocks.Type.Common
-import Options.Applicative hiding (Parser)
-import Prelude hiding ((-), takeWhile)
-import System.Log.Logger
+import           Control.Lens
+import           Data.Aeson (Value, toJSON)
+import           Data.Attoparsec.Text (Parser, takeWhile, char, decimal)
+import           Data.Attoparsec.Text (skipSpace, parseOnly, many', choice)
+import           Data.Maybe (catMaybes)
+import           Data.Monoid ((<>))
+import           Data.Text (Text)
 import qualified Data.Text as T
-import qualified Network.MoeSocks.Type.Bootstrap.Config as C
+import           Data.Text.Lens
 import qualified Options.Applicative as O
-import Data.Attoparsec.Text (Parser, takeWhile, char, decimal, skipSpace,
-                              parseOnly, many', choice)
-import Data.Monoid ((<>))
+import           Options.Applicative hiding (Parser)
+import           System.Log.Logger (Priority(DEBUG, INFO))
+
+import           Network.MoeSocks.Default (defaultConfig)
+import qualified Network.MoeSocks.Type.Bootstrap.Config as C
+import           Network.MoeSocks.Type.Bootstrap.Option (Options(..), RunningMode(..))
+import           Network.MoeSocks.Type.Common (Forward(Forward))
+
+import           Network.MoeSocks.Helper ((-))
+import           Prelude hiding ((-), takeWhile)
 
 textOption :: O.Mod O.OptionFields String -> O.Parser Text
 textOption x = strOption x <&> review _Text

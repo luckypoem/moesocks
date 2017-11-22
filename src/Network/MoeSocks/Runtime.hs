@@ -3,28 +3,29 @@
 
 module Network.MoeSocks.Runtime where
 
-import Control.Lens
-import Control.Monad.Except
-import Control.Monad.Writer hiding (listen)
-import Data.IP
-{-import Data.List (intercalate)-}
-{-import Data.Text (Text)-}
-import Data.Text.IO as T
-import Data.Text.Lens
-import Network.MoeSocks.Bootstrap
-import Network.MoeSocks.Default
-import Network.MoeSocks.Encrypt
-import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
-import Prelude hiding ((-), take)
-import System.Log.Formatter
-import System.Log.Handler.Simple
-import System.Log.Logger
+import           Control.Lens
+import           Control.Monad.Except (ExceptT, throwError)
+import           Data.IP (IPRange)
+import           Data.Monoid ((<>))
 import qualified Data.Text as T
+import           Data.Text.IO as T
+import           Data.Text.Lens (_Text)
 import qualified Network.MoeSocks.Type.Bootstrap.Config as C
 import qualified Network.MoeSocks.Type.Bootstrap.Option as O
 import qualified System.IO as IO
+import           System.Log.Formatter (simpleLogFormatter)
 import qualified System.Log.Handler as LogHandler
+import           System.Log.Handler.Simple (streamHandler)
+import           System.Log.Logger (Priority(DEBUG), removeHandler, addHandler, setLevel)
+import           System.Log.Logger (updateGlobalLogger, rootLoggerName)
+
+import           Network.MoeSocks.Bootstrap (loadConfig)
+import           Network.MoeSocks.Default (defaultRuntime, parseIPRangeList, defaultEnv)
+import           Network.MoeSocks.Encrypt (initCipherBox)
+import           Network.MoeSocks.Type
+
+import           Prelude hiding ((-), take)
+import           Network.MoeSocks.Helper ((-), debug_, io, is)
 
 initLogger :: Priority -> IO ()
 initLogger aLevel = do

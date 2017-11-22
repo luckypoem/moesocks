@@ -2,22 +2,35 @@
 
 module Network.MoeSocks.TCP where
 
-import Control.Concurrent.STM
-import Control.Exception
-import Control.Lens
-import Control.Monad.Writer hiding (listen)
-import Data.ByteString (ByteString)
-import Data.Text (Text)
-import Network.MoeSocks.BuilderAndParser
-import Network.MoeSocks.Common
-import Network.MoeSocks.Encrypt (identityCipher)
-import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
-import Network.Socket hiding (send, recv, recvFrom, sendTo)
-import Network.Socket.ByteString (recv)
-import Prelude hiding ((-), take)
+import           Control.Concurrent.STM (newTBQueueIO)
+import           Control.Exception (throwIO, finally)
+import           Control.Lens
+import           Control.Monad (when)
+import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
+import           Data.Monoid ((<>))
 import qualified Data.Strict as S
+import           Data.Text (Text)
+import           Network.Socket (Socket, SockAddr, SocketType(Stream))
+import           Network.Socket (connect, getPeerName, getSocketName)
+import           Network.Socket.ByteString (recv)
+
+import           Network.MoeSocks.BuilderAndParser (greetingParser, greetingReplyBuilder)
+import           Network.MoeSocks.BuilderAndParser (shadowSocksRequestParser)
+import           Network.MoeSocks.BuilderAndParser (shadowSocksRequestBuilder)
+import           Network.MoeSocks.BuilderAndParser (connectionParser, connectionReplyBuilder)
+import           Network.MoeSocks.BuilderAndParser (sockAddr_To_Pair, _No_authentication)
+import           Network.MoeSocks.Common (showRelay, getIPLists, initTarget)
+import           Network.MoeSocks.Common (withChecked_IP_List, setSocketConfig)
+import           Network.MoeSocks.Encrypt (identityCipher)
+import           Network.MoeSocks.Type
+
+import           Network.MoeSocks.Helper ((-), connectMarket, consumeLoop, produceLoop)
+import           Network.MoeSocks.Helper (sendBytes, connectTunnel, send_, sendFast)
+import           Network.MoeSocks.Helper (info_, debug_, logSA, parseSocket)
+import           Network.MoeSocks.Helper (builder_To_ByteString, getSocket)
+import           Network.MoeSocks.Helper (ParseException(ParseException))
+import           Prelude hiding ((-), take)
 
 _NoThrottle :: Maybe a
 _NoThrottle = Nothing

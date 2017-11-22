@@ -2,22 +2,29 @@
 
 module Network.MoeSocks.UDP where
 
-import Control.Exception
-import Control.Lens
-import Control.Monad
-import Control.Monad.Writer hiding (listen)
-import Data.Attoparsec.ByteString
-import Data.ByteString (ByteString)
-import Data.Text (Text)
-import Network.MoeSocks.BuilderAndParser
-import Network.MoeSocks.Common
-import Network.MoeSocks.Helper
-import Network.MoeSocks.Type
-import Network.Socket hiding (send, recv, recvFrom, sendTo)
-import Network.Socket.ByteString
-import Prelude hiding ((-), take)
+import           Control.Exception (throwIO)
+import           Control.Lens
+import           Control.Monad (when)
+import           Data.Monoid ((<>))
+import           Data.Attoparsec.ByteString (IResult(Done), parse)
+import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
 import qualified Data.Strict as S
+import           Data.Text (Text)
+import           Network.Socket (Socket, SockAddr)
+import           Network.Socket (connect, SocketType(Datagram))
+import           Network.Socket.ByteString (sendAllTo)
+
+import           Network.MoeSocks.BuilderAndParser (shadowSocksRequestParser)
+import           Network.MoeSocks.BuilderAndParser (shadowSocksRequestBuilder)
+import           Network.MoeSocks.BuilderAndParser (sockAddr_To_Pair)
+import           Network.MoeSocks.Common (withChecked_IP_List, showRelay, initTarget, getIPLists)
+import           Network.MoeSocks.Type
+
+import           Network.MoeSocks.Helper ((-), recv_UDP, info_, debug_, send_)
+import           Network.MoeSocks.Helper (logSA, getSocket, ParseException(ParseException))
+import           Network.MoeSocks.Helper (builder_To_ByteString)
+import           Prelude hiding ((-), take)
 
 
 buildShadowSocksRequest :: ClientRequest -> ByteString -> ByteString
