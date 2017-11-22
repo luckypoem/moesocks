@@ -5,7 +5,7 @@
 }:
 mkDerivation {
   pname = "moesocks";
-  version = "1.0.0.42";
+  version = "1.0.0.43";
   src = ./.;
   isLibrary = false;
   isExecutable = true;
