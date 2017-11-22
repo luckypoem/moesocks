@@ -4,10 +4,10 @@
 module Network.MoeSocks.Type.Bootstrap.Option where
 
 import Control.Lens
-import Data.Aeson
+import Data.Aeson (Value)
 import Data.Text (Text)
-import Network.MoeSocks.Type.Common
-import System.Log.Logger
+import Network.MoeSocks.Type.Common (Forward)
+import System.Log.Logger (Priority)
 
 data RunningMode = RemoteMode | LocalMode | DebugMode
       deriving (Show, Eq)

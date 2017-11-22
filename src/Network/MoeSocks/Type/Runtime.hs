@@ -3,17 +3,17 @@
 
 module Network.MoeSocks.Type.Runtime where
 
-import Control.Lens
-import Control.Monad.Except
-import Data.ByteString (ByteString)
-import Data.Text (Text)
-import Data.Text.Lens
-import Data.Word
-import Data.IP
-import Network.MoeSocks.Type.Common
-import Numeric (showHex)
+import           Control.Lens
+import           Control.Monad.Except
+import           Data.ByteString (ByteString)
+import           Data.IP
 import qualified Data.List as L
 import qualified Data.Strict as S
+import           Data.Text (Text)
+import           Data.Text.Lens
+import           Data.Word (Word8, Word16)
+import           Network.MoeSocks.Type.Common
+import           Numeric (showHex)
 
 data ClientGreeting = ClientGreeting
   {

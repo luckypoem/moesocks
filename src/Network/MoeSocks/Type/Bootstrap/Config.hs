@@ -4,7 +4,7 @@
 module Network.MoeSocks.Type.Bootstrap.Config where
 
 import Control.Lens
-import Data.Aeson
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
