@@ -102,6 +102,8 @@ initTarget _clientRequest = do
 setSocketConfig:: Env -> Socket -> IO ()
 setSocketConfig aEnv aSocket = do
   setSocketOption aSocket NoDelay 1
+  -- keepalive
+  setSocketOption aSocket KeepAlive 1
   when (aEnv ^. socketOption_TCP_NOTSENT_LOWAT) - do
     tryIO "setSocket_TCP_NOTSENT_LOWAT" - setSocket_TCP_NOTSENT_LOWAT aSocket
     pure ()

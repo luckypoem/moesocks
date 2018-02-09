@@ -54,7 +54,7 @@ localService _env aServiceType aID aHandler s =
         let handleLocal _socket = do
               _s@(_newSocket, _newSockAddr) <- accept _socket
               setSocketCloseOnExec _newSocket
-              setSocketConfig _env _socket
+              setSocketConfig _env _newSocket
 
               forkIO - catchExceptAsyncLog "LT" -
                         logSA "L TCP client socket" (pure _s) -
@@ -140,7 +140,7 @@ remote_TCP_Relay _env s = logSA "R loop" (pure s) -
     let handleRemote _socket = do
           (_newSocket, _) <- accept _socket
           setSocketCloseOnExec _newSocket
-          setSocketConfig _env _socket
+          setSocketConfig _env _newSocket
 
           forkIO - catchExceptAsyncLog "RT" -
                       logSocket "R remote socket" (pure _newSocket) -
