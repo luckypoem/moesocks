@@ -5,9 +5,9 @@
 , pkgs
 }:
 
-let
-  nemesis = pkgs.callPackage /home/jinjing/scm/haskell/nemesis {}
-; in
+# let
+#   nemesis = pkgs.callPackage /home/jinjing/scm/haskell/nemesis {}
+# ; in
 
 mkDerivation {
   pname = "moesocks";
@@ -20,7 +20,7 @@ mkDerivation {
     hslogger HsOpenSSL iproute lens lens-aeson mtl network
     optparse-applicative random stm strict text time transformers
     unordered-containers
-    nemesis
+    # nemesis
   ];
   homepage = "https://github.com/nfjinjing/moesocks";
   description = "A functional firewall killer";
