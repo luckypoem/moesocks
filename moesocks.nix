@@ -11,7 +11,7 @@ let
 
 mkDerivation {
   pname = "moesocks";
-  version = "1.0.0.43";
+  version = "1.0.0.44";
   src = ./.;
   isLibrary = false;
   isExecutable = true;
