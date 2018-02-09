@@ -2,7 +2,13 @@
 , containers, cryptohash, hslogger, HsOpenSSL, iproute, lens
 , lens-aeson, mtl, network, optparse-applicative, random, stdenv
 , stm, strict, text, time, transformers, unordered-containers
+, pkgs
 }:
+
+let
+  nemesis = pkgs.callPackage /home/jinjing/scm/haskell/nemesis {}
+; in
+
 mkDerivation {
   pname = "moesocks";
   version = "1.0.0.43";
@@ -14,6 +20,7 @@ mkDerivation {
     hslogger HsOpenSSL iproute lens lens-aeson mtl network
     optparse-applicative random stm strict text time transformers
     unordered-containers
+    nemesis
   ];
   homepage = "https://github.com/nfjinjing/moesocks";
   description = "A functional firewall killer";

@@ -1,3 +1,3 @@
-{ nixpkgs ? import <nixpkgs> {}, compiler ? "ghc802" }:
+{ nixpkgs ? import <nixpkgs> {} }:
 
-nixpkgs.pkgs.haskell.packages.${compiler}.callPackage ./moesocks.nix {}
+nixpkgs.pkgs.haskellPackages.callPackage ./moesocks.nix {}
